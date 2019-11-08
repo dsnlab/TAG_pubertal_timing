@@ -12,64 +12,41 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Set Working Directory
 ```{r Set Directory, message=FALSE, warning=FALSE, include=FALSE}
 getwd()
-#You should set this to the behavioral directory on the TAG file server 
-workdir='Z:/dsnlab/TAG/behavior/' 
+#You should set this to the TAG directory on the CAS file server 
+workdir='Z:/dsnlab/TAG/' 
 ```
 
 
 ```{r Load and Clean Data}
-# Load Data. NOTE: The "PBIP" variables are not actually from the Picture Based Interview of Puberty (PBIP) but the Udry & Morris Line drawings
-
-######
-
-# Wave 1 first - the below will work once we also have more waves of hormones, but for now I'm just removing waves 2 and 3 of the questionnaires
-
-saliva <- read.csv(file.path(workdir,"Puberty/Saliva/Wave1/TAG_W1_Saliva_wide_cens_only4.csv", fsep=""))
-hair <- read.csv(file.path(workdir,"Puberty/Hair/Wave1/TAG_W1_Hair_processed.csv", fsep=""))
-qs <- read.csv(file.path(workdir,"Questionnaires/Puberty/Allwaves_PubertyComposite.csv", fsep=""))
-
-# Reformat & Merge Data
-
-# Transforming Hair Data into Wide Format
-hair <- dcast(hair, SID ~ hormone, value.var = "concentration_ln")
-colnames(hair) <- c("SID","dhea_hair","estr_hair","test_hair")
-
-# Getting rid of Saliva clutter
-sal_dhea <- select(saliva, "SID", "sal_DHEA_conc_ln_w_1", "sal_DHEA_conc_ln_w_2", 
-               "sal_DHEA_conc_ln_w_3", "sal_DHEA_conc_ln_w_4")
-colnames(sal_dhea) <- c("SID","dhea1","dhea2","dhea3","dhea4")
-sal_estr <- select(saliva, "SID", "sal_EST_conc_ln_w_1", "sal_EST_conc_ln_w_2", 
-               "sal_EST_conc_ln_w_3", "sal_EST_conc_ln_w_4")
-colnames(sal_estr) <- c("SID","estr1","estr2","estr3","estr4")
-sal_test <- select(saliva, "SID", "sal_TEST_conc_ln_w_1", "sal_TEST_conc_ln_w_2", 
-               "sal_TEST_conc_ln_w_3", "sal_TEST_conc_ln_w_4")
-colnames(sal_test) <- c("SID","test1","test2","test3","test4")
-
-# Re-Merging Saliva Data
-saliva <- sal_dhea %>% full_join(sal_estr, by = "SID") %>% full_join(sal_test, by = "SID")
-
-# Getting rid of Questionnaire Clutter
-sr_qs <- select(qs, "SID", "wave", "adrenf2", "gonadf2", 
-                "pdss", "PBIP_1A", "PBIP_2A", "stage", "age",
-                "ADRENcomp", "GONADcomp", "PUBcomp")
-colnames(sr_qs) <- c("SID","wave","adrenf2","gonadf2",
-                     "pdsss","PBIP_1A","PBIP_2A","stage", "age",
-                     "ADRENcomp", "GONADcomp", "PUBcomp")
-
-sr_qs_w1 <- sr_qs[ which(sr_qs$wave=='1'), ]
-
-# Making one big pretty data frame
-hormones_w1 <- saliva %>% full_join(hair, by = "SID")
-#hormones_complete_E2hair <- filter(hormones, !is.na(estr_hair))
-data_w1 <- hormones_w1 %>% full_join(sr_qs_w1, by = "SID")
-
+library(dplyr)
+library(zoo)
+# Load Data Wave 1 first - see Marjolein's code for how this all got put together
+data_w1 <- read.csv(file.path(workdir,"projects/W1_W2_pubertal_timing/Timing_allways_w1.csv", fsep=""))
 ```
 
 ```{r Dynamic Timing Windows}
+# THERESA IS BOSS
 
-# for each individual, find the mean of the values from everyone else that is within 1 year age of them (+/- 0.5)
+# for each individual, find the mean of the values from everyone else that is within 1 year age of them (+/- 0.5), then take that person's value and subtract the mean of  that value only within the subset
+data_w1$max_age <- data_w1$age + 0.5
+data_w1$min_age <- data_w1$age - 0.5
 
-# Take that person's value and subtract the mean above
-
+for (i in 1:nrow(data_w1)) { 
+  comp_values <- data.frame()
+  
+  curr_max_age <- data_w1$max_age[i]
+  curr_min_age <- data_w1$min_age[i]
+  
+  # modify dataframe
+  temp_data_w1 <- data_w1[-i, ]
+  
+  for (j in 1:nrow(temp_data_w1)) {
+    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$ldstage[j], NA)
+    comp_values <- c(comp_values, curr_comp_values)
+  }
+  # then go back to the original loop and subtract the mean of the current vector of values from the original individual's value  
+  comp_values <- as.numeric(comp_values)
+  data_w1$window_ldstage[i] <- round(data_w1$ldstage[i] - mean(comp_values, na.rm = TRUE), 2)
+}
 ```
 
