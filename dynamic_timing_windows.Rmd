@@ -211,3 +211,7 @@ for (i in 1:nrow(data_w1)) {
 }
 ```      
  
+```{r}
+write.csv(data_w1,file.path(workdir,"projects/W1_W2_pubertal_timing/Timing_allways_w1.csv", fsep=""), row.names = FALSE)
+```
+
