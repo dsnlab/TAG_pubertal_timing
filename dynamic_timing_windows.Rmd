@@ -24,10 +24,11 @@ library(zoo)
 data_w1 <- read.csv(file.path(workdir,"projects/W1_W2_pubertal_timing/Timing_allways_w1.csv", fsep=""))
 ```
 
-```{r Dynamic Timing Windows}
-# THERESA IS BOSS
+```{r Dynamic Timing Windows - LD stage}
 
 # for each individual, find the mean of the values from everyone else that is within 1 year age of them (+/- 0.5), then take that person's value and subtract the mean of  that value only within the subset
+
+# First do them for LDstage:
 data_w1$max_age <- data_w1$age + 0.5
 data_w1$min_age <- data_w1$age - 0.5
 
@@ -38,7 +39,7 @@ for (i in 1:nrow(data_w1)) {
   curr_min_age <- data_w1$min_age[i]
   
   # modify dataframe
-  temp_data_w1 <- data_w1[-i, ]
+  temp_data_w1 <- data_w1[-i, ] # -i b/c don't want to compare to themselves
   
   for (j in 1:nrow(temp_data_w1)) {
     curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$ldstage[j], NA)
@@ -46,7 +47,167 @@ for (i in 1:nrow(data_w1)) {
   }
   # then go back to the original loop and subtract the mean of the current vector of values from the original individual's value  
   comp_values <- as.numeric(comp_values)
-  data_w1$window_ldstage[i] <- round(data_w1$ldstage[i] - mean(comp_values, na.rm = TRUE), 2)
+  data_w1$window_ldstage[i] <- data_w1$ldstage[i] - mean(comp_values, na.rm = TRUE)
 }
 ```
 
+```{r Dynamic Timing Windows - PDS stage}
+
+for (i in 1:nrow(data_w1)) { 
+  comp_values <- data.frame()
+  
+  curr_max_age <- data_w1$max_age[i]
+  curr_min_age <- data_w1$min_age[i]
+  
+  temp_data_w1 <- data_w1[-i, ] 
+  
+  for (j in 1:nrow(temp_data_w1)) {
+    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$pdsstage[j], NA)
+    comp_values <- c(comp_values, curr_comp_values)
+  }
+ 
+  comp_values <- as.numeric(comp_values)
+  data_w1$window_pdsstage[i] <- data_w1$pdsstage[i] - mean(comp_values, na.rm = TRUE)
+}
+```
+
+```{r Dynamic Timing Windows - PDS score}
+
+for (i in 1:nrow(data_w1)) { 
+  comp_values <- data.frame()
+  
+  curr_max_age <- data_w1$max_age[i]
+  curr_min_age <- data_w1$min_age[i]
+  
+  temp_data_w1 <- data_w1[-i, ] 
+  
+  for (j in 1:nrow(temp_data_w1)) {
+    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$pdsscore[j], NA)
+    comp_values <- c(comp_values, curr_comp_values)
+  }
+ 
+  comp_values <- as.numeric(comp_values)
+  data_w1$window_pdsscore[i] <- data_w1$pdsscore[i] - mean(comp_values, na.rm = TRUE)
+}
+```
+        
+```{r Dynamic Timing Windows - PUBcomp}
+
+for (i in 1:nrow(data_w1)) { 
+  comp_values <- data.frame()
+  
+  curr_max_age <- data_w1$max_age[i]
+  curr_min_age <- data_w1$min_age[i]
+  
+  temp_data_w1 <- data_w1[-i, ] 
+  
+  for (j in 1:nrow(temp_data_w1)) {
+    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$PUBcomp[j], NA)
+    comp_values <- c(comp_values, curr_comp_values)
+  }
+ 
+  comp_values <- as.numeric(comp_values)
+  data_w1$window_PUBcomp[i] <- data_w1$PUBcomp[i] - mean(comp_values, na.rm = TRUE)
+}
+```
+
+```{r Dynamic Timing Windows - Parent PDS stage}
+
+for (i in 1:nrow(data_w1)) { 
+  comp_values <- data.frame()
+  
+  curr_max_age <- data_w1$max_age[i]
+  curr_min_age <- data_w1$min_age[i]
+  
+  temp_data_w1 <- data_w1[-i, ] 
+  
+  for (j in 1:nrow(temp_data_w1)) {
+    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$parent_pdsstage[j], NA)
+    comp_values <- c(comp_values, curr_comp_values)
+  }
+ 
+  comp_values <- as.numeric(comp_values)
+  data_w1$window_parent_pdsstage[i] <- data_w1$parent_pdsstage[i] - mean(comp_values, na.rm = TRUE)
+}
+```
+
+```{r Dynamic Timing Windows - Parent PDS score}
+
+for (i in 1:nrow(data_w1)) { 
+  comp_values <- data.frame()
+  
+  curr_max_age <- data_w1$max_age[i]
+  curr_min_age <- data_w1$min_age[i]
+  
+  temp_data_w1 <- data_w1[-i, ] 
+  
+  for (j in 1:nrow(temp_data_w1)) {
+    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$parent_pdsscore[j], NA)
+    comp_values <- c(comp_values, curr_comp_values)
+  }
+ 
+  comp_values <- as.numeric(comp_values)
+  data_w1$window_parent_pdsscore[i] <- data_w1$parent_pdsscore[i] - mean(comp_values, na.rm = TRUE)
+}
+```
+ 
+```{r Dynamic Timing Windows - DHEA}
+
+for (i in 1:nrow(data_w1)) { 
+  comp_values <- data.frame()
+  
+  curr_max_age <- data_w1$max_age[i]
+  curr_min_age <- data_w1$min_age[i]
+  
+  temp_data_w1 <- data_w1[-i, ] 
+  
+  for (j in 1:nrow(temp_data_w1)) {
+    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$mean_DHEA_ln[j], NA)
+    comp_values <- c(comp_values, curr_comp_values)
+  }
+ 
+  comp_values <- as.numeric(comp_values)
+  data_w1$window_mean_DHEA_ln[i] <- data_w1$mean_DHEA_ln[i] - mean(comp_values, na.rm = TRUE)
+}
+``` 
+ 
+```{r Dynamic Timing Windows - Testosterone}
+
+for (i in 1:nrow(data_w1)) { 
+  comp_values <- data.frame()
+  
+  curr_max_age <- data_w1$max_age[i]
+  curr_min_age <- data_w1$min_age[i]
+  
+  temp_data_w1 <- data_w1[-i, ] 
+  
+  for (j in 1:nrow(temp_data_w1)) {
+    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$mean_TEST_ln[j], NA)
+    comp_values <- c(comp_values, curr_comp_values)
+  }
+ 
+  comp_values <- as.numeric(comp_values)
+  data_w1$window_mean_TEST_ln[i] <- data_w1$mean_TEST_ln[i] - mean(comp_values, na.rm = TRUE)
+}
+```  
+
+```{r Dynamic Timing Windows - Estradiol}
+
+for (i in 1:nrow(data_w1)) { 
+  comp_values <- data.frame()
+  
+  curr_max_age <- data_w1$max_age[i]
+  curr_min_age <- data_w1$min_age[i]
+  
+  temp_data_w1 <- data_w1[-i, ] 
+  
+  for (j in 1:nrow(temp_data_w1)) {
+    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$mean_EST_ln[j], NA)
+    comp_values <- c(comp_values, curr_comp_values)
+  }
+ 
+  comp_values <- as.numeric(comp_values)
+  data_w1$window_mean_EST_ln[i] <- data_w1$mean_EST_ln[i] - mean(comp_values, na.rm = TRUE)
+}
+```      
+ 
