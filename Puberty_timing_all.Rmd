@@ -1,0 +1,96 @@
+---
+title: "Pubertaltiming_alltheways"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+packages <- c("lme4" , "ggplot2","tidyr","dplyr", "psych","ggcorrplot")
+if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
+  install.packages(setdiff(packages, rownames(installed.packages())))  
+}
+lapply(packages, library, character.only = TRUE)
+
+cas_dir="Y:/dsnlab/TAG/"
+```
+
+```{r Combine all puberty measures in long format, include=FALSE}
+PubertyComposite <- read.table(paste0(cas_dir,'behavior/Questionnaires/Puberty/Allwaves_PubertyComposite.csv'),header=T,sep=",") %>%
+  filter(wave<3) %>% 
+  dplyr::rename(pdsstage=pdss, ldstage=stage)
+
+#Get PDS_F5 all waves and pds scores (not in 5 stages)
+file_list_cpds = Sys.glob(paste0(cas_dir, 'behavior/Questionnaires/Wave*/PDS_Wave*.csv'))
+ChildPDS = data.frame()
+for (file in file_list_cpds) {
+  temp <- read.table(file, header=TRUE, sep=",") %>%
+    select(tagid, PDS_F1, PDS_F2, PDS_F3, PDS_F4, PDS_F5, PDS_F6, pdss) %>%
+    mutate(wave = regmatches(file, regexpr("[[:digit:]]+", file)))
+  ChildPDS = rbind(ChildPDS, temp)
+  rm(temp) }
+ChildPDS <- ChildPDS %>%
+  mutate(menarchescore=ifelse(PDS_F6==1,4,ifelse(PDS_F6==0,1,NA))) %>%
+  dplyr::rename(subj_timing=PDS_F5)
+ChildPDS$pdsscore <- rowMeans(ChildPDS[,c("PDS_F1","PDS_F2","PDS_F3","PDS_F4","menarchescore")], na.rm=TRUE)
+#Get parent pds 
+file_list_ppds = Sys.glob(paste0(cas_dir, 'behavior/Questionnaires/Wave*/PDS_parent_Wave*.csv'))
+
+ParentPDS = data.frame()
+for (file in file_list_ppds) {
+  temp <- read.table(file, header=TRUE, sep=",") %>%
+    select(tagid, PDS_F1, PDS_F2, PDS_F3, PDS_F4, PDS_F5, PDS_F6, pdss) %>%
+    mutate(wave = regmatches(file, regexpr("[[:digit:]]+", file)))
+  ParentPDS = rbind(ParentPDS, temp)
+  rm(temp) }
+
+ParentPDS <- ParentPDS %>% 
+  dplyr::rename(parent_pdsstage=pdss, parent_subj_timing=PDS_F5) %>% 
+  mutate(menarchescore=ifelse(PDS_F6==1,4,ifelse(PDS_F6==0,1,NA)))
+
+ParentPDS$parent_pdsscore <- rowMeans(ParentPDS[,c("PDS_F1","PDS_F2","PDS_F3","PDS_F4","menarchescore")], na.rm=TRUE)
+#merge all the measures in one dataframe
+Puberty_all <- merge(PubertyComposite[,c("tagid","wave","age","pdsstage","ldstage","PUBcomp")], ChildPDS[,c("tagid","wave","pdsscore","subj_timing")], by=c("tagid","wave"),all=T)
+Puberty_all <- merge(Puberty_all, ParentPDS[,c("tagid","wave", "parent_pdsstage","parent_pdsscore","parent_subj_timing")], by=c("tagid","wave"),all=T)
+
+#Note that Parent PDS is missing for half of pp at wave 1
+
+#Only wave 1 and 2
+Puberty_allways <- Puberty_all %>% filter(wave<3)
+
+#Add hormones
+Hormones <- read.table('C:/Users/marjo/Documents/postdoc/puberty/TAG_Wave12_saliva_processed_averaged.csv', header=T, sep=",") %>% 
+  select(TAG_ID,wave,mean_DHEA_ln,mean_TEST_ln,mean_EST_ln) %>%
+  dplyr::rename(tagid=TAG_ID)
+Puberty_allways <- merge(Puberty_allways,Hormones,by=c("tagid","wave"),all=T)
+
+```
+
+Pubertal timing
+```{r Pubertal timing from residuals}
+
+#regress and create residuals #!need to add latent_est_pub
+pubcolumns1 <- c("ldstage","pdsstage","pdsscore","PUBcomp","parent_pdsstage","parent_pdsscore","mean_DHEA_ln","mean_TEST_ln","mean_EST_ln")
+for(Pub in pubcolumns1){
+  modelap <- lm(formula = paste(Pub, "~ age"),data=Puberty_allways,na.action=na.exclude)
+  summary(modelap)
+  Puberty_allways[[paste('resid',Pub, sep="_")]] <- resid(modelap)
+}
+
+```  
+
+```{r add Age at menarche}
+
+age_at_menarche <- read.table(paste0(cas_dir,'behavior/Questionnaires/Puberty/Age_at_menarche_short.csv'),header=T,sep=",") %>%
+  select(tagid,first_rep_age_menarche)
+Timing_allways <- merge(Puberty_allways,age_at_menarche,by="tagid",all=T)
+
+```
+
+```{r correlate all measures}
+Timing_allwaysn <- select_if(Timing_allways, is.numeric) 
+cor_timing_r <- cor(Timing_allwaysn, use="pairwise.complete.obs", method="pearson")
+cor_timing_rho <- cor(Timing_allwaysn, use="pairwise.complete.obs", method="spearman")
+ggcorrplot(cor_timing_r)
+ggcorrplot(cor_timing_rho)
+p_timing_rho <- cor_pmat(Timing_allwaysn)
+ggcorrplot(cor_timing_rho, p.mat=p_timing_rho, lab=T) 
+```
