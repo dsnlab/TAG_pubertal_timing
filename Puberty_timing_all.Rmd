@@ -94,3 +94,8 @@ ggcorrplot(cor_timing_rho)
 p_timing_rho <- cor_pmat(Timing_allwaysn)
 ggcorrplot(cor_timing_rho, p.mat=p_timing_rho, lab=T) 
 ```
+
+```{r save}
+write.csv(Timing_allways,paste0(casdir,'projects/W1_W2_pubertal_timing/Timing_allways.csv'),row.names=F)
+
+```
