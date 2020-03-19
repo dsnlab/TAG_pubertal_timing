@@ -59,18 +59,14 @@ Puberty_all <- merge(Puberty_all, ParentPDS[,c("tagid","wave", "parent_pdsstage"
 Puberty_allways <- Puberty_all %>% filter(wave<3)
 
 #Add hormones
-Hormones <- read.table('C:/Users/marjo/Documents/postdoc/puberty/TAG_Wave12_saliva_processed_averaged.csv', header=T, sep=",") %>% 
-  select(TAG_ID,wave,mean_DHEA_ln,mean_TEST_ln,mean_EST_ln) %>%
-  dplyr::rename(tagid=TAG_ID)
+Hormones <- read.table(paste0(cas_dir,'behavior/Puberty/Saliva//TAG_W1W2_Saliva_basalestimates.csv'), header=T, sep=",") %>% 
+  select(SID,DHEAmean_wave1,TESTmean_wave1,ESTmean_wave1,DHEAmean_wave2,TESTmean_wave2,ESTmean_wave2,DHEAcoef_imp_wave1,TESTcoef_imp_wave1,ESTcoef_imp_wave1,DHEAcoef_imp_wave2,TESTcoef_imp_wave2,ESTcoef_imp_wave2) %>%
+  mutate(tagid=sprintf("TAG%03d", SID)) %>%
+  pivot_longer(cols=contains("wave"),names_to = c(".value","wave"), names_pattern = "(.*)_wave(.*)") %>%
+  rename(DHEA_cor=DHEAcoef_imp,TEST_cor=TESTcoef_imp,EST_cor=ESTcoef_imp)
+
 Puberty_allways <- merge(Puberty_allways,Hormones,by=c("tagid","wave"),all=T)
 
-#Hormones1 <- read.table(paste0(cas_dir,'behavior/Puberty/Saliva/Wave1/TAG_W1_Saliva_basalestimates.csv'), header=T, sep=",") %>% 
-# select(SID,DHEAresid_imp,TESTresid_imp,ESTresid_imp) %>%
-# mutate(tagid=sprintf("TAG%03d", SID)) %>% mutate(wave=1)
-#Hormones2 <- read.table(paste0(cas_dir,'behavior/Puberty/Saliva/Wave2/TAG_W2_Saliva_basalestimates.csv'), header=T, sep=",") %>% 
-#  select(SID,DHEAresid_imp,TESTresid_imp,ESTresid_imp) %>%
-#  mutate(tagid=sprintf("TAG%03d", SID)) %>% mutate(wave=1)
-#Puberty_allways <- merge(Puberty_allways,Hormones,by=c("tagid","wave"),all=T)
 
 ```
 
@@ -78,7 +74,7 @@ Pubertal timing
 ```{r Pubertal timing from residuals}
 
 #regress and create residuals #!need to add latent_est_pub
-pubcolumns1 <- c("ldstage","pdsstage","ADRENcomp","GONADcomp","PUBcomp","parent_pdsstage","mean_DHEA_ln","mean_TEST_ln","mean_EST_ln")
+pubcolumns1 <- c("ldstage","pdsstage","ADRENcomp","GONADcomp","PUBcomp","parent_pdsstage","DHEAmean","TESTmean","ESTmean","DHEA_cor","TEST_cor","EST_cor")
 for(Pub in pubcolumns1){
   modelap <- lmer(formula = paste(Pub, "~ age + ( 1 | tagid)"),data=Puberty_allways,na.action=na.exclude)
   summary(modelap)
@@ -87,7 +83,7 @@ for(Pub in pubcolumns1){
 
 ```  
 
-```{r add Age at menarche}
+```{r add Age at menarche and hormones corrected for confounds and age}
 
 age_at_menarche <- read.csv(paste0(cas_dir,'behavior/Questionnaires/Puberty/Age_at_menarche_short_finalizing.csv'),header=T,sep=",") %>%
   dplyr::select(tagid,aam_final)
@@ -95,10 +91,20 @@ Timing_allways <- merge(Puberty_allways,age_at_menarche,by="tagid",all=T)
 
 #remove duplicates (TAG077 and TAG124 wave 2)
 Timing_allways <- Timing_allways[!duplicated(Timing_allways[c("tagid","wave")]),]
+
+#Adding hormone based timing variables based on the script "Basalestimates_W1W2"
+Hormone_timing <- read.table(paste0(cas_dir,'projects/W1_W2_pubertal_timing/TAG_W1W2_hormonebasedtiming.csv'), header=T, sep=",") %>% 
+  select(SID,DHEAcoef_imp_wave1,TESTcoef_imp_wave1,ESTcoef_imp_wave1,DHEAcoef_imp_wave2,TESTcoef_imp_wave2,ESTcoef_imp_wave2) %>%
+  mutate(tagid=sprintf("TAG%03d", SID))
+Hormone_timing <- Hormone_timing %>% pivot_longer(cols=contains("wave"),names_to = c(".value","wave"), names_pattern = "(.*)_wave(.*)") %>%
+  rename(DHEA_cor_interc=DHEAcoef_imp,TEST_cor_interc=TESTcoef_imp,EST_cor_interc=ESTcoef_imp) %>%
+  select(-SID)
+Timing_allways <- merge(Timing_allways,Hormone_timing,by=c("tagid","wave"),all=T)
+
 ```
 
 ```{r reorder and correlate all measures}
-Timing_allways <- Timing_allways %>% select(age,pdsstage,ldstage,ADRENcomp,GONADcomp,PUBcomp,parent_pdsstage,mean_DHEA_ln,mean_TEST_ln,mean_EST_ln,subj_timing,parent_subj_timing,everything())
+Timing_allways <- Timing_allways %>% select(age,pdsstage,ldstage,ADRENcomp,GONADcomp,PUBcomp,parent_pdsstage,DHEAmean,TESTmean,ESTmean,DHEA_cor,TEST_cor,EST_cor,subj_timing,parent_subj_timing,everything())
 
 Timing_allwaysn <- select_if(Timing_allways, is.numeric) 
 cor_timing_r <- cor(Timing_allwaysn, use="pairwise.complete.obs", method="pearson")
