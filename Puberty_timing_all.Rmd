@@ -142,5 +142,5 @@ ggcorrplot(cor_waves_rho, p.mat=p_waves_rho, lab=T,lab_size=2, title="Pubertal t
 ```{r save}
 write.csv(Timing_allways,paste0(cas_dir,'projects/W1_W2_pubertal_timing/Timing_allways.csv'),row.names=F)
 
-# NOTE: Run the dynamic timing window script after this - it calculates timing based on stage of windows of 6 month age peers per person. This script is separate and will be used for descriptive purposes only (since they correlate strongly with age residuals)
+# NOTE: Run the dynamic timing window script after this - it calculates timing based on stage of windows of 6 month age peers per person. This script is separate and may be used for descriptive purposes only (since W1 correlate strongly with age residuals, although W2 not as much, so still deciding. May also run windows for school grade instead of +/- 6 months)
 ```
