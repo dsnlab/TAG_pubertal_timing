@@ -1,0 +1,108 @@
+---
+title: "W1 W2 pubertal timing psychopathology SCA"
+author: "Michelle Byrne"
+date: "3/30/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Set Working Directory
+```{r Set Directory, message=FALSE, warning=FALSE, include=FALSE}
+getwd()
+#You should set this to the TAG directory on the CAS file server 
+workdir='Z:/dsnlab/TAG/' 
+```
+
+```{r Load Data}
+require(dplyr)
+require(zoo)
+# Load Data (Wave 1 and 2) first - see Marjolein's code for how this all got put together
+data <- read.csv(file.path(workdir,"projects/W1_W2_pubertal_timing/Timing_allways.csv", fsep=""))
+
+#!! - ADD PSYCHOPATHOLOGY DATA HERE - DIAGNOSES AND SYMPTOMS
+
+```
+
+# Model decisions and setup:
+
+# 2 timepoints x N pubertal timing variables x N internalising outcome variables x control variables Y/N (OR possible combinations of N control variables) x impute or not = N models
+```{r setup}
+require(specr)
+require (tidyverse)
+
+# Example from specr !! - UPDATE BELOW WITH OUR DATA:
+
+setup_specs(y = c("y1"),               # We choose only one dependent variable
+            x = c("x1", "x2"),         # We are not sure which independent variable is better
+            model = c("lm"),           # We only estimate one type of model (linear model)
+            controls = c("c1", "c2"))  # We include two control variable 
+
+```
+
+
+# The main function is run_specs() in which analytical choices are specified as arguments. The function plot_specs() can then be used to visualize the results.
+
+# The function runs traditional linear regression models by default (i.e. when model = "lm" is provided as argument). However, customized model functions can be passed to the function, too.
+```{r run_sca}
+# !! - UPDATE BELOW WITH OUR DATA
+
+results <- run_specs(df = example_data, 
+                     y = c("y1", "y2"), 
+                     x = c("x1", "x2"), 
+                     model = c("lm"), 
+                     controls = c("c1", "c2"), 
+                     subsets = list(group1 = unique(example_data$group1),
+                                    group2 = unique(example_data$group2)))
+
+
+```
+
+```{r visualise}
+# We can now plot a simple decision tree to understand how our analytical choices lead to a large number of specifications:
+
+plot_decisiontree(results, 
+                  legend = TRUE)
+
+# basic summary of the entire specification curve:
+summarise_specs(results)
+
+# summary by specific groups and  statistics:
+summarise_specs(results,                         # result data frame
+                x, y,                            # grouping variables
+                stats = lst(median, min, max))   # specific functions
+
+# Plot specification curve analysis:
+plot_specs(results, choices = c("x", "y", "controls", "subsets"))
+
+#to produce respective boxplots:
+plot_summary(results)
+```
+
+# Decompose the variance in the specification curve
+
+#Finally, we can estimate how much variance in the specification curve is related to which analytical decisions. Therefore, we have to estimate a basic multilevel model without predictors and the analytical decisions as random effects (interactions could be included too). We then use the function icc_specs() to calculate a respective table or plot_variance() to visualize the distribution.
+```{r}
+# Estimate multilevel model 
+library(lme4)
+model <- lmer(estimate ~ 1 + (1|x)  + (1|y) + (1|controls) + (1|subsets), data = results)
+
+# Get intra-class correlation
+icc_specs(model) %>%
+  mutate_if(is.numeric, round, 2)
+#>        grp  vcov  icc percent
+#> 1  subsets  0.79 0.04    3.62
+#> 2 controls  0.05 0.00    0.23
+#> 3        y 19.74 0.90   89.83
+#> 4        x  0.43 0.02    1.95
+#> 5 Residual  0.96 0.04    4.38
+
+# Plot decomposition
+plot_variance(model)
+
+# Customize plots instructions:
+# https://masurp.github.io/specr/articles/custom-plot.html
+```
+
