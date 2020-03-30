@@ -25,11 +25,10 @@ data <- read.csv(file.path(workdir,"projects/W1_W2_pubertal_timing/Timing_allway
 ```
 
 ```{r Dynamic Timing Windows - LD stage}
-
 # for each individual, find the mean of the values from everyone else that is within 1 year age of them (+/- 0.5), then take that person's value and subtract the mean of that value only within the subset. We do this separately by wave to avoid comparing peers across waves.
 
 # Wave 1:
-data_w1 <- data[which(wave=='1'),]
+data_w1 <- data[which(data$wave=='1'),]
 
 # First do them for LDstage:
 data_w1$max_age <- data_w1$age + 0.5
@@ -54,7 +53,7 @@ for (i in 1:nrow(data_w1)) {
 }
 
 # Wave 2:
-data_w2 <- data[which(wave=='2'),]
+data_w2 <- data[which(data$wave=='2'),]
 
 # For LDstage:
 data_w2$max_age <- data_w2$age + 0.5
@@ -80,7 +79,6 @@ for (i in 1:nrow(data_w2)) {
 ```
 
 ```{r Dynamic Timing Windows - PDS stage}
-
 # Wave 1:
 for (i in 1:nrow(data_w1)) { 
   comp_values <- data.frame()
@@ -118,8 +116,7 @@ for (i in 1:nrow(data_w2)) {
 }
 ```
 
-```{r Dynamic Timing Windows - PDS score}
-
+```{r Dynamic Timing Windows - ADRENcomp}
 # Wave 1:
 for (i in 1:nrow(data_w1)) { 
   comp_values <- data.frame()
@@ -130,12 +127,12 @@ for (i in 1:nrow(data_w1)) {
   temp_data_w1 <- data_w1[-i, ] 
   
   for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$pdsscore[j], NA)
+    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$ADRENcomp[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w1$window_pdsscore[i] <- data_w1$pdsscore[i] - mean(comp_values, na.rm = TRUE)
+  data_w1$window_ADRENcomp[i] <- data_w1$ADRENcomp[i] - mean(comp_values, na.rm = TRUE)
 }
 
 # Wave 2:
@@ -148,12 +145,50 @@ for (i in 1:nrow(data_w2)) {
   temp_data_w2 <- data_w2[-i, ] 
   
   for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$age[j] > curr_min_age & temp_data_w2$age[j] < curr_max_age, temp_data_w2$pdsscore[j], NA)
+    curr_comp_values <- ifelse(temp_data_w2$age[j] > curr_min_age & temp_data_w2$age[j] < curr_max_age, temp_data_w2$ADRENcomp[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w2$window_pdsscore[i] <- data_w2$pdsscore[i] - mean(comp_values, na.rm = TRUE)
+  data_w2$window_ADRENcomp[i] <- data_w2$ADRENcomp[i] - mean(comp_values, na.rm = TRUE)
+}
+```
+        
+```{r Dynamic Timing Windows - GONADcomp}
+# Wave 1:
+for (i in 1:nrow(data_w1)) { 
+  comp_values <- data.frame()
+  
+  curr_max_age <- data_w1$max_age[i]
+  curr_min_age <- data_w1$min_age[i]
+  
+  temp_data_w1 <- data_w1[-i, ] 
+  
+  for (j in 1:nrow(temp_data_w1)) {
+    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$GONADcomp[j], NA)
+    comp_values <- c(comp_values, curr_comp_values)
+  }
+ 
+  comp_values <- as.numeric(comp_values)
+  data_w1$window_GONADcomp[i] <- data_w1$GONADcomp[i] - mean(comp_values, na.rm = TRUE)
+}
+
+# Wave 2:
+for (i in 1:nrow(data_w2)) { 
+  comp_values <- data.frame()
+  
+  curr_max_age <- data_w2$max_age[i]
+  curr_min_age <- data_w2$min_age[i]
+  
+  temp_data_w2 <- data_w2[-i, ] 
+  
+  for (j in 1:nrow(temp_data_w2)) {
+    curr_comp_values <- ifelse(temp_data_w2$age[j] > curr_min_age & temp_data_w2$age[j] < curr_max_age, temp_data_w2$GONADcomp[j], NA)
+    comp_values <- c(comp_values, curr_comp_values)
+  }
+ 
+  comp_values <- as.numeric(comp_values)
+  data_w2$window_GONADcomp[i] <- data_w2$GONADcomp[i] - mean(comp_values, na.rm = TRUE)
 }
 ```
         
@@ -197,7 +232,6 @@ for (i in 1:nrow(data_w2)) {
 ```
 
 ```{r Dynamic Timing Windows - Parent PDS stage}
-
 # Wave 1:
 for (i in 1:nrow(data_w1)) { 
   comp_values <- data.frame()
@@ -234,9 +268,8 @@ for (i in 1:nrow(data_w2)) {
   data_w2$window_parent_pdsstage[i] <- data_w2$parent_pdsstage[i] - mean(comp_values, na.rm = TRUE)
 }
 ```
-
-```{r Dynamic Timing Windows - Parent PDS score}
-
+ 
+```{r Dynamic Timing Windows - DHEA mean}
 # Wave 1:
 for (i in 1:nrow(data_w1)) { 
   comp_values <- data.frame()
@@ -247,12 +280,12 @@ for (i in 1:nrow(data_w1)) {
   temp_data_w1 <- data_w1[-i, ] 
   
   for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$parent_pdsscore[j], NA)
+    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$DHEAmean[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w1$window_parent_pdsscore[i] <- data_w1$parent_pdsscore[i] - mean(comp_values, na.rm = TRUE)
+  data_w1$window_DHEAmean[i] <- data_w1$DHEAmean[i] - mean(comp_values, na.rm = TRUE)
 }
 
 # Wave 2:
@@ -265,55 +298,16 @@ for (i in 1:nrow(data_w2)) {
   temp_data_w2 <- data_w2[-i, ] 
   
   for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$age[j] > curr_min_age & temp_data_w2$age[j] < curr_max_age, temp_data_w2$parent_pdsscore[j], NA)
+    curr_comp_values <- ifelse(temp_data_w2$age[j] > curr_min_age & temp_data_w2$age[j] < curr_max_age, temp_data_w2$DHEAmean[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w2$window_parent_pdsscore[i] <- data_w2$parent_pdsscore[i] - mean(comp_values, na.rm = TRUE)
-}
-```
- 
-```{r Dynamic Timing Windows - DHEA}
-
-# Wave 1:
-for (i in 1:nrow(data_w1)) { 
-  comp_values <- data.frame()
-  
-  curr_max_age <- data_w1$max_age[i]
-  curr_min_age <- data_w1$min_age[i]
-  
-  temp_data_w1 <- data_w1[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$mean_DHEA_ln[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
- 
-  comp_values <- as.numeric(comp_values)
-  data_w1$window_mean_DHEA_ln[i] <- data_w1$mean_DHEA_ln[i] - mean(comp_values, na.rm = TRUE)
-}
-
-# Wave 2:
-for (i in 1:nrow(data_w2)) { 
-  comp_values <- data.frame()
-  
-  curr_max_age <- data_w2$max_age[i]
-  curr_min_age <- data_w2$min_age[i]
-  
-  temp_data_w2 <- data_w2[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$age[j] > curr_min_age & temp_data_w2$age[j] < curr_max_age, temp_data_w2$mean_DHEA_ln[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
- 
-  comp_values <- as.numeric(comp_values)
-  data_w2$window_mean_DHEA_ln[i] <- data_w2$mean_DHEA_ln[i] - mean(comp_values, na.rm = TRUE)
+  data_w2$window_DHEAmean[i] <- data_w2$DHEAmean[i] - mean(comp_values, na.rm = TRUE)
 }
 ``` 
  
-```{r Dynamic Timing Windows - Testosterone}
+```{r Dynamic Timing Windows - TEST mean}
 
 # Wave 1:
 for (i in 1:nrow(data_w1)) { 
@@ -325,12 +319,12 @@ for (i in 1:nrow(data_w1)) {
   temp_data_w1 <- data_w1[-i, ] 
   
   for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$mean_TEST_ln[j], NA)
+    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$TESTmean[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w1$window_mean_TEST_ln[i] <- data_w1$mean_TEST_ln[i] - mean(comp_values, na.rm = TRUE)
+  data_w1$window_TESTmean[i] <- data_w1$TESTmean[i] - mean(comp_values, na.rm = TRUE)
 }
 
 # Wave 2:
@@ -343,16 +337,16 @@ for (i in 1:nrow(data_w2)) {
   temp_data_w2 <- data_w2[-i, ] 
   
   for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$age[j] > curr_min_age & temp_data_w2$age[j] < curr_max_age, temp_data_w2$mean_TEST_ln[j], NA)
+    curr_comp_values <- ifelse(temp_data_w2$age[j] > curr_min_age & temp_data_w2$age[j] < curr_max_age, temp_data_w2$TESTmean[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w2$window_mean_TEST_ln[i] <- data_w2$mean_TEST_ln[i] - mean(comp_values, na.rm = TRUE)
+  data_w2$window_TESTmean[i] <- data_w2$TESTmean[i] - mean(comp_values, na.rm = TRUE)
 }
 ```  
 
-```{r Dynamic Timing Windows - Estradiol}
+```{r Dynamic Timing Windows - EST mean}
 
 # Wave 1:
 for (i in 1:nrow(data_w1)) { 
@@ -364,12 +358,12 @@ for (i in 1:nrow(data_w1)) {
   temp_data_w1 <- data_w1[-i, ] 
   
   for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$mean_EST_ln[j], NA)
+    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$ESTmean[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w1$window_mean_EST_ln[i] <- data_w1$mean_EST_ln[i] - mean(comp_values, na.rm = TRUE)
+  data_w1$window_ESTmean[i] <- data_w1$ESTmean[i] - mean(comp_values, na.rm = TRUE)
 }
 
 # Wave 2:
@@ -382,17 +376,201 @@ for (i in 1:nrow(data_w2)) {
   temp_data_w2 <- data_w2[-i, ] 
   
   for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$age[j] > curr_min_age & temp_data_w2$age[j] < curr_max_age, temp_data_w2$mean_EST_ln[j], NA)
+    curr_comp_values <- ifelse(temp_data_w2$age[j] > curr_min_age & temp_data_w2$age[j] < curr_max_age, temp_data_w2$ESTmean[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w2$window_mean_EST_ln[i] <- data_w2$mean_EST_ln[i] - mean(comp_values, na.rm = TRUE)
+  data_w2$window_ESTmean[i] <- data_w2$ESTmean[i] - mean(comp_values, na.rm = TRUE)
+}
+```      
+  
+```{r Dynamic Timing Windows - DHEA basal estimate}
+# Wave 1:
+for (i in 1:nrow(data_w1)) { 
+  comp_values <- data.frame()
+  
+  curr_max_age <- data_w1$max_age[i]
+  curr_min_age <- data_w1$min_age[i]
+  
+  temp_data_w1 <- data_w1[-i, ] 
+  
+  for (j in 1:nrow(temp_data_w1)) {
+    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$DHEA_cor[j], NA)
+    comp_values <- c(comp_values, curr_comp_values)
+  }
+ 
+  comp_values <- as.numeric(comp_values)
+  data_w1$window_DHEA_cor[i] <- data_w1$DHEA_cor[i] - mean(comp_values, na.rm = TRUE)
+}
+
+# Wave 2:
+for (i in 1:nrow(data_w2)) { 
+  comp_values <- data.frame()
+  
+  curr_max_age <- data_w2$max_age[i]
+  curr_min_age <- data_w2$min_age[i]
+  
+  temp_data_w2 <- data_w2[-i, ] 
+  
+  for (j in 1:nrow(temp_data_w2)) {
+    curr_comp_values <- ifelse(temp_data_w2$age[j] > curr_min_age & temp_data_w2$age[j] < curr_max_age, temp_data_w2$DHEA_cor[j], NA)
+    comp_values <- c(comp_values, curr_comp_values)
+  }
+ 
+  comp_values <- as.numeric(comp_values)
+  data_w2$window_DHEA_cor[i] <- data_w2$DHEA_cor[i] - mean(comp_values, na.rm = TRUE)
+}
+``` 
+ 
+```{r Dynamic Timing Windows - TEST basal estimate}
+
+# Wave 1:
+for (i in 1:nrow(data_w1)) { 
+  comp_values <- data.frame()
+  
+  curr_max_age <- data_w1$max_age[i]
+  curr_min_age <- data_w1$min_age[i]
+  
+  temp_data_w1 <- data_w1[-i, ] 
+  
+  for (j in 1:nrow(temp_data_w1)) {
+    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$TEST_cor[j], NA)
+    comp_values <- c(comp_values, curr_comp_values)
+  }
+ 
+  comp_values <- as.numeric(comp_values)
+  data_w1$window_TEST_cor[i] <- data_w1$TEST_cor[i] - mean(comp_values, na.rm = TRUE)
+}
+
+# Wave 2:
+for (i in 1:nrow(data_w2)) { 
+  comp_values <- data.frame()
+  
+  curr_max_age <- data_w2$max_age[i]
+  curr_min_age <- data_w2$min_age[i]
+  
+  temp_data_w2 <- data_w2[-i, ] 
+  
+  for (j in 1:nrow(temp_data_w2)) {
+    curr_comp_values <- ifelse(temp_data_w2$age[j] > curr_min_age & temp_data_w2$age[j] < curr_max_age, temp_data_w2$TEST_cor[j], NA)
+    comp_values <- c(comp_values, curr_comp_values)
+  }
+ 
+  comp_values <- as.numeric(comp_values)
+  data_w2$window_TEST_cor[i] <- data_w2$TEST_cor[i] - mean(comp_values, na.rm = TRUE)
+}
+```  
+
+```{r Dynamic Timing Windows - EST basal estimate}
+
+# Wave 1:
+for (i in 1:nrow(data_w1)) { 
+  comp_values <- data.frame()
+  
+  curr_max_age <- data_w1$max_age[i]
+  curr_min_age <- data_w1$min_age[i]
+  
+  temp_data_w1 <- data_w1[-i, ] 
+  
+  for (j in 1:nrow(temp_data_w1)) {
+    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$EST_cor[j], NA)
+    comp_values <- c(comp_values, curr_comp_values)
+  }
+ 
+  comp_values <- as.numeric(comp_values)
+  data_w1$window_EST_cor[i] <- data_w1$EST_cor[i] - mean(comp_values, na.rm = TRUE)
+}
+
+# Wave 2:
+for (i in 1:nrow(data_w2)) { 
+  comp_values <- data.frame()
+  
+  curr_max_age <- data_w2$max_age[i]
+  curr_min_age <- data_w2$min_age[i]
+  
+  temp_data_w2 <- data_w2[-i, ] 
+  
+  for (j in 1:nrow(temp_data_w2)) {
+    curr_comp_values <- ifelse(temp_data_w2$age[j] > curr_min_age & temp_data_w2$age[j] < curr_max_age, temp_data_w2$EST_cor[j], NA)
+    comp_values <- c(comp_values, curr_comp_values)
+  }
+ 
+  comp_values <- as.numeric(comp_values)
+  data_w2$window_EST_cor[i] <- data_w2$EST_cor[i] - mean(comp_values, na.rm = TRUE)
 }
 ```      
  
-```{r}
+```{r correlations}
+# correlate each residual measure with the dynamic timing window (DTM) measure:
+library(Hmisc)
+library(corrplot)
+# wave 1:
+w1_all <- select (data_w1, "resid_ldstage", "window_ldstage", "resid_pdsstage", "window_pdsstage", "resid_ADRENcomp", "window_ADRENcomp", "resid_GONADcomp", "window_GONADcomp", "resid_PUBcomp", "window_PUBcomp", "resid_parent_pdsstage", "window_parent_pdsstage", "resid_DHEAmean", "window_DHEAmean", "resid_TESTmean", "window_TESTmean", "resid_ESTmean", "window_ESTmean", "resid_DHEA_cor", "window_DHEA_cor", "resid_TEST_cor", "window_TEST_cor", "resid_EST_cor", "window_EST_cor")
+
+library(moments)
+skewness(w1_all, na.rm = TRUE)
+kurtosis(w1_all, na.rm = TRUE)
+#skewness is ok, kurtosis technically a little high, could use method="spearman" for rho if wanted)
+corr_w1_r <- cor(w1_all, use="pairwise.complete.obs", method="pearson")
+corr_w1_rbar <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEAmean", "TESTmean", "ESTmean", "DHEA_cor", "TEST_cor", "EST_cor"), resid_window_r=c(corr_w1_r[1,2], corr_w1_r[3,4], corr_w1_r[5,6], corr_w1_r[7,8], corr_w1_r[9,10], corr_w1_r[11,12], corr_w1_r[13,14], corr_w1_r[15,16], corr_w1_r[17,18], corr_w1_r[19,20], corr_w1_r[21,22], corr_w1_r[23,24]))
+library(ggplot2)
+library(viridis)
+w1_plot <- ggplot(data=corr_w1_rbar, aes(x=timing_measure, y=resid_window_r, fill=timing_measure)) +
+  geom_bar(stat="identity") +
+  geom_text(aes(label=round(resid_window_r, digits=2)), vjust=-0.5, color="black", size=3) +
+  scale_x_discrete(limits=corr_w1_rbar$timing_measure) +
+  scale_fill_viridis(discrete=TRUE) +
+  theme(text = element_text(size=10),
+        axis.text.x = element_text(angle=45, hjust=1), legend.position = "none") +
+  labs(title="W1 Pearson corr of age residual & dynamic timing windows", x ="Wave 1 measure of timing", y = "correlation (r)")
+
+corr_w1_rcorr <- rcorr(as.matrix(w1_all)) # for saving later
+library(ggcorrplot)
+w1_corrmat <- ggcorrplot(corr_w1_r) + 
+  scale_fill_viridis(discrete = FALSE) +
+  labs(title = "W1 Pearson corrs of timing (incl. age residual & DTW)")
+
+# wave 2:
+w2_all <- select (data_w2, "resid_ldstage", "window_ldstage", "resid_pdsstage", "window_pdsstage", "resid_ADRENcomp", "window_ADRENcomp", "resid_GONADcomp", "window_GONADcomp", "resid_PUBcomp", "window_PUBcomp", "resid_parent_pdsstage", "window_parent_pdsstage", "resid_DHEAmean", "window_DHEAmean", "resid_TESTmean", "window_TESTmean", "resid_ESTmean", "window_ESTmean", "resid_DHEA_cor", "window_DHEA_cor", "resid_TEST_cor", "window_TEST_cor", "resid_EST_cor", "window_EST_cor")
+skewness(w2_all, na.rm = TRUE)
+kurtosis(w2_all, na.rm = TRUE)
+#skewness is ok, kurtosis technically a little high, could use method="spearman" for rho if wanted)
+corr_w2_r <- cor(w2_all, use="pairwise.complete.obs", method="pearson")
+corr_w2_rbar <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEAmean", "TESTmean", "ESTmean", "DHEA_cor", "TEST_cor", "EST_cor"), resid_window_r=c(corr_w2_r[1,2], corr_w2_r[3,4], corr_w2_r[5,6], corr_w2_r[7,8], corr_w2_r[9,10], corr_w2_r[11,12], corr_w2_r[13,14], corr_w2_r[15,16], corr_w2_r[17,18], corr_w2_r[19,20], corr_w2_r[21,22], corr_w2_r[23,24]))
+w2_plot <- ggplot(data=corr_w2_rbar, aes(x=timing_measure, y=resid_window_r, fill=timing_measure)) +
+  geom_bar(stat="identity") +
+  geom_text(aes(label=round(resid_window_r, digits=2)), vjust=-0.5, color="black", size=3) +
+  scale_x_discrete(limits=corr_w2_rbar$timing_measure) +
+  scale_fill_viridis(discrete=TRUE) +
+  theme(text = element_text(size=10),
+        axis.text.x = element_text(angle=45, hjust=1), legend.position = "none") +
+  labs(title="W2 Pearson corrs of age residual & dynamic timing windows", x ="Wave 2 measure of timing", y = "correlation (r)")
+
+corr_w2_rcorr <- rcorr(as.matrix(w2_all)) # for saving later
+w2_corrmat <- ggcorrplot(corr_w2_r) + 
+  scale_fill_viridis(discrete = FALSE) +
+  labs(title = "W2 Pearson corrs of timing (incl. age residual & DTW)")
+
+library(cowplot)
+w1w2_plots <- plot_grid(w1_plot, w2_plot, labels = "AUTO")
+
+```
+
+
+```{r export}
 data <- rbind(data_w1, data_w2)
-write.csv(data,file.path(workdir,"projects/W1_W2_pubertal_timing/Timing_allways.csv", fsep=""), row.names = FALSE)
+
+library(xlsx) 
+write.xlsx(corr_w1$r, file.path(workdir,"projects/W1_W2_pubertal_timing/residual_window_corr.xlsx", fsep=""), sheetName="w1_r", row.names=FALSE) 
+
+write.xlsx(corr_w1$P, file.path(workdir,"projects/W1_W2_pubertal_timing/residual_window_corr.xlsx", fsep=""), sheetName="w1_p", append=TRUE, row.names=FALSE)
+
+write.xlsx(corr_w2$r, file.path(workdir,"projects/W1_W2_pubertal_timing/residual_window_corr.xlsx", fsep=""), sheetName="w2_r", append=TRUE, row.names=FALSE) 
+
+write.xlsx(corr_w2$P, file.path(workdir,"projects/W1_W2_pubertal_timing/residual_window_corr.xlsx", fsep=""), sheetName="w2_p", append=TRUE, row.names=FALSE)
+
+# save DTWs with the other variables as a separate file because we probably won't continue to use DTW in further analyses. UPDATE: OR WILL WE?? Corrs are kinda crap at W2...
+write.csv(data,file.path(workdir,"projects/W1_W2_pubertal_timing/Dynamic_timing_windows.csv", fsep=""), row.names = FALSE)
 ```
 
