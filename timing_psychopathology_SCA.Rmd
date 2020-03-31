@@ -34,6 +34,7 @@ require(specr)
 require (tidyverse)
 
 # Example from specr !! - UPDATE BELOW WITH OUR DATA:
+# Split into two SCA's: one with continuous outcomes, one with binary outcomes, then combine rows before plotting
 
 setup_specs(y = c("y1"),               # We choose only one dependent variable
             x = c("x1", "x2"),         # We are not sure which independent variable is better
@@ -48,7 +49,15 @@ setup_specs(y = c("y1"),               # We choose only one dependent variable
 # The function runs traditional linear regression models by default (i.e. when model = "lm" is provided as argument). However, customized model functions can be passed to the function, too.
 ```{r run_sca}
 # !! - UPDATE BELOW WITH OUR DATA
+# Split into two SCA's: one with continuous outcomes, one with binary outcomes, then combine rows before plotting
 
+ logistic <- function(formula, data) {
+  glm(formula = formula, 
+      data = data, 
+      family = binomial,
+      control = glmerControl(optimizer = "bobyqa"))
+}
+                 
 results <- run_specs(df = example_data, 
                      y = c("y1", "y2"), 
                      x = c("x1", "x2"), 
