@@ -20,7 +20,8 @@ workdir='Z:/dsnlab/TAG/'
 ```{r Load and Clean Data}
 library(dplyr)
 library(zoo)
-# Load Data (Wave 1 and 2) first - see Marjolein's code for how this all got put together
+# Load Data (Wave 1 and 2) first - see Marjolein's code for how this all got put together 
+######  !! NEED TO UPDATE - go back to output timing_allways (and merge grade in this script instead)
 data <- read.csv(file.path(workdir,"projects/W1_W2_pubertal_timing/Timing_allways_withgrade.csv", fsep=""))
 ```
 
