@@ -128,7 +128,6 @@ EST_cor_parPDScompare <- t.test(w1_parPDScompare$EST_cor ~ w1_parPDScompare$befo
 
 ```{r imputation}
 
-# !! TO BE COMPLETED !!
 #Note: we're not imputing Parent PDS and Parent subjective timing at Wave 1, because of the findings above.
 #Note 2: we're also not imputing age at menarche (added below) because missings are mostly pre-menarcheal girls
 
