@@ -1146,6 +1146,68 @@ w2_ESTcor_scatter <- ggplot(data_w2, aes(x = resid_EST_cor, y = window_EST_cor))
   scale_color_viridis(discrete=TRUE) +
   theme_bw() +
   geom_text(aes(label=paste(tagid, "(",round(age, digits=2),")")),hjust=0, vjust=0, size = 3)
+
+
+## The above correlations were based on residuals that were calculated with one linear model across both wave 1 and 2.
+
+# We recalculated separate residuals for Wave 1 and 2, and now will check the correlations with age dynamic timing windows:
+
+Timing_allways_short <- read_csv("Z:/dsnlab/TAG/projects/W1_W2_pubertal_timing/Timing_allways_short.csv")
+
+# wave 1:
+w1_all_sepres <- merge(Timing_allways_short, data_w1, by = "tagid")
+w1_all_sepres2 <- select (w1_all_sepres, "resid_ldstage_wave1", "window_ldstage", "resid_pdsstage_wave1", "window_pdsstage", "resid_ADRENcomp_wave1", "window_ADRENcomp", "resid_GONADcomp_wave1", "window_GONADcomp", "resid_PUBcomp_wave1", "window_PUBcomp", "resid_parent_pdsstage_wave1", "window_parent_pdsstage", "resid_DHEAmean_wave1", "window_DHEAmean", "resid_TESTmean_wave1", "window_TESTmean", "resid_ESTmean_wave1", "window_ESTmean", "resid_DHEA_cor_wave1", "window_DHEA_cor", "resid_TEST_cor_wave1", "window_TEST_cor", "resid_EST_cor_wave1", "window_EST_cor")
+
+# Age resid (with w1 linear model only) vs age windows:
+corr_w1_r_sepres <- cor(w1_all_sepres2, use="pairwise.complete.obs", method="pearson")
+corr_w1_rho_sepres <- cor(w1_all_sepres2, use="pairwise.complete.obs", method="spearman")
+corr_w1_tau_sepres <- cor(w1_all_sepres2, use="pairwise.complete.obs", method="kendall")
+
+corr_w1_rbar_sepres <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEAmean", "TESTmean", "ESTmean", "DHEA_cor", "TEST_cor", "EST_cor"), resid_window_r_sepres = c(corr_w1_r_sepres[1,2], corr_w1_r_sepres[3,4], corr_w1_r_sepres[5,6], corr_w1_r_sepres[7,8], corr_w1_r_sepres[9,10], corr_w1_r_sepres[11,12], corr_w1_r_sepres[13,14], corr_w1_r_sepres[15,16], corr_w1_r_sepres[17,18], corr_w1_r_sepres[19,20], corr_w1_r_sepres[21,22], corr_w1_r_sepres[23,24]))
+
+corr_w1_rhobar_sepres <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEAmean", "TESTmean", "ESTmean", "DHEA_cor", "TEST_cor", "EST_cor"), resid_window_rho_sepres = c(corr_w1_rho_sepres[1,2], corr_w1_rho_sepres[3,4], corr_w1_rho_sepres[5,6], corr_w1_rho_sepres[7,8], corr_w1_rho_sepres[9,10], corr_w1_rho_sepres[11,12], corr_w1_rho_sepres[13,14], corr_w1_rho_sepres[15,16], corr_w1_rho_sepres[17,18], corr_w1_rho_sepres[19,20], corr_w1_rho_sepres[21,22], corr_w1_rho_sepres[23,24]))
+
+corr_w1_taubar_sepres <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEAmean", "TESTmean", "ESTmean", "DHEA_cor", "TEST_cor", "EST_cor"), resid_window_tau_sepres = c(corr_w1_tau_sepres[1,2], corr_w1_tau_sepres[3,4], corr_w1_tau_sepres[5,6], corr_w1_tau_sepres[7,8], corr_w1_tau_sepres[9,10], corr_w1_tau_sepres[11,12], corr_w1_tau_sepres[13,14], corr_w1_tau_sepres[15,16], corr_w1_tau_sepres[17,18], corr_w1_tau_sepres[19,20], corr_w1_tau_sepres[21,22], corr_w1_tau_sepres[23,24]))
+library(ggplot2)
+library(viridis)
+
+w1_plot_sepres <- ggplot(data = corr_w1_rbar_sepres, aes(x=timing_measure, y=resid_window_r_sepres, fill=timing_measure)) +
+  geom_bar(stat="identity") +
+  geom_text(aes(label=round(resid_window_r_sepres, digits=2)), vjust=-0.5, color="black", size=3) +
+  scale_x_discrete(limits = corr_w1_rbar_sepres$timing_measure) +
+  scale_fill_viridis(discrete=TRUE) +
+  theme(text = element_text(size=10),
+        axis.text.x = element_text(angle=45, hjust=1), legend.position = "none") +
+  labs(title="W1 Pearson corr of age residual (separate W1 model) & 6 mo dynamic timing windows", x ="Wave 1 measure of timing", y = "correlation (r)") + 
+  ylim(0,1)
+
+# wave 2:
+w2_all_sepres <- merge(Timing_allways_short, data_w2, by = "tagid")
+w2_all_sepres2 <- select (w2_all_sepres, "resid_ldstage_wave2", "window_ldstage", "resid_pdsstage_wave2", "window_pdsstage", "resid_ADRENcomp_wave2", "window_ADRENcomp", "resid_GONADcomp_wave2", "window_GONADcomp", "resid_PUBcomp_wave2", "window_PUBcomp", "resid_parent_pdsstage_wave2", "window_parent_pdsstage", "resid_DHEAmean_wave2", "window_DHEAmean", "resid_TESTmean_wave2", "window_TESTmean", "resid_ESTmean_wave2", "window_ESTmean", "resid_DHEA_cor_wave2", "window_DHEA_cor", "resid_TEST_cor_wave2", "window_TEST_cor", "resid_EST_cor_wave2", "window_EST_cor")
+
+# Age resid (with w2 linear model only) vs age windows:
+corr_w2_r_sepres <- cor(w2_all_sepres2, use="pairwise.complete.obs", method="pearson")
+corr_w2_rho_sepres <- cor(w2_all_sepres2, use="pairwise.complete.obs", method="spearman")
+corr_w2_tau_sepres <- cor(w2_all_sepres2, use="pairwise.complete.obs", method="kendall")
+
+corr_w2_rbar_sepres <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEAmean", "TESTmean", "ESTmean", "DHEA_cor", "TEST_cor", "EST_cor"), resid_window_w2_r_sepres = c(corr_w2_r_sepres[1,2], corr_w2_r_sepres[3,4], corr_w2_r_sepres[5,6], corr_w2_r_sepres[7,8], corr_w2_r_sepres[9,10], corr_w2_r_sepres[11,12], corr_w2_r_sepres[13,14], corr_w2_r_sepres[15,16], corr_w2_r_sepres[17,18], corr_w2_r_sepres[19,20], corr_w2_r_sepres[21,22], corr_w2_r_sepres[23,24]))
+
+corr_w2_rhobar_sepres <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEAmean", "TESTmean", "ESTmean", "DHEA_cor", "TEST_cor", "EST_cor"), resid_window_w2_rho_sepres = c(corr_w2_rho_sepres[1,2], corr_w2_rho_sepres[3,4], corr_w2_rho_sepres[5,6], corr_w2_rho_sepres[7,8], corr_w2_rho_sepres[9,10], corr_w2_rho_sepres[11,12], corr_w2_rho_sepres[13,14], corr_w2_rho_sepres[15,16], corr_w2_rho_sepres[17,18], corr_w2_rho_sepres[19,20], corr_w2_rho_sepres[21,22], corr_w2_rho_sepres[23,24]))
+
+corr_w2_taubar_sepres <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEAmean", "TESTmean", "ESTmean", "DHEA_cor", "TEST_cor", "EST_cor"), resid_window_w2_tau_sepres = c(corr_w2_tau_sepres[1,2], corr_w2_tau_sepres[3,4], corr_w2_tau_sepres[5,6], corr_w2_tau_sepres[7,8], corr_w2_tau_sepres[9,10], corr_w2_tau_sepres[11,12], corr_w2_tau_sepres[13,14], corr_w2_tau_sepres[15,16], corr_w2_tau_sepres[17,18], corr_w2_tau_sepres[19,20], corr_w2_tau_sepres[21,22], corr_w2_tau_sepres[23,24]))
+library(ggplot2)
+library(viridis)
+
+w2_plot_sepres <- ggplot(data = corr_w2_rbar_sepres, aes(x=timing_measure, y=resid_window_w2_r_sepres, fill=timing_measure)) +
+  geom_bar(stat="identity") +
+  geom_text(aes(label=round(resid_window_w2_r_sepres, digits=2)), vjust=-0.5, color="black", size=3) +
+  scale_x_discrete(limits = corr_w2_rbar_sepres$timing_measure) +
+  scale_fill_viridis(discrete=TRUE) +
+  theme(text = element_text(size=10),
+        axis.text.x = element_text(angle=45, hjust=1), legend.position = "none") +
+  labs(title="W2 Pearson corr of age residual (separate W2 model) & 6 mo dynamic timing windows", x ="Wave 2 measure of timing", y = "correlation (r)") + 
+  ylim(0,1)
+
 ```
 
 
