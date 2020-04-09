@@ -4,7 +4,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-packages <- c("lme4" , "ggplot2","tidyr","dplyr", "psych","ggcorrplot")
+packages <- c("lme4" , "ggplot2","tidyr","dplyr", "psych","ggcorrplot","mice","BaylorEdPsych","readxl","purr")
 if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
   install.packages(setdiff(packages, rownames(installed.packages())))  
 }
@@ -14,11 +14,19 @@ cas_dir="Y:/dsnlab/TAG/"
 ```
 
 ```{r Combine all puberty measures in long format, include=FALSE}
+
+#PDS, LD, and composite measures
 PubertyComposite <- read.table(paste0(cas_dir,'behavior/Questionnaires/Puberty/Allwaves_PubertyComposite.csv'),header=T,sep=",") %>%
-  filter(wave<3) %>% 
+  filter(wave<3) %>% select(-age) %>%
   dplyr::rename(pdsstage=pdss, ldstage=stage)
 
-#Get PDS_F5 all waves 
+#replace age with most complete data
+Age <- read.csv(paste0(cas_dir,'behavior/Demographics/Age/TAG_age.csv'),header=T,sep=",") %>% 
+        filter(wave<3) %>% filter(session==2) %>% 
+        select(tagid,wave,age_excel) %>%
+        dplyr::rename(age=age_excel)
+
+#Get PDS_F5(subjective timing) all waves 
 file_list_cpds = Sys.glob(paste0(cas_dir, 'behavior/Questionnaires/Wave*/PDS_Wave*.csv'))
 ChildPDS = data.frame()
 for (file in file_list_cpds) {
@@ -33,6 +41,7 @@ ChildPDS <- ChildPDS %>%
 #ChildPDS$pdsscore <- rowMeans(ChildPDS[,c("PDS_F1","PDS_F2","PDS_F3","PDS_F4","menarchescore")], na.rm=TRUE)
 
 #Get parent pds 
+#Note that Parent PDS is missing for half of pp at wave 1
 file_list_ppds = Sys.glob(paste0(cas_dir, 'behavior/Questionnaires/Wave*/PDS_parent_Wave*.csv'))
 
 ParentPDS = data.frame()
@@ -46,14 +55,12 @@ for (file in file_list_ppds) {
 ParentPDS <- ParentPDS %>% 
   dplyr::rename(parent_pdsstage=pdss, parent_subj_timing=PDS_F5)  
 #  mutate(menarchescore=ifelse(PDS_F6==1,4,ifelse(PDS_F6==0,1,NA)))
-
 #ParentPDS$parent_pdsscore <- rowMeans(ParentPDS[,c("PDS_F1","PDS_F2","PDS_F3","PDS_F4","menarchescore")], na.rm=TRUE)
 
 #merge all the measures in one dataframe
-Puberty_all <- merge(PubertyComposite[,c("tagid","wave","age","pdsstage","ldstage","ADRENcomp","GONADcomp","PUBcomp")], ChildPDS[,c("tagid","wave","subj_timing")], by=c("tagid","wave"),all=T)
+Puberty_all <- merge(PubertyComposite[,c("tagid","wave","pdsstage","ldstage","ADRENcomp","GONADcomp","PUBcomp")], ChildPDS[,c("tagid","wave","subj_timing")], by=c("tagid","wave"),all=T)
 Puberty_all <- merge(Puberty_all, ParentPDS[,c("tagid","wave", "parent_pdsstage","parent_subj_timing")], by=c("tagid","wave"),all=T)
-
-#Note that Parent PDS is missing for half of pp at wave 1
+Puberty_all <- merge(Puberty_all, Age, by=c("tagid","wave"),all=T)
 
 #Only wave 1 and 2
 Puberty_allways <- Puberty_all %>% filter(wave<3)
@@ -61,17 +68,27 @@ Puberty_allways <- Puberty_all %>% filter(wave<3)
 #Add hormones
 Hormones <- read.table(paste0(cas_dir,'behavior/Puberty/Saliva//TAG_W1W2_Saliva_basalestimates.csv'), header=T, sep=",") %>% 
   select(SID,DHEAmean_wave1,TESTmean_wave1,ESTmean_wave1,DHEAmean_wave2,TESTmean_wave2,ESTmean_wave2,DHEAcoef_imp_wave1,TESTcoef_imp_wave1,ESTcoef_imp_wave1,DHEAcoef_imp_wave2,TESTcoef_imp_wave2,ESTcoef_imp_wave2) %>%
-  mutate(tagid=sprintf("TAG%03d", SID)) %>%
+  mutate(tagid=sprintf("TAG%03d", SID)) %>% select(-SID) %>%
   pivot_longer(cols=contains("wave"),names_to = c(".value","wave"), names_pattern = "(.*)_wave(.*)") %>%
   rename(DHEA_cor=DHEAcoef_imp,TEST_cor=TESTcoef_imp,EST_cor=ESTcoef_imp)
 
 Puberty_allways <- merge(Puberty_allways,Hormones,by=c("tagid","wave"),all=T)
 
+#Filter out excluded participants
+overview <- read_excel(paste0(cas_dir,'behavior/Overview/Overview_Withdrawn_Completed/TAG_Overview_Doc.xlsx'),sheet=1)
+overview <- overview[,c("TAG_ID","W1S2_Completed","Withdrawn_W1","Exclusionary_Withdrawl")]
+overview <- overview %>% 
+  rename(tagid = TAG_ID) %>%
+  replace_na(list(Withdrawn_W1 = 0)) %>%
+  replace_na(list(Exclusionary_Withdrawl = 0)) %>% 
+  arrange(Exclusionary_Withdrawl) %>% 
+  filter(Exclusionary_Withdrawl==0) %>%
+  filter(Withdrawn_W1==0)
+Puberty_allways <- Puberty_allways %>% filter(tagid %in% overview$tagid)
 
 ```
 
-```{r imputation}
-# NOTE: SAVE THE WORKSPACE AFTER RUNNING IMPUTATION - DO NOT RERUN THE SCRIPT FROM THIS CHUNK PRIOR TO AVOID NEW IMPUTED DATASETS - INSTEAD, LOAD WORKSPACE AND RUN FROM NEXT CHUNK ONWARDS
+```{r checks on parent pds}
 
 # First check missing data percentages:
 Puberty_allways
@@ -107,42 +124,114 @@ TEST_cor_parPDScompare <- t.test(w1_parPDScompare$TEST_cor ~ w1_parPDScompare$be
 
 EST_cor_parPDScompare <- t.test(w1_parPDScompare$EST_cor ~ w1_parPDScompare$before_after_parentPDSw1) # t = 3.9926, df = 162.86, p-value = 9.868e-05, mean in group 0 = 1.604741, mean in group 1 = 1.559396
 
+```
 
-# Then, do all the multiple imputation steps here: !! TO BE COMPLETED !!
+```{r imputation}
+
+# !! TO BE COMPLETED !!
+#Note: we're not imputing Parent PDS and Parent subjective timing at Wave 1, because of the findings above.
+#Note 2: we're also not imputing age at menarche (added below) because missings are mostly pre-menarcheal girls
+
+#remove duplicates (TAG077 and TAG124 wave 2)
+Puberty_allways <- Puberty_allways[!duplicated(Puberty_allways[c("tagid","wave")]),]
+#exclude parent pds variables
+Puberty_allways_cl <- Puberty_allways %>% select(-parent_pdsstage, -parent_subj_timing) %>%
+  mutate(PP=as.integer(tagid), const=1) 
+#check missingness pattern
+md.pattern(Puberty_allways_cl)
+
+#impute
+ini <- mice(Puberty_allways_cl, maxit=0, print=F)
+meth <- ini$meth
+meth["PUBcomp"]<- "~ I((ADRENcomp + GONADcomp) / 2)" #tell mice that PUBcomp is calculated from ADREN and GONAD
+meth[which(meth == "pmm")] <- "2l.norm" #2-level data with heterogeneous within pp variance
+pred<- quickpred(Puberty_allways_cl,exclude= 'tagid') # exclude tagid
+pred[c("GONADcomp", "ADRENcomp"), "PUBcomp"] <- 0 # avoid circular prediction from PUBcomp
+pred[,"PP"]<- -2 # set ID as class variable for 2l.norm
+pred[,"const"]<- 2 # random intercept
+pred["wave",]<- 0
+post <- ini$post
+post[c("subj_timing","ldstage","pdsstage","ADRENcomp","GONADcomp","PUBcomp")] <- "imp[[j]][, i] <- squeeze(imp[[j]][, i], c(1, 5))" #constrain the self-report variables to their range of 1-5
+imp <- mice(Puberty_allways_cl, m=20,maxit=15,meth=meth,pred=pred,post=post,print=FALSE,seed=500)
+
+#Plotting to check the imputations
+plot(imp, c("GONADcomp","ADRENcomp","PUBcomp","DHEAmean","TESTmean","ESTmean","DHEA_cor","TEST_cor","EST_cor","subj_timing"))
+miss <- is.na(imp$data$PUBcomp)
+xyplot(imp, PUBcomp ~ I ((ADRENcomp + GONADcomp) / 2),
+       na.groups = miss,     ylab = "Imputed", xlab = "Calculated")
+stripplot(imp, pch = 20, cex = 1.2) 
+densityplot(imp) 
+
+#average imputations
+completedData <- complete(imp, 'long')
+agg <- aggregate(completedData[,5:17] , by = list(completedData$.id),FUN= mean)
+ids <- completedData %>% filter(.imp==1) %>% select(.id,tagid,wave) %>% mutate(Group.1=.id) 
+Puberty_allways_im <- agg %>% left_join(.,ids) %>% select(tagid, everything(), -Group.1,-.id)
+
+#check distribution imputed variables
+#put in short format
+Puberty_allways_short <- Puberty_allways %>% pivot_wider(id_cols= tagid, names_from = wave, names_prefix = "wave", values_from = c(age,pdsstage,ldstage,parent_pdsstage,ADRENcomp,GONADcomp,PUBcomp,subj_timing,parent_subj_timing,DHEAmean,DHEA_cor,TESTmean,TEST_cor,ESTmean,EST_cor)) 
+Puberty_allways_im_short <- Puberty_allways_im %>% pivot_wider(id_cols= tagid, names_from = wave, names_prefix = "wave", values_from = c(age,pdsstage,ldstage,ADRENcomp,GONADcomp,PUBcomp,subj_timing,DHEAmean,DHEA_cor,TESTmean,TEST_cor,ESTmean,EST_cor)) 
+#plot
+Puberty_allways_short %>% 
+  select(-tagid) %>% gather() %>%
+  ggplot(aes(value)) + facet_wrap(~ key, scales = "free") + geom_histogram()
+Puberty_allways_im_short %>% 
+  select(-tagid) %>% gather() %>%
+  ggplot(aes(value)) + facet_wrap(~ key, scales = "free") + geom_histogram()
 
 ```
 
 
 Pubertal timing
 ```{r Pubertal timing from residuals}
+#put in short format
+Puberty_allways_short <- Puberty_allways %>% pivot_wider(id_cols= tagid, names_from = wave, names_prefix = "wave", values_from = c(age,pdsstage,ldstage,parent_pdsstage,ADRENcomp,GONADcomp,PUBcomp,subj_timing,parent_subj_timing,DHEAmean,DHEA_cor,TESTmean,TEST_cor,ESTmean,EST_cor)) 
 
-#regress and create residuals #!need to add latent_est_pub
-pubcolumns1 <- c("ldstage","pdsstage","ADRENcomp","GONADcomp","PUBcomp","parent_pdsstage","DHEAmean","TESTmean","ESTmean","DHEA_cor","TEST_cor","EST_cor")
+#create residuals for each wave separately
+pubcolumns1 <- list("ldstage_wave1","pdsstage_wave1","ADRENcomp_wave1","GONADcomp_wave1","PUBcomp_wave1","parent_pdsstage_wave1","DHEAmean_wave1","TESTmean_wave1","ESTmean_wave1","DHEA_cor_wave1","TEST_cor_wave1","EST_cor_wave1")
 for(Pub in pubcolumns1){
-  modelap <- lmer(formula = paste(Pub, "~ age + ( 1 | tagid)"),data=Puberty_allways,na.action=na.exclude)
-  summary(modelap)
-  Puberty_allways[[paste('resid',Pub, sep="_")]] <- resid(modelap)
+  modelap1 <- lm(formula = paste(Pub, "~ age_wave1"),data=Puberty_allways_short,na.action=na.exclude)
+  summary(modelap1)
+  Puberty_allways_short[[paste('resid',Pub, sep="_")]] <- resid(modelap1)
 }
+
+pubcolumns2 <- c("ldstage_wave2","pdsstage_wave2","ADRENcomp_wave2","GONADcomp_wave2","PUBcomp_wave2","parent_pdsstage_wave2","DHEAmean_wave2","TESTmean_wave2","ESTmean_wave2","DHEA_cor_wave2","TEST_cor_wave2","EST_cor_wave2")
+for(Pub in pubcolumns2){
+  modelap2 <- lm(formula = paste(Pub, "~ age_wave2"),data=Puberty_allways_short,na.action=na.exclude)
+  summary(modelap2)
+  Puberty_allways_short[[paste('resid',Pub, sep="_")]] <- resid(modelap2)
+}
+
+write.csv(Puberty_allways_short, paste0(cas_dir, "projects/W1_W2_pubertal_timing/Timing_allways_short.csv"),row.names = F)
+
+#regression with long format data and create residuals 
+pubcolumns <- c("ldstage","pdsstage","ADRENcomp","GONADcomp","PUBcomp","parent_pdsstage","DHEAmean","TESTmean","ESTmean","DHEA_cor","TEST_cor","EST_cor")
+for(Pub in pubcolumns){
+  modelap1 <- lmer(formula = paste(Pub, "~ age + ( 1 | tagid)"),data=Puberty_allways,na.action=na.exclude)
+  summary(modelap1)
+  Puberty_allways[[paste('resid',Pub, sep="_")]] <- resid(modelap1)
+}
+
+
 
 ```  
 
-```{r add Age at menarche and hormones corrected for confounds and age}
+```{r add Age at menarche}
 
 age_at_menarche <- read.csv(paste0(cas_dir,'behavior/Questionnaires/Puberty/Age_at_menarche_short_finalizing.csv'),header=T,sep=",") %>%
   dplyr::select(tagid,aam_final)
 Timing_allways <- merge(Puberty_allways,age_at_menarche,by="tagid",all=T)
 
-#remove duplicates (TAG077 and TAG124 wave 2)
-Timing_allways <- Timing_allways[!duplicated(Timing_allways[c("tagid","wave")]),]
 
 #Adding hormone based timing variables based on the script "Basalestimates_W1W2"
-Hormone_timing <- read.table(paste0(cas_dir,'projects/W1_W2_pubertal_timing/TAG_W1W2_hormonebasedtiming.csv'), header=T, sep=",") %>% 
-  select(SID,DHEAcoef_imp_wave1,TESTcoef_imp_wave1,ESTcoef_imp_wave1,DHEAcoef_imp_wave2,TESTcoef_imp_wave2,ESTcoef_imp_wave2) %>%
-  mutate(tagid=sprintf("TAG%03d", SID))
-Hormone_timing <- Hormone_timing %>% pivot_longer(cols=contains("wave"),names_to = c(".value","wave"), names_pattern = "(.*)_wave(.*)") %>%
-  rename(DHEA_cor_interc=DHEAcoef_imp,TEST_cor_interc=TESTcoef_imp,EST_cor_interc=ESTcoef_imp) %>%
-  select(-SID)
-Timing_allways <- merge(Timing_allways,Hormone_timing,by=c("tagid","wave"),all=T)
+#Hormone_timing <- read.table(paste0(cas_dir,'projects/W1_W2_pubertal_timing/TAG_W1W2_hormonebasedtiming.csv'), header=T, sep=",") %>% 
+#  select(SID,DHEAcoef_imp_wave1,TESTcoef_imp_wave1,ESTcoef_imp_wave1,DHEAcoef_imp_wave2,TESTcoef_imp_wave2,ESTcoef_imp_wave2) %>%
+#  mutate(tagid=sprintf("TAG%03d", SID))
+#Hormone_timing <- Hormone_timing %>% pivot_longer(cols=contains("wave"),names_to = c(".value","wave"), names_pattern = "(.*)_wave(.*)") %>%
+#  rename(DHEA_cor_interc=DHEAcoef_imp,TEST_cor_interc=TESTcoef_imp,EST_cor_interc=ESTcoef_imp) %>%
+#  select(-SID)
+#Timing_allways <- merge(Timing_allways,Hormone_timing,by=c("tagid","wave"),all=T)
 
 ```
 
