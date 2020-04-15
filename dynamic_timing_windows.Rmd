@@ -1181,6 +1181,54 @@ w1_plot_sepres <- ggplot(data = corr_w1_rbar_sepres, aes(x=timing_measure, y=res
   labs(title="W1 Pearson corr of age residual (separate W1 model) & 6 mo dynamic timing windows", x ="Wave 1 measure of timing", y = "correlation (r)") + 
   ylim(0,1)
 
+w1_ldstage_scatter_sepres <- ggplot(w1_all_sepres, aes(x = resid_ldstage_wave1, y = window_ldstage)) + 
+  geom_point(size = 3.5, aes(colour = factor(pdsstage))) +
+  scale_color_viridis(discrete=TRUE) +
+  theme_bw() + 
+  theme(legend.position="none") 
+w1_pdsstage_scatter_sepres <- ggplot(w1_all_sepres, aes(x = resid_pdsstage_wave1, y = window_pdsstage)) + 
+  geom_point(size = 3.5, aes(colour = factor(pdsstage))) +
+  scale_color_viridis(discrete=TRUE) +
+  theme_bw()+ 
+  theme(legend.position="none")
+w1_ADRENcomp_scatter_sepres <- ggplot(w1_all_sepres, aes(x = resid_ADRENcomp_wave1, y = window_ADRENcomp)) + 
+  geom_point(size = 3.5, aes(colour = factor(pdsstage))) +
+  scale_color_viridis(discrete=TRUE) +
+  theme_bw()+ 
+  theme(legend.position="none")
+w1_GONADcomp_scatter_sepres <- ggplot(w1_all_sepres, aes(x = resid_GONADcomp_wave1, y = window_GONADcomp)) + 
+  geom_point(size = 3.5, aes(colour = factor(pdsstage))) +
+  scale_color_viridis(discrete=TRUE) +
+  theme_bw() + 
+  theme(legend.position="none")
+w1_PUBcomp_scatter_sepres <- ggplot(w1_all_sepres, aes(x = resid_PUBcomp_wave1, y = window_PUBcomp)) + 
+  geom_point(size = 3.5, aes(colour = factor(pdsstage))) +
+  scale_color_viridis(discrete=TRUE) +
+  theme_bw() + 
+  theme(legend.position="none")
+w1_parent_pdsstage_scatter_sepres <- ggplot(w1_all_sepres, aes(x = resid_parent_pdsstage_wave1, y = window_parent_pdsstage)) + 
+  geom_point(size = 3.5, aes(colour = factor(pdsstage))) +
+  scale_color_viridis(discrete=TRUE) +
+  theme_bw() + 
+  theme(legend.position="none")
+w1_DHEA_cor_scatter_sepres <- ggplot(w1_all_sepres, aes(x = resid_DHEA_cor_wave1, y = window_DHEA_cor)) + 
+  geom_point(size = 3.5, aes(colour = factor(pdsstage))) +
+  scale_color_viridis(discrete=TRUE) +
+  theme_bw() + 
+  theme(legend.position="none")
+w1_TEST_cor_scatter_sepres <- ggplot(w1_all_sepres, aes(x = resid_TEST_cor_wave1, y = window_TEST_cor)) + 
+  geom_point(size = 3.5, aes(colour = factor(pdsstage))) +
+  scale_color_viridis(discrete=TRUE) +
+  theme_bw() + 
+  theme(legend.position="none")
+w1_EST_cor_scatter_sepres <- ggplot(w1_all_sepres, aes(x = resid_EST_cor_wave1, y = window_EST_cor)) + 
+  geom_point(size = 3.5, aes(colour = factor(pdsstage))) +
+  scale_color_viridis(discrete=TRUE) +
+  theme_bw() + 
+  theme(legend.position="none")
+
+w1_sepres_plots <- plot_grid(w1_ldstage_scatter_sepres, w1_pdsstage_scatter_sepres, w1_ADRENcomp_scatter_sepres, w1_GONADcomp_scatter_sepres, w1_PUBcomp_scatter_sepres,  w1_parent_pdsstage_scatter_sepres, w1_DHEA_cor_scatter_sepres, w1_TEST_cor_scatter_sepres, w1_EST_cor_scatter_sepres)
+
 # wave 2:
 w2_all_sepres <- merge(Timing_allways_short, data_w2, by = "tagid")
 w2_all_sepres2 <- select (w2_all_sepres, "resid_ldstage_wave2", "window_ldstage", "resid_pdsstage_wave2", "window_pdsstage", "resid_ADRENcomp_wave2", "window_ADRENcomp", "resid_GONADcomp_wave2", "window_GONADcomp", "resid_PUBcomp_wave2", "window_PUBcomp", "resid_parent_pdsstage_wave2", "window_parent_pdsstage", "resid_DHEAmean_wave2", "window_DHEAmean", "resid_TESTmean_wave2", "window_TESTmean", "resid_ESTmean_wave2", "window_ESTmean", "resid_DHEA_cor_wave2", "window_DHEA_cor", "resid_TEST_cor_wave2", "window_TEST_cor", "resid_EST_cor_wave2", "window_EST_cor")
@@ -1208,6 +1256,53 @@ w2_plot_sepres <- ggplot(data = corr_w2_rbar_sepres, aes(x=timing_measure, y=res
   labs(title="W2 Pearson corr of age residual (separate W2 model) & 6 mo dynamic timing windows", x ="Wave 2 measure of timing", y = "correlation (r)") + 
   ylim(0,1)
 
+w2_ldstage_scatter_sepres <- ggplot(w2_all_sepres, aes(x = resid_ldstage_wave2, y = window_ldstage)) + 
+  geom_point(size = 3.5, aes(colour = factor(pdsstage))) +
+  scale_color_viridis(discrete=TRUE) +
+  theme_bw() + 
+  theme(legend.position="none") 
+w2_pdsstage_scatter_sepres <- ggplot(w2_all_sepres, aes(x = resid_pdsstage_wave2, y = window_pdsstage)) + 
+  geom_point(size = 3.5, aes(colour = factor(pdsstage))) +
+  scale_color_viridis(discrete=TRUE) +
+  theme_bw()+ 
+  theme(legend.position="none")
+w2_ADRENcomp_scatter_sepres <- ggplot(w2_all_sepres, aes(x = resid_ADRENcomp_wave2, y = window_ADRENcomp)) + 
+  geom_point(size = 3.5, aes(colour = factor(pdsstage))) +
+  scale_color_viridis(discrete=TRUE) +
+  theme_bw()+ 
+  theme(legend.position="none")
+w2_GONADcomp_scatter_sepres <- ggplot(w2_all_sepres, aes(x = resid_GONADcomp_wave2, y = window_GONADcomp)) + 
+  geom_point(size = 3.5, aes(colour = factor(pdsstage))) +
+  scale_color_viridis(discrete=TRUE) +
+  theme_bw() + 
+  theme(legend.position="none")
+w2_PUBcomp_scatter_sepres <- ggplot(w2_all_sepres, aes(x = resid_PUBcomp_wave2, y = window_PUBcomp)) + 
+  geom_point(size = 3.5, aes(colour = factor(pdsstage))) +
+  scale_color_viridis(discrete=TRUE) +
+  theme_bw() + 
+  theme(legend.position="none")
+w2_parent_pdsstage_scatter_sepres <- ggplot(w2_all_sepres, aes(x = resid_parent_pdsstage_wave2, y = window_parent_pdsstage)) + 
+  geom_point(size = 3.5, aes(colour = factor(pdsstage))) +
+  scale_color_viridis(discrete=TRUE) +
+  theme_bw() + 
+  theme(legend.position="none")
+w2_DHEA_cor_scatter_sepres <- ggplot(w2_all_sepres, aes(x = resid_DHEA_cor_wave2, y = window_DHEA_cor)) + 
+  geom_point(size = 3.5, aes(colour = factor(pdsstage))) +
+  scale_color_viridis(discrete=TRUE) +
+  theme_bw() + 
+  theme(legend.position="none")
+w2_TEST_cor_scatter_sepres <- ggplot(w2_all_sepres, aes(x = resid_TEST_cor_wave2, y = window_TEST_cor)) + 
+  geom_point(size = 3.5, aes(colour = factor(pdsstage))) +
+  scale_color_viridis(discrete=TRUE) +
+  theme_bw() + 
+  theme(legend.position="none")
+w2_EST_cor_scatter_sepres <- ggplot(w2_all_sepres, aes(x = resid_EST_cor_wave2, y = window_EST_cor)) + 
+  geom_point(size = 3.5, aes(colour = factor(pdsstage))) +
+  scale_color_viridis(discrete=TRUE) +
+  theme_bw() + 
+  theme(legend.position="none")
+
+W2_sepres_plots <- plot_grid(w2_ldstage_scatter_sepres, w2_pdsstage_scatter_sepres, w2_ADRENcomp_scatter_sepres, w2_GONADcomp_scatter_sepres, w2_PUBcomp_scatter_sepres,  w2_parent_pdsstage_scatter_sepres, w2_DHEA_cor_scatter_sepres, w2_TEST_cor_scatter_sepres, w2_EST_cor_scatter_sepres)
 ```
 
 
@@ -1223,6 +1318,10 @@ write.xlsx(corr_w2$r, file.path(workdir,"projects/W1_W2_pubertal_timing/residual
 
 write.xlsx(corr_w2$P, file.path(workdir,"projects/W1_W2_pubertal_timing/residual_window_corr.xlsx", fsep=""), sheetName="w2_p", append=TRUE, row.names=FALSE)
 
-# save DTWs with the other variables as a separate file because we probably won't continue to use DTW in further analyses. UPDATE: OR WILL WE?? Corrs are kinda crap at W2...
+# save DTWs with the other variables as a separate file (this is only for residuals across both waves)
 write.csv(data,file.path(workdir,"projects/W1_W2_pubertal_timing/Dynamic_timing_windows.csv", fsep=""), row.names = FALSE)
+
+# Do stuff with separate residuals by wave:
+write.csv(w1_all_sepres,file.path(workdir,"projects/W1_W2_pubertal_timing/w1_all_sepres.csv", fsep=""), row.names = FALSE)
+write.csv(w2_all_sepres,file.path(workdir,"projects/W1_W2_pubertal_timing/w2_all_sepres.csv", fsep=""), row.names = FALSE)
 ```
