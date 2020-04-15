@@ -1,0 +1,112 @@
+---
+title: "Gather_internalizingoutcomes"
+author: "MEAB"
+date: "09/04/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+packages <- c( "ggplot2","stringr","tidyr","dplyr", "psych","ggcorrplot","readxl")
+if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
+  install.packages(setdiff(packages, rownames(installed.packages())))  
+}
+lapply(packages, library, character.only = TRUE)
+
+cas_dir="Y:/dsnlab/TAG/"
+```
+
+```{r Get questionnaire measures, include=FALSE}
+
+#CESDC
+CESDC_wave1 <- read.table(paste0(cas_dir,'behavior/Questionnaires/Wave1/CESDC_Wave1.csv'),header=T,sep=",") %>%
+  select(tagid,CES_DC_total_75perc) %>%
+  dplyr::rename(CESDC_total_w1=CES_DC_total_75perc)
+CESDC_wave2 <- read.table(paste0(cas_dir,'behavior/Questionnaires/Wave2/CESDC_Wave2.csv'),header=T,sep=",") %>%
+  select(tagid,CES_DC_total_75perc) %>%
+  dplyr::rename(CESDC_total_w2=CES_DC_total_75perc) 
+CESDC_wave2 <- CESDC_wave2[!(CESDC_wave2$tagid=="TAG077"& CESDC_wave2$CESDC_total_w2==5),] #remove pp who filled out wave 2 survey at wave 3
+CESDC_wave2 <- CESDC_wave2[!(CESDC_wave2$tagid=="TAG124"& CESDC_wave2$CESDC_total_w2==9),]#remove pp who filled out wave 2 survey at wave 3
+
+#SCARED
+SCARED_wave1 <- read.table(paste0(cas_dir,'behavior/Questionnaires/Wave1/SCARED_Wave1.csv'),header=T,sep=",") %>%
+  select(tagid,SCARED_mean) %>%
+  dplyr::rename(SCARED_mean_w1=SCARED_mean)
+SCARED_wave2 <- read.table(paste0(cas_dir,'behavior/Questionnaires/Wave2/SCARED_Wave2.csv'),header=T,sep=",") %>%
+  select(tagid,SCARED_mean) %>%
+  dplyr::rename(SCARED_mean_w2=SCARED_mean)
+SCARED_wave2 <- SCARED_wave2[!(SCARED_wave2$tagid=="TAG124"& SCARED_wave2$SCARED_mean_w2==0.222),]#remove pp who filled out wave 2 survey at wave 3
+SCARED_wave2 <- SCARED_wave2[!duplicated(SCARED_wave2[c("tagid","SCARED_mean_w2")]),] #remove pp who filled out wave 2 survey at wave 3
+
+#combine
+int_q <- merge(CESDC_wave1,CESDC_wave2,by="tagid",all=T) %>%
+  merge(.,SCARED_wave1,by="tagid",all=T) %>%
+  merge(.,SCARED_wave2,by="tagid",all=T) 
+
+```
+
+```{r Get KSADS variables, include=FALSE}
+
+#Wave 1 anx + depr
+KSADS_diagn1 <- read_excel(paste0(cas_dir,'behavior/KSADS/organized KSADS data/KSADS_diagnoses.xlsx'),sheet=1) %>% 
+  filter(str_detect(ID, "TAG")) %>%
+  rename(tagid=ID) %>% 
+  mutate(depres_d_w1=ifelse(MDD_past=="x"|MDD_current=="x"|DYS_current=="x"|ADDM_past=="x"|ADDM_current=="x"|DNOS_past=="x"|DNOS_current=="x",1,0),
+         anx_d_w1=ifelse(PD_past=="x"|PD_current=="x"|SA_current=="x"|SA_past=="x"|SP_past=="x"|SP_current=="x"|SC_past=="x"|SC_current=="x"|AG_current=="x"|AG_past=="x"|GAD_past=="x"|GAD_current=="x"|OCD_past=="x"|OCD_current=="x"|PTSD_past=="x"|PTSD_current=="x"|ANOS_past=="x"|ANOS_current=="x",1,0)) %>% 
+  mutate(depres_d_w1=ifelse(is.na(depres_d_w1),0,depres_d_w1),
+         anx_d_w1=ifelse(is.na(anx_d_w1),0,anx_d_w1),
+         int_d_w1=ifelse(depres_d_w1==1|anx_d_w1==1,1,0)) %>%
+  dplyr::select(tagid,depres_d_w1,anx_d_w1,int_d_w1)
+
+#Wave 2 anx + depr
+KSADS_diagn2 <- read_excel(paste0(cas_dir,'behavior/KSADS/organized KSADS data/KSADS_diagnoses.xlsx'),sheet=4) %>%
+  filter(str_detect(ID, "TAG")) %>%
+  rename(tagid=ID) %>% 
+  mutate(depres_d_w2=ifelse(MDD_past=="x"|MDD_current=="x"|DYS_current=="x"|ADDM_past=="x"|ADDM_current=="x"|DNOS_past=="x"|DNOS_current=="x",1,0),
+         anx_d_w2=ifelse(PD_past=="x"|PD_current=="x"|SA_current=="x"|SA_past=="x"|SP_past=="x"|SP_current=="x"|SC_past=="x"|SC_current=="x"|AG_current=="x"|AG_past=="x"|GAD_past=="x"|GAD_current=="x"|OCD_past=="x"|OCD_current=="x"|PTSD_past=="x"|PTSD_current=="x"|ANOS_past=="x"|ANOS_current=="x",1,0)) %>% 
+  mutate(depres_d_w2=ifelse(is.na(depres_d_w2),0,depres_d_w2),
+         anx_d_w2=ifelse(is.na(anx_d_w2),0,anx_d_w2),
+         int_d_w2=ifelse(depres_d_w2==1|anx_d_w2==1,1,0)) %>%
+  dplyr::select(tagid,depres_d_w2,anx_d_w2,int_d_w2)
+
+#Get Hitop format data 
+HITOP_diagn1 <- read_excel(paste0(cas_dir,'behavior/KSADS/organized KSADS data/HiTOP Classifications/HiTOP Classifications of KSADS data.xlsx'),sheet=1) %>%
+  filter(str_detect(ID, "TAG")) %>%
+  rename(tagid=ID,distress_d_w1=Distress_Dx,fear_d_w1=Fear_Dx) %>% 
+  dplyr::select(tagid,distress_d_w1,fear_d_w1)
+HITOP_diagn2 <- read_excel(paste0(cas_dir,'behavior/KSADS/organized KSADS data/HiTOP Classifications/HiTOP Classifications of KSADS data.xlsx'),sheet=2) %>%
+  filter(str_detect(ID, "TAG")) %>%
+  rename(tagid=ID,distress_d_w2=Distress_Dx,fear_d_w2=Fear_Dx) %>% 
+  dplyr::select(tagid,distress_d_w2,fear_d_w2)
+
+#Combine 
+int_d <- merge(KSADS_diagn1,HITOP_diagn1,by="tagid",all.x=T) %>%
+  merge(.,KSADS_diagn2,by="tagid",all=T) %>%
+  merge(.,HITOP_diagn2,by="tagid",all=T) 
+
+
+```
+
+```{r combine q and d, include=FALSE}
+
+#merge
+int_all <- merge(int_d,int_q,by="tagid",all=T)
+#limit to 174 in final sample 
+overview <- read_excel(paste0(cas_dir,'behavior/Overview/Overview_Withdrawn_Completed/TAG_Overview_Doc.xlsx'),sheet=1)
+overview <- overview[,c("TAG_ID","W1S2_Completed","Withdrawn_W1","Exclusionary_Withdrawl")]
+overview <- overview %>% 
+  rename(tagid = TAG_ID) %>%
+  replace_na(list(Withdrawn_W1 = 0)) %>%
+  replace_na(list(Exclusionary_Withdrawl = 0)) %>% 
+  arrange(Exclusionary_Withdrawl) %>% 
+  filter(Exclusionary_Withdrawl==0) %>%
+  filter(Withdrawn_W1==0)
+int_all <- int_all %>% filter(tagid %in% overview$tagid)
+#summarize numbers
+summary(int_all)
+
+#impute?
+
+#save
+write.csv(int_all,paste0(cas_dir,'projects/W1_W2_pubertal_timing/Internalizing_allways.csv'),row.names=F)
+
+```
