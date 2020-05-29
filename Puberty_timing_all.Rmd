@@ -4,7 +4,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-packages <- c("lme4" , "ggplot2","tidyr","dplyr", "psych","ggcorrplot","mice","BaylorEdPsych","readxl","purr")
+packages <- c("lme4" , "ggplot2","tidyr","dplyr", "psych","ggcorrplot","mice","BaylorEdPsych","readxl")
 if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
   install.packages(setdiff(packages, rownames(installed.packages())))  
 }
@@ -136,9 +136,12 @@ Internalizing_all_long <- pivot_longer(Internalizing_all,cols=contains("w"),name
 #merge
 all_for_imp <- merge(Puberty_allways,Internalizing_all_long,by=c("tagid","wave"))
 #covariates
-SES <- read_xlsx(paste0(cas_dir,"behavior/Demographics/ParentQ_SES/TAG_W1_SES_ParentQ_finalsamplesummarized.xlsx"),sheet=1) %>% mutate(Parent_ed=rowMeans(SES[,c("W1_parent_ed","W1_spouse_ed")],na.rm=T))
+CTQ <- read.csv(paste0(cas_dir,"projects/W1_W2_pubertal_timing/W1_CTQ_threatscoring.csv")) 
+CTQ <- CTQ %>% 
+  rename(CTQ_threat=CTQ_threat_total_75perc) %>% 
+  mutate(tagid=sprintf("TAG%03d", SID))
 all_for_imp <- all_for_imp %>% merge(.,have_parPDS,by=c("tagid","wave"),all.x=T) %>%
-                              merge(.,SES[,c("tagid","Parent_ed")],by=c("tagid"),all.x=T)
+                              merge(.,CTQ[,c("tagid","CTQ_threat")],by=c("tagid"),all.x=T)
 
 ```
 
@@ -159,13 +162,19 @@ meth <- ini$meth
 meth["PUBcomp"]<- "~ I((ADRENcomp + GONADcomp) / 2)" #tell mice that PUBcomp is calculated from ADREN and GONAD
 meth[which(meth == "pmm")] <- "2l.norm" #2-level data with heterogeneous within pp variance
 meth[c("depres_d","anx_d","int_d","distress_d","fear_d")] <- "logreg"
-pred<- quickpred(all_for_imp,exclude= 'tagid') # exclude tagid
+meth["CTQ_threat"] <- "2lonly.norm"
+pred<- quickpred(all_for_imp,method="spearman",exclude= 'tagid') # exclude tagid
 pred[c("GONADcomp", "ADRENcomp"), "PUBcomp"] <- 0 # avoid circular prediction from PUBcomp
 pred[,"PP"]<- -2 # set ID as class variable for 2l.norm
 pred[,"const"]<- 2 # random intercept
 pred["wave",]<- 0
+pred[,"wave"]<- 0
 post <- ini$post
 post[c("subj_timing","parent_subj_timing","ldstage","pdsstage","parent_pdsstage","ADRENcomp","GONADcomp","PUBcomp")] <- "imp[[j]][, i] <- squeeze(imp[[j]][, i], c(1, 5))" #constrain the self-report variables to their range of 1-5
+post["SCARED_mean"] <- "imp[[j]][, i] <- squeeze(imp[[j]][, i], c(0, 2))" #constrain the scared
+post["CESDC_total"] <- "imp[[j]][, i] <- squeeze(imp[[j]][, i], c(0, 60))" #constrain the cesdc
+post["CTQ_threat"] <- "imp[[j]][, i] <- squeeze(imp[[j]][, i], c(0, 68))" #constrain the ctq
+
 imp <- mice(all_for_imp, m=25,maxit=15,meth=meth,pred=pred,post=post,print=FALSE,seed=500)
 
 #Plotting to check the imputations
@@ -187,14 +196,14 @@ all_im <- agg %>% left_join(.,ids) %>% left_join(.,agg2) %>% select(tagid, wave,
 
 #check distribution imputed variables
 #put in short format
-all_for_imp_short <- all_for_imp %>% pivot_wider(id_cols= tagid, names_from = wave, names_prefix = "wave", values_from = c(age,pdsstage,ldstage,parent_pdsstage,ADRENcomp,GONADcomp,PUBcomp,subj_timing,parent_subj_timing,DHEAmean,DHEA_cor,TESTmean,TEST_cor,ESTmean,EST_cor,SCARED_mean,CESDC_total,depres_d,anx_d,int_d,distress_d,fear_d,Parent_ed)) 
-all_im_short <- all_im %>% pivot_wider(id_cols= tagid, names_from = wave, names_prefix = "wave", values_from = c(age,pdsstage,ldstage,parent_pdsstage,ADRENcomp,GONADcomp,PUBcomp,subj_timing,parent_subj_timing,DHEAmean,DHEA_cor,TESTmean,TEST_cor,ESTmean,EST_cor,SCARED_mean,CESDC_total,depres_d,anx_d,int_d,distress_d,fear_d,Parent_ed)) 
+all_for_imp_short <- all_for_imp %>% pivot_wider(id_cols= tagid, names_from = wave, names_prefix = "wave", values_from = c(age,pdsstage,ldstage,parent_pdsstage,ADRENcomp,GONADcomp,PUBcomp,subj_timing,parent_subj_timing,DHEAmean,DHEA_cor,TESTmean,TEST_cor,ESTmean,EST_cor,SCARED_mean,CESDC_total,depres_d,anx_d,int_d,distress_d,fear_d,CTQ_threat)) 
+all_im_short <- all_im %>% pivot_wider(id_cols= tagid, names_from = wave, names_prefix = "im_wave", values_from = c(age,pdsstage,ldstage,parent_pdsstage,ADRENcomp,GONADcomp,PUBcomp,subj_timing,parent_subj_timing,DHEAmean,DHEA_cor,TESTmean,TEST_cor,ESTmean,EST_cor,SCARED_mean,CESDC_total,depres_d,anx_d,int_d,distress_d,fear_d,CTQ_threat)) 
 #plot
 all_for_imp_short %>% 
-  select(-tagid) %>% gather() %>%
+  select(-tagid,-depres_d_wave1,-anx_d_wave1,-int_d_wave1,-distress_d_wave1,-fear_d_wave1,-depres_d_wave2,-anx_d_wave2,-int_d_wave2,-distress_d_wave2,-fear_d_wave2) %>% gather() %>%
   ggplot(aes(value)) + facet_wrap(~ key, scales = "free") + geom_histogram()
 all_im_short %>% 
-  select(-tagid) %>% gather() %>%
+  select(-tagid,-depres_d_im_wave1,-anx_d_im_wave1,-int_d_im_wave1,-distress_d_im_wave1,-fear_d_im_wave1,-depres_d_im_wave2,-anx_d_im_wave2,-int_d_im_wave2,-distress_d_im_wave2,-fear_d_im_wave2) %>% gather() %>%
   ggplot(aes(value)) + facet_wrap(~ key, scales = "free") + geom_histogram()
 
 ```
@@ -203,7 +212,8 @@ all_im_short %>%
 Pubertal timing
 ```{r Pubertal timing from residuals}
 #set up timing dataframe
-Timing_allways <- all_im_short
+Timing_allways <- all_im_short %>%
+  merge(.,all_for_imp_short[,c("tagid","subj_timing_wave1","parent_subj_timing_wave1","SCARED_mean_wave1","CESDC_total_wave1","depres_d_wave1","anx_d_wave1","int_d_wave1","distress_d_wave1","fear_d_wave1","subj_timing_wave2","parent_subj_timing_wave2","SCARED_mean_wave2","CESDC_total_wave2","depres_d_wave2","anx_d_wave2","int_d_wave2","distress_d_wave2","fear_d_wave2","CTQ_threat_wave1")],by="tagid")
 
 #create residuals for each wave separately BEFORE IMPUTATION
 pubcolumns1 <- list("ldstage_wave1","pdsstage_wave1","ADRENcomp_wave1","GONADcomp_wave1","PUBcomp_wave1","parent_pdsstage_wave1","DHEAmean_wave1","TESTmean_wave1","ESTmean_wave1","DHEA_cor_wave1","TEST_cor_wave1","EST_cor_wave1")
@@ -221,18 +231,18 @@ for(Pub in pubcolumns2){
 }
 
 #create residuals for each wave separately AFTER IMPUTATION
-pubcolumns1a <- list("ldstage_wave1","pdsstage_wave1","ADRENcomp_wave1","GONADcomp_wave1","PUBcomp_wave1","DHEAmean_wave1","TESTmean_wave1","ESTmean_wave1","DHEA_cor_wave1","TEST_cor_wave1","EST_cor_wave1")
+pubcolumns1a <- list("ldstage_im_wave1","pdsstage_im_wave1","ADRENcomp_im_wave1","GONADcomp_im_wave1","PUBcomp_im_wave1","DHEAmean_im_wave1","TESTmean_im_wave1","ESTmean_im_wave1","DHEA_cor_im_wave1","TEST_cor_im_wave1","EST_cor_im_wave1")
 for(Pub in pubcolumns1a){
-  modelap1a <- lm(formula = paste(Pub, "~ age_wave1"),data=all_im_short,na.action=na.exclude)
+  modelap1a <- lm(formula = paste(Pub, "~ age_im_wave1"),data=Timing_allways,na.action=na.exclude)
   summary(modelap1a)
-  Timing_allways[[paste('resid_im',Pub, sep="_")]] <- resid(modelap1a)
+  Timing_allways[[paste('resid',Pub, sep="_")]] <- resid(modelap1a)
 }
 
-pubcolumns2a <- c("ldstage_wave2","pdsstage_wave2","ADRENcomp_wave2","GONADcomp_wave2","PUBcomp_wave2","DHEAmean_wave2","TESTmean_wave2","ESTmean_wave2","DHEA_cor_wave2","TEST_cor_wave2","EST_cor_wave2")
+pubcolumns2a <- c("ldstage_im_wave2","pdsstage_im_wave2","ADRENcomp_im_wave2","GONADcomp_im_wave2","PUBcomp_im_wave2","DHEAmean_im_wave2","TESTmean_im_wave2","ESTmean_im_wave2","DHEA_cor_im_wave2","TEST_cor_im_wave2","EST_cor_im_wave2")
 for(Pub in pubcolumns2a){
-  modelap2a <- lm(formula = paste(Pub, "~ age_wave2"),data=all_im_short,na.action=na.exclude)
+  modelap2a <- lm(formula = paste(Pub, "~ age_im_wave2"),data=Timing_allways,na.action=na.exclude)
   summary(modelap2a)
-  Timing_allways[[paste('resid_im',Pub, sep="_")]] <- resid(modelap2a)
+  Timing_allways[[paste('resid',Pub, sep="_")]] <- resid(modelap2a)
 }
 
 #regression with long format data and create residuals 
