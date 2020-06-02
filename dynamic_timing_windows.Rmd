@@ -996,7 +996,7 @@ w1_corrmat <- ggcorrplot(corr_w1_r) +
   labs(title = "W1 Pearson corrs of timing (incl. age residual & DTW)")
 
 # wave 2:
-w2_all <- select (data_w2, "resid_ldstage", "window_ldstage", "resid_pdsstage", "window_pdsstage", "resid_ADRENcomp", "window_ADRENcomp", "resid_GONADcomp", "window_GONADcomp", "resid_PUBcomp", "window_PUBcomp", "resid_parent_pdsstage", "window_parent_pdsstage", "resid_DHEAmean", "window_DHEAmean", "resid_TESTmean", "window_TESTmean", "resid_ESTmean", "window_ESTmean", "resid_DHEA_cor", "window_DHEA_cor", "resid_TEST_cor", "window_TEST_cor", "resid_EST_cor", "window_EST_cor", "gradewindow_ldstage", "gradewindow_pdsstage", "gradewindow_ADRENcomp", "gradewindow_GONADcomp", "gradewindow_PUBcomp", "gradewindow_parent_pdsstage", "gradewindow_DHEAmean", "gradewindow_TESTmean", "gradewindow_ESTmean", "gradewindow_DHEA_cor", "gradewindow_TEST_cor", "gradewindow_EST_cor")
+w2_all <- select (data_w2, "resid_ldstage_im", "window_ldstage", "resid_pdsstage_im", "window_pdsstage", "resid_ADRENcomp_im", "window_ADRENcomp", "resid_GONADcomp_im", "window_GONADcomp", "resid_PUBcomp_im", "window_PUBcomp", "resid_parent_pdsstage", "window_parent_pdsstage", "resid_DHEAmean_im", "window_DHEAmean", "resid_TESTmean_im", "window_TESTmean", "resid_ESTmean_im", "window_ESTmean", "resid_DHEA_cor_im", "window_DHEA_cor", "resid_TEST_cor_im", "window_TEST_cor", "resid_EST_cor_im", "window_EST_cor")
 skewness(w2_all, na.rm = TRUE)
 kurtosis(w2_all, na.rm = TRUE)
 #skewness is ok, kurtosis technically a little high, could use method="spearman" for rho if wanted)
@@ -1111,7 +1111,7 @@ w1w2_windows_plots <- plot_grid(w1_plot_windows, w2_plot_windows, labels = "AUTO
 w1_r_rho_tau_plots <- plot_grid(w1_plot, w1_rho_plot, w1_tau_plot)
 w2_r_rho_tau_plots <- plot_grid(w2_plot, w2_rho_plot, w2_tau_plot)
 
-##### DEEPER LOOK INTO WEAKER CORRELATIONS ##### 
+##### DEEPER LOOK INTO WEAKER CORRELATIONS (NOTE - don't need to do any of the below anymore because imputed data - what we just visualized above - is based on separate linear models now) ##### 
 
 #Some W2 correlations (resid vs. windows, either kind of window) are terrible, so take a look what's going on. Grade vs. age windows are very similar so we'll just examine age residuals vs. age windows.
 
