@@ -20,20 +20,26 @@ workdir='Z:/dsnlab/TAG/'
 ```{r Load and Clean Data}
 library(dplyr)
 library(zoo)
-# Load Data (Wave 1 and 2) first - see Marjolein's code for how this all got put together 
-######  !! NEED TO UPDATE - go back to output timing_allways (and merge grade in this script instead)
-data <- read.csv(file.path(workdir,"projects/W1_W2_pubertal_timing/Timing_allways_withgrade.csv", fsep=""))
+# Load Data (Wave 1 and 2) first - see Marjolein's code "puberty_timing_all" for how this all got put together 
+# Note that parent_pdsstage is NOT imputed because reasons
+
+data <- read.csv(file.path(workdir,"projects/W1_W2_pubertal_timing/Timing_and_internalizing.csv", fsep=""))
+data_imputed <- select(data, "tagid", "age_im_wave2", "age_im_wave1", "pdsstage_im_wave2", "pdsstage_im_wave1", "ldstage_im_wave2", "ldstage_im_wave1", "parent_pdsstage_im_wave2", "parent_pdsstage_im_wave1", "ADRENcomp_im_wave2", "ADRENcomp_im_wave1", "GONADcomp_im_wave2", "GONADcomp_im_wave1", "PUBcomp_im_wave2", "PUBcomp_im_wave1", "subj_timing_im_wave2", "subj_timing_im_wave1", "parent_subj_timing_im_wave2", "parent_subj_timing_im_wave1", "DHEAmean_im_wave2", "DHEAmean_im_wave1", "DHEA_cor_im_wave2", "DHEA_cor_im_wave1", "TESTmean_im_wave2", "TESTmean_im_wave1", "TEST_cor_im_wave2", "TEST_cor_im_wave1", "ESTmean_im_wave2", "ESTmean_im_wave1", "EST_cor_im_wave2", "EST_cor_im_wave1", "resid_ldstage_im_wave1", "resid_ldstage_im_wave2", "resid_pdsstage_im_wave1", "resid_pdsstage_im_wave2", "resid_parent_pdsstage_wave1", "resid_parent_pdsstage_wave2", "resid_ADRENcomp_im_wave1", "resid_ADRENcomp_im_wave2", "resid_GONADcomp_im_wave1", "resid_GONADcomp_im_wave2", "resid_PUBcomp_im_wave1", "resid_PUBcomp_im_wave2", "resid_DHEAmean_im_wave1", "resid_DHEAmean_im_wave2", "resid_DHEA_cor_im_wave1", "resid_DHEA_cor_im_wave2", "resid_TESTmean_im_wave1", "resid_TESTmean_im_wave2", "resid_TEST_cor_im_wave1", "resid_TEST_cor_im_wave2", "resid_ESTmean_im_wave1", "resid_ESTmean_im_wave2", "resid_EST_cor_im_wave1", "resid_EST_cor_im_wave2", "aam_final")
+
+data_imp_long <- reshape(as.data.frame(data_imputed), sep = "_wave", times = c(1, 2), direction = "long", varying = c("age_im_wave2", "age_im_wave1", "pdsstage_im_wave2", "pdsstage_im_wave1", "ldstage_im_wave2", "ldstage_im_wave1", "parent_pdsstage_im_wave2", "parent_pdsstage_im_wave1", "ADRENcomp_im_wave2", "ADRENcomp_im_wave1", "GONADcomp_im_wave2", "GONADcomp_im_wave1", "PUBcomp_im_wave2", "PUBcomp_im_wave1", "subj_timing_im_wave2", "subj_timing_im_wave1", "parent_subj_timing_im_wave2", "parent_subj_timing_im_wave1", "DHEAmean_im_wave2", "DHEAmean_im_wave1", "DHEA_cor_im_wave2", "DHEA_cor_im_wave1", "TESTmean_im_wave2", "TESTmean_im_wave1", "TEST_cor_im_wave2", "TEST_cor_im_wave1", "ESTmean_im_wave2", "ESTmean_im_wave1", "EST_cor_im_wave2", "EST_cor_im_wave1", "resid_ldstage_im_wave1", "resid_ldstage_im_wave2", "resid_pdsstage_im_wave1", "resid_pdsstage_im_wave2", "resid_parent_pdsstage_wave1", "resid_parent_pdsstage_wave2", "resid_ADRENcomp_im_wave1", "resid_ADRENcomp_im_wave2", "resid_GONADcomp_im_wave1", "resid_GONADcomp_im_wave2", "resid_PUBcomp_im_wave1", "resid_PUBcomp_im_wave2", "resid_DHEAmean_im_wave1", "resid_DHEAmean_im_wave2", "resid_DHEA_cor_im_wave1", "resid_DHEA_cor_im_wave2", "resid_TESTmean_im_wave1", "resid_TESTmean_im_wave2", "resid_TEST_cor_im_wave1", "resid_TEST_cor_im_wave2", "resid_ESTmean_im_wave1", "resid_ESTmean_im_wave2", "resid_EST_cor_im_wave1", "resid_EST_cor_im_wave2"))
+
+data_imp_long <- rename(data_imp_long, wave = time)
 ```
 
 ```{r 6 month Dynamic Timing Windows (DTW) - LD stage}
 # for each individual, find the mean of the values from everyone else that is within 1 year age of them (+/- 0.5), then take that person's value and subtract the mean of that value only within the subset. We do this separately by wave to avoid comparing peers across waves.
 
 # Wave 1:
-data_w1 <- data[which(data$wave=='1'),]
+data_w1 <- data_imp_long[which(data_imp_long$wave=='1'),]
 
 # First do them for LDstage:
-data_w1$max_age <- data_w1$age + 0.5
-data_w1$min_age <- data_w1$age - 0.5
+data_w1$max_age <- data_w1$age_im + 0.5
+data_w1$min_age <- data_w1$age_im - 0.5
 
 for (i in 1:nrow(data_w1)) { 
   comp_values <- data.frame()
@@ -45,21 +51,21 @@ for (i in 1:nrow(data_w1)) {
   temp_data_w1 <- data_w1[-i, ] # -i b/c don't want to compare to themselves
   
   for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$ldstage[j], NA)
+    curr_comp_values <- ifelse(temp_data_w1$age_im[j] > curr_min_age & temp_data_w1$age_im[j] < curr_max_age, temp_data_w1$ldstage_im[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
   # then go back to the original loop and subtract the mean of the current vector of values from the original individual's value  
   comp_values <- as.numeric(comp_values)
-  data_w1$window_ldstage[i] <- data_w1$ldstage[i] - mean(comp_values, na.rm = TRUE)
+  data_w1$window_ldstage[i] <- data_w1$ldstage_im[i] - mean(comp_values, na.rm = TRUE)
   data_w1$window_ldstage_compN[i] <- length(na.omit(comp_values))
 }
 
 # Wave 2:
-data_w2 <- data[which(data$wave=='2'),]
+data_w2 <- data_imp_long[which(data_imp_long$wave=='2'),]
 
 # For LDstage:
-data_w2$max_age <- data_w2$age + 0.5
-data_w2$min_age <- data_w2$age - 0.5
+data_w2$max_age <- data_w2$age_im + 0.5
+data_w2$min_age <- data_w2$age_im - 0.5
 
 for (i in 1:nrow(data_w2)) { 
   comp_values <- data.frame()
@@ -71,12 +77,12 @@ for (i in 1:nrow(data_w2)) {
   temp_data_w2 <- data_w2[-i, ] # -i b/c don't want to compare to themselves
   
   for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$age[j] > curr_min_age & temp_data_w2$age[j] < curr_max_age, temp_data_w2$ldstage[j], NA)
+    curr_comp_values <- ifelse(temp_data_w2$age_im[j] > curr_min_age & temp_data_w2$age_im[j] < curr_max_age, temp_data_w2$ldstage_im[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
   # then go back to the original loop and subtract the mean of the current vector of values from the original individual's value  
   comp_values <- as.numeric(comp_values)
-  data_w2$window_ldstage[i] <- data_w2$ldstage[i] - mean(comp_values, na.rm = TRUE)
+  data_w2$window_ldstage[i] <- data_w2$ldstage_im[i] - mean(comp_values, na.rm = TRUE)
   data_w2$window_ldstage_compN[i] <- length(na.omit(comp_values))
 }
 ```
@@ -92,12 +98,12 @@ for (i in 1:nrow(data_w1)) {
   temp_data_w1 <- data_w1[-i, ] 
   
   for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$pdsstage[j], NA)
+    curr_comp_values <- ifelse(temp_data_w1$age_im[j] > curr_min_age & temp_data_w1$age_im[j] < curr_max_age, temp_data_w1$pdsstage_im[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w1$window_pdsstage[i] <- data_w1$pdsstage[i] - mean(comp_values, na.rm = TRUE)
+  data_w1$window_pdsstage[i] <- data_w1$pdsstage_im[i] - mean(comp_values, na.rm = TRUE)
   data_w1$window_pdsstage_compN[i] <- length(na.omit(comp_values))
 }
 
@@ -111,12 +117,12 @@ for (i in 1:nrow(data_w2)) {
   temp_data_w2 <- data_w2[-i, ] 
   
   for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$age[j] > curr_min_age & temp_data_w2$age[j] < curr_max_age, temp_data_w2$pdsstage[j], NA)
+    curr_comp_values <- ifelse(temp_data_w2$age_im[j] > curr_min_age & temp_data_w2$age_im[j] < curr_max_age, temp_data_w2$pdsstage_im[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w2$window_pdsstage[i] <- data_w2$pdsstage[i] - mean(comp_values, na.rm = TRUE)
+  data_w2$window_pdsstage[i] <- data_w2$pdsstage_im[i] - mean(comp_values, na.rm = TRUE)
   data_w2$window_pdsstage_compN[i] <- length(na.omit(comp_values))
 }
 ```
@@ -132,12 +138,12 @@ for (i in 1:nrow(data_w1)) {
   temp_data_w1 <- data_w1[-i, ] 
   
   for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$ADRENcomp[j], NA)
+    curr_comp_values <- ifelse(temp_data_w1$age_im[j] > curr_min_age & temp_data_w1$age_im[j] < curr_max_age, temp_data_w1$ADRENcomp_im[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w1$window_ADRENcomp[i] <- data_w1$ADRENcomp[i] - mean(comp_values, na.rm = TRUE)
+  data_w1$window_ADRENcomp[i] <- data_w1$ADRENcomp_im[i] - mean(comp_values, na.rm = TRUE)
   data_w1$window_ADRENcomp_compN[i] <- length(na.omit(comp_values))
 }
 
@@ -151,12 +157,12 @@ for (i in 1:nrow(data_w2)) {
   temp_data_w2 <- data_w2[-i, ] 
   
   for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$age[j] > curr_min_age & temp_data_w2$age[j] < curr_max_age, temp_data_w2$ADRENcomp[j], NA)
+    curr_comp_values <- ifelse(temp_data_w2$age_im[j] > curr_min_age & temp_data_w2$age_im[j] < curr_max_age, temp_data_w2$ADRENcomp_im[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w2$window_ADRENcomp[i] <- data_w2$ADRENcomp[i] - mean(comp_values, na.rm = TRUE)
+  data_w2$window_ADRENcomp[i] <- data_w2$ADRENcomp_im[i] - mean(comp_values, na.rm = TRUE)
   data_w2$window_ADRENcomp_compN[i] <- length(na.omit(comp_values))
 }
 ```
@@ -172,12 +178,12 @@ for (i in 1:nrow(data_w1)) {
   temp_data_w1 <- data_w1[-i, ] 
   
   for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$GONADcomp[j], NA)
+    curr_comp_values <- ifelse(temp_data_w1$age_im[j] > curr_min_age & temp_data_w1$age_im[j] < curr_max_age, temp_data_w1$GONADcomp_im[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w1$window_GONADcomp[i] <- data_w1$GONADcomp[i] - mean(comp_values, na.rm = TRUE)
+  data_w1$window_GONADcomp[i] <- data_w1$GONADcomp_im[i] - mean(comp_values, na.rm = TRUE)
   data_w1$window_GONADcomp_compN[i] <- length(na.omit(comp_values))
 }
 
@@ -191,12 +197,12 @@ for (i in 1:nrow(data_w2)) {
   temp_data_w2 <- data_w2[-i, ] 
   
   for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$age[j] > curr_min_age & temp_data_w2$age[j] < curr_max_age, temp_data_w2$GONADcomp[j], NA)
+    curr_comp_values <- ifelse(temp_data_w2$age_im[j] > curr_min_age & temp_data_w2$age_im[j] < curr_max_age, temp_data_w2$GONADcomp_im[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w2$window_GONADcomp[i] <- data_w2$GONADcomp[i] - mean(comp_values, na.rm = TRUE)
+  data_w2$window_GONADcomp[i] <- data_w2$GONADcomp_im[i] - mean(comp_values, na.rm = TRUE)
   data_w2$window_GONADcomp_compN[i] <- length(na.omit(comp_values))
 }
 ```
@@ -213,12 +219,12 @@ for (i in 1:nrow(data_w1)) {
   temp_data_w1 <- data_w1[-i, ] 
   
   for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$PUBcomp[j], NA)
+    curr_comp_values <- ifelse(temp_data_w1$age_im[j] > curr_min_age & temp_data_w1$age_im[j] < curr_max_age, temp_data_w1$PUBcomp_im[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w1$window_PUBcomp[i] <- data_w1$PUBcomp[i] - mean(comp_values, na.rm = TRUE)
+  data_w1$window_PUBcomp[i] <- data_w1$PUBcomp_im[i] - mean(comp_values, na.rm = TRUE)
   data_w1$window_PUBcomp_compN[i] <- length(na.omit(comp_values))
 }
 
@@ -232,12 +238,12 @@ for (i in 1:nrow(data_w2)) {
   temp_data_w2 <- data_w2[-i, ] 
   
   for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$age[j] > curr_min_age & temp_data_w2$age[j] < curr_max_age, temp_data_w2$PUBcomp[j], NA)
+    curr_comp_values <- ifelse(temp_data_w2$age_im[j] > curr_min_age & temp_data_w2$age_im[j] < curr_max_age, temp_data_w2$PUBcomp_im[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w2$window_PUBcomp[i] <- data_w2$PUBcomp[i] - mean(comp_values, na.rm = TRUE)
+  data_w2$window_PUBcomp[i] <- data_w2$PUBcomp_im[i] - mean(comp_values, na.rm = TRUE)
   data_w2$window_PUBcomp_compN[i] <- length(na.omit(comp_values))
 }
 ```
@@ -253,12 +259,12 @@ for (i in 1:nrow(data_w1)) {
   temp_data_w1 <- data_w1[-i, ] 
   
   for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$parent_pdsstage[j], NA)
+    curr_comp_values <- ifelse(temp_data_w1$age_im[j] > curr_min_age & temp_data_w1$age_im[j] < curr_max_age, temp_data_w1$parent_pdsstage_im[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w1$window_parent_pdsstage[i] <- data_w1$parent_pdsstage[i] - mean(comp_values, na.rm = TRUE)
+  data_w1$window_parent_pdsstage[i] <- data_w1$parent_pdsstage_im[i] - mean(comp_values, na.rm = TRUE)
   data_w1$window_parent_pdsstage_compN[i] <- length(na.omit(comp_values))
 }
 
@@ -272,12 +278,12 @@ for (i in 1:nrow(data_w2)) {
   temp_data_w2 <- data_w2[-i, ] 
   
   for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$age[j] > curr_min_age & temp_data_w2$age[j] < curr_max_age, temp_data_w2$parent_pdsstage[j], NA)
+    curr_comp_values <- ifelse(temp_data_w2$age_im[j] > curr_min_age & temp_data_w2$age_im[j] < curr_max_age, temp_data_w2$parent_pdsstage_im[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w2$window_parent_pdsstage[i] <- data_w2$parent_pdsstage[i] - mean(comp_values, na.rm = TRUE)
+  data_w2$window_parent_pdsstage[i] <- data_w2$parent_pdsstage_im[i] - mean(comp_values, na.rm = TRUE)
   data_w2$window_parent_pdsstage_compN[i] <- length(na.omit(comp_values))
 }
 ```
@@ -293,12 +299,12 @@ for (i in 1:nrow(data_w1)) {
   temp_data_w1 <- data_w1[-i, ] 
   
   for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$DHEAmean[j], NA)
+    curr_comp_values <- ifelse(temp_data_w1$age_im[j] > curr_min_age & temp_data_w1$age_im[j] < curr_max_age, temp_data_w1$DHEAmean_im[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w1$window_DHEAmean[i] <- data_w1$DHEAmean[i] - mean(comp_values, na.rm = TRUE)
+  data_w1$window_DHEAmean[i] <- data_w1$DHEAmean_im[i] - mean(comp_values, na.rm = TRUE)
   data_w1$window_DHEAmean_compN[i] <- length(na.omit(comp_values))
 }
 
@@ -312,12 +318,12 @@ for (i in 1:nrow(data_w2)) {
   temp_data_w2 <- data_w2[-i, ] 
   
   for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$age[j] > curr_min_age & temp_data_w2$age[j] < curr_max_age, temp_data_w2$DHEAmean[j], NA)
+    curr_comp_values <- ifelse(temp_data_w2$age_im[j] > curr_min_age & temp_data_w2$age_im[j] < curr_max_age, temp_data_w2$DHEAmean_im[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w2$window_DHEAmean[i] <- data_w2$DHEAmean[i] - mean(comp_values, na.rm = TRUE)
+  data_w2$window_DHEAmean[i] <- data_w2$DHEAmean_im[i] - mean(comp_values, na.rm = TRUE)
   data_w2$window_DHEAmean_compN[i] <- length(na.omit(comp_values))
 }
 ``` 
@@ -334,12 +340,12 @@ for (i in 1:nrow(data_w1)) {
   temp_data_w1 <- data_w1[-i, ] 
   
   for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$TESTmean[j], NA)
+    curr_comp_values <- ifelse(temp_data_w1$age_im[j] > curr_min_age & temp_data_w1$age_im[j] < curr_max_age, temp_data_w1$TESTmean_im[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w1$window_TESTmean[i] <- data_w1$TESTmean[i] - mean(comp_values, na.rm = TRUE)
+  data_w1$window_TESTmean[i] <- data_w1$TESTmean_im[i] - mean(comp_values, na.rm = TRUE)
   data_w1$window_TESTmean_compN[i] <- length(na.omit(comp_values))
 }
 
@@ -353,12 +359,12 @@ for (i in 1:nrow(data_w2)) {
   temp_data_w2 <- data_w2[-i, ] 
   
   for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$age[j] > curr_min_age & temp_data_w2$age[j] < curr_max_age, temp_data_w2$TESTmean[j], NA)
+    curr_comp_values <- ifelse(temp_data_w2$age_im[j] > curr_min_age & temp_data_w2$age_im[j] < curr_max_age, temp_data_w2$TESTmean_im[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w2$window_TESTmean[i] <- data_w2$TESTmean[i] - mean(comp_values, na.rm = TRUE)
+  data_w2$window_TESTmean[i] <- data_w2$TESTmean_im[i] - mean(comp_values, na.rm = TRUE)
   data_w2$window_TESTmean_compN[i] <- length(na.omit(comp_values))
 }
 ```  
@@ -375,12 +381,12 @@ for (i in 1:nrow(data_w1)) {
   temp_data_w1 <- data_w1[-i, ] 
   
   for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$ESTmean[j], NA)
+    curr_comp_values <- ifelse(temp_data_w1$age_im[j] > curr_min_age & temp_data_w1$age_im[j] < curr_max_age, temp_data_w1$ESTmean_im[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w1$window_ESTmean[i] <- data_w1$ESTmean[i] - mean(comp_values, na.rm = TRUE)
+  data_w1$window_ESTmean[i] <- data_w1$ESTmean_im[i] - mean(comp_values, na.rm = TRUE)
   data_w1$window_ESTmean_compN[i] <- length(na.omit(comp_values))
 }
 
@@ -394,12 +400,12 @@ for (i in 1:nrow(data_w2)) {
   temp_data_w2 <- data_w2[-i, ] 
   
   for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$age[j] > curr_min_age & temp_data_w2$age[j] < curr_max_age, temp_data_w2$ESTmean[j], NA)
+    curr_comp_values <- ifelse(temp_data_w2$age_im[j] > curr_min_age & temp_data_w2$age_im[j] < curr_max_age, temp_data_w2$ESTmean_im[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w2$window_ESTmean[i] <- data_w2$ESTmean[i] - mean(comp_values, na.rm = TRUE)
+  data_w2$window_ESTmean[i] <- data_w2$ESTmean_im[i] - mean(comp_values, na.rm = TRUE)
   data_w2$window_ESTmean_compN[i] <- length(na.omit(comp_values))
 }
 ```      
@@ -415,12 +421,12 @@ for (i in 1:nrow(data_w1)) {
   temp_data_w1 <- data_w1[-i, ] 
   
   for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$DHEA_cor[j], NA)
+    curr_comp_values <- ifelse(temp_data_w1$age_im[j] > curr_min_age & temp_data_w1$age_im[j] < curr_max_age, temp_data_w1$DHEA_cor_im[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w1$window_DHEA_cor[i] <- data_w1$DHEA_cor[i] - mean(comp_values, na.rm = TRUE)
+  data_w1$window_DHEA_cor[i] <- data_w1$DHEA_cor_im[i] - mean(comp_values, na.rm = TRUE)
   data_w1$window_DHEA_cor_compN[i] <- length(na.omit(comp_values))
 }
 
@@ -434,12 +440,12 @@ for (i in 1:nrow(data_w2)) {
   temp_data_w2 <- data_w2[-i, ] 
   
   for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$age[j] > curr_min_age & temp_data_w2$age[j] < curr_max_age, temp_data_w2$DHEA_cor[j], NA)
+    curr_comp_values <- ifelse(temp_data_w2$age_im[j] > curr_min_age & temp_data_w2$age_im[j] < curr_max_age, temp_data_w2$DHEA_cor_im[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w2$window_DHEA_cor[i] <- data_w2$DHEA_cor[i] - mean(comp_values, na.rm = TRUE)
+  data_w2$window_DHEA_cor[i] <- data_w2$DHEA_cor_im[i] - mean(comp_values, na.rm = TRUE)
   data_w2$window_DHEA_cor_compN[i] <- length(na.omit(comp_values))
 }
 ``` 
@@ -456,12 +462,12 @@ for (i in 1:nrow(data_w1)) {
   temp_data_w1 <- data_w1[-i, ] 
   
   for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$TEST_cor[j], NA)
+    curr_comp_values <- ifelse(temp_data_w1$age_im[j] > curr_min_age & temp_data_w1$age_im[j] < curr_max_age, temp_data_w1$TEST_cor_im[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w1$window_TEST_cor[i] <- data_w1$TEST_cor[i] - mean(comp_values, na.rm = TRUE)
+  data_w1$window_TEST_cor[i] <- data_w1$TEST_cor_im[i] - mean(comp_values, na.rm = TRUE)
   data_w1$window_TEST_cor_compN[i] <- length(na.omit(comp_values))
 }
 
@@ -475,12 +481,12 @@ for (i in 1:nrow(data_w2)) {
   temp_data_w2 <- data_w2[-i, ] 
   
   for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$age[j] > curr_min_age & temp_data_w2$age[j] < curr_max_age, temp_data_w2$TEST_cor[j], NA)
+    curr_comp_values <- ifelse(temp_data_w2$age_im[j] > curr_min_age & temp_data_w2$age_im[j] < curr_max_age, temp_data_w2$TEST_cor_im[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w2$window_TEST_cor[i] <- data_w2$TEST_cor[i] - mean(comp_values, na.rm = TRUE)
+  data_w2$window_TEST_cor[i] <- data_w2$TEST_cor_im[i] - mean(comp_values, na.rm = TRUE)
   data_w2$window_TEST_cor_compN[i] <- length(na.omit(comp_values))
 }
 ```  
@@ -497,12 +503,12 @@ for (i in 1:nrow(data_w1)) {
   temp_data_w1 <- data_w1[-i, ] 
   
   for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$age[j] > curr_min_age & temp_data_w1$age[j] < curr_max_age, temp_data_w1$EST_cor[j], NA)
+    curr_comp_values <- ifelse(temp_data_w1$age_im[j] > curr_min_age & temp_data_w1$age_im[j] < curr_max_age, temp_data_w1$EST_cor_im[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w1$window_EST_cor[i] <- data_w1$EST_cor[i] - mean(comp_values, na.rm = TRUE)
+  data_w1$window_EST_cor[i] <- data_w1$EST_cor_im[i] - mean(comp_values, na.rm = TRUE)
   data_w1$window_EST_cor_compN[i] <- length(na.omit(comp_values))
 }
 
@@ -516,12 +522,12 @@ for (i in 1:nrow(data_w2)) {
   temp_data_w2 <- data_w2[-i, ] 
   
   for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$age[j] > curr_min_age & temp_data_w2$age[j] < curr_max_age, temp_data_w2$EST_cor[j], NA)
+    curr_comp_values <- ifelse(temp_data_w2$age_im[j] > curr_min_age & temp_data_w2$age_im[j] < curr_max_age, temp_data_w2$EST_cor_im[j], NA)
     comp_values <- c(comp_values, curr_comp_values)
   }
  
   comp_values <- as.numeric(comp_values)
-  data_w2$window_EST_cor[i] <- data_w2$EST_cor[i] - mean(comp_values, na.rm = TRUE)
+  data_w2$window_EST_cor[i] <- data_w2$EST_cor_im[i] - mean(comp_values, na.rm = TRUE)
   data_w2$window_EST_cor_compN[i] <- length(na.omit(comp_values))
 }
 ```      
@@ -529,377 +535,377 @@ for (i in 1:nrow(data_w2)) {
 
 # At the end of this script are the correlations between residual and windows timing measures. At first, we did it only with AGE dynamic timing windows (+/- 6 months). From that, we learned that at Wave 2 - controlling stage for age was not totally the same as comparing stage with +/- 6 month peers, especially for the adrenarcheal measures.
 
-# So now we also do all the window measures again comparing to the same school grade (instead of same age) - grade dynamic timing windows. At the end we will compare all three (age residual, age DTW, grade DTW) - spoiler alert grade windows are no different to age windows.
+# So now we also do all the window measures again comparing to the same school grade (instead of same age) - grade dynamic timing windows. At the end we will compare all three (age residual, age DTW, grade DTW) - spoiler alert grade windows are no different to age windows. BECAUSE OF THIS THE GRADE CODE BELOW IS COMMENTED OUT AND HAS NOT BEEN UPDATED
 
 ```{r Grade DTW - LD stage}
 # for each individual, find the mean of the values from everyone else that is in the same school grade as them, then take that person's value and subtract the mean of that value only within the subset. We do this separately by wave to avoid comparing peers across waves.
 
 # Wave 1:
-for (i in 1:nrow(data_w1)) { 
-  comp_values <- data.frame()
-  
-  curr_grade <- data_w1$grade[i]
-
-  # modify dataframe
-  temp_data_w1 <- data_w1[-i, ] # -i b/c don't want to compare to themselves
-  
-  for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$grade[j] == curr_grade, temp_data_w1$ldstage[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
-  # then go back to the original loop and subtract the mean of the current vector of values from the original individual's value  
-  comp_values <- as.numeric(comp_values)
-  data_w1$gradewindow_ldstage[i] <- data_w1$ldstage[i] - mean(comp_values, na.rm = TRUE)
-}
-
-# Wave 2:
-for (i in 1:nrow(data_w2)) { 
-  comp_values <- data.frame()
-  curr_grade <- data_w2$grade[i]
-  
-  # modify dataframe
-  temp_data_w2 <- data_w2[-i, ] # -i b/c don't want to compare to themselves
-  
-  for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$grade[j] == curr_grade, temp_data_w2$ldstage[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
-  # then go back to the original loop and subtract the mean of the current vector of values from the original individual's value  
-  comp_values <- as.numeric(comp_values)
-  data_w2$gradewindow_ldstage[i] <- data_w2$ldstage[i] - mean(comp_values, na.rm = TRUE)
-}
-```
-```{r Grade DTW - PDS stage}
-# Wave 1:
-for (i in 1:nrow(data_w1)) { 
-  comp_values <- data.frame()
-  curr_grade <- data_w1$grade[i]
-  temp_data_w1 <- data_w1[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$grade[j] == curr_grade, temp_data_w1$pdsstage[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
-  comp_values <- as.numeric(comp_values)
-  data_w1$gradewindow_pdsstage[i] <- data_w1$pdsstage[i] - mean(comp_values, na.rm = TRUE)
-}
-
-# Wave 2:
-for (i in 1:nrow(data_w2)) { 
-  comp_values <- data.frame()
-  curr_grade <- data_w2$grade[i]
-  temp_data_w2 <- data_w2[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$grade[j] == curr_grade, temp_data_w2$pdsstage[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
-  comp_values <- as.numeric(comp_values)
-  data_w2$gradewindow_pdsstage[i] <- data_w2$pdsstage[i] - mean(comp_values, na.rm = TRUE)
-}
-```
-
-```{r Grade DTW - ADRENcomp}
-# Wave 1:
-for (i in 1:nrow(data_w1)) { 
-  comp_values <- data.frame()
-  curr_grade <- data_w1$grade[i]
-  temp_data_w1 <- data_w1[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$grade[j] == curr_grade, temp_data_w1$ADRENcomp[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
-  comp_values <- as.numeric(comp_values)
-  data_w1$gradewindow_ADRENcomp[i] <- data_w1$ADRENcomp[i] - mean(comp_values, na.rm = TRUE)
-}
-
-# Wave 2:
-for (i in 1:nrow(data_w2)) { 
-  comp_values <- data.frame()
-  curr_grade <- data_w2$grade[i]
-  temp_data_w2 <- data_w2[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$grade[j] == curr_grade, temp_data_w2$ADRENcomp[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
-  comp_values <- as.numeric(comp_values)
-  data_w2$gradewindow_ADRENcomp[i] <- data_w2$ADRENcomp[i] - mean(comp_values, na.rm = TRUE)
-}
-```
-        
-```{r Grade DTW - GONADcomp}
-# Wave 1:
-# Wave 1:
-for (i in 1:nrow(data_w1)) { 
-  comp_values <- data.frame()
-  curr_grade <- data_w1$grade[i]
-  temp_data_w1 <- data_w1[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$grade[j] == curr_grade, temp_data_w1$GONADcomp[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
-  comp_values <- as.numeric(comp_values)
-  data_w1$gradewindow_GONADcomp[i] <- data_w1$GONADcomp[i] - mean(comp_values, na.rm = TRUE)
-}
-
-# Wave 2:
-for (i in 1:nrow(data_w2)) { 
-  comp_values <- data.frame()
-  curr_grade <- data_w2$grade[i]
-  temp_data_w2 <- data_w2[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$grade[j] == curr_grade, temp_data_w2$GONADcomp[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
-  comp_values <- as.numeric(comp_values)
-  data_w2$gradewindow_GONADcomp[i] <- data_w2$GONADcomp[i] - mean(comp_values, na.rm = TRUE)
-}
-```
-        
-```{r Grade DTW - PUBcomp}
-
-# Wave 1:
-# Wave 1:
-for (i in 1:nrow(data_w1)) { 
-  comp_values <- data.frame()
-  curr_grade <- data_w1$grade[i]
-  temp_data_w1 <- data_w1[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$grade[j] == curr_grade, temp_data_w1$PUBcomp[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
-  comp_values <- as.numeric(comp_values)
-  data_w1$gradewindow_PUBcomp[i] <- data_w1$PUBcomp[i] - mean(comp_values, na.rm = TRUE)
-}
-
-# Wave 2:
-for (i in 1:nrow(data_w2)) { 
-  comp_values <- data.frame()
-  curr_grade <- data_w2$grade[i]
-  temp_data_w2 <- data_w2[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$grade[j] == curr_grade, temp_data_w2$PUBcomp[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
-  comp_values <- as.numeric(comp_values)
-  data_w2$gradewindow_PUBcomp[i] <- data_w2$PUBcomp[i] - mean(comp_values, na.rm = TRUE)
-}
-```
-
-```{r Grade DTW - Parent PDS stage}
-# Wave 1:
-for (i in 1:nrow(data_w1)) { 
-  comp_values <- data.frame()
-  curr_grade <- data_w1$grade[i]
-  temp_data_w1 <- data_w1[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$grade[j] == curr_grade, temp_data_w1$parent_pdsstage[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
-  comp_values <- as.numeric(comp_values)
-  data_w1$gradewindow_parent_pdsstage[i] <- data_w1$parent_pdsstage[i] - mean(comp_values, na.rm = TRUE)
-}
-
-# Wave 2:
-for (i in 1:nrow(data_w2)) { 
-  comp_values <- data.frame()
-  curr_grade <- data_w2$grade[i]
-  temp_data_w2 <- data_w2[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$grade[j] == curr_grade, temp_data_w2$parent_pdsstage[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
-  comp_values <- as.numeric(comp_values)
-  data_w2$gradewindow_parent_pdsstage[i] <- data_w2$parent_pdsstage[i] - mean(comp_values, na.rm = TRUE)
-}
-```
- 
-```{r Grade DTW - DHEA mean}
-# Wave 1:
-for (i in 1:nrow(data_w1)) { 
-  comp_values <- data.frame()
-  curr_grade <- data_w1$grade[i]
-  temp_data_w1 <- data_w1[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$grade[j] == curr_grade, temp_data_w1$DHEAmean[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
-  comp_values <- as.numeric(comp_values)
-  data_w1$gradewindow_DHEAmean[i] <- data_w1$DHEAmean[i] - mean(comp_values, na.rm = TRUE)
-}
-
-# Wave 2:
-for (i in 1:nrow(data_w2)) { 
-  comp_values <- data.frame()
-  curr_grade <- data_w2$grade[i]
-  temp_data_w2 <- data_w2[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$grade[j] == curr_grade, temp_data_w2$DHEAmean[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
-  comp_values <- as.numeric(comp_values)
-  data_w2$gradewindow_DHEAmean[i] <- data_w2$DHEAmean[i] - mean(comp_values, na.rm = TRUE)
-}
-``` 
- 
-```{r Grade DTW - TEST mean}
-# Wave 1:
-for (i in 1:nrow(data_w1)) { 
-  comp_values <- data.frame()
-  curr_grade <- data_w1$grade[i]
-  temp_data_w1 <- data_w1[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$grade[j] == curr_grade, temp_data_w1$TESTmean[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
-  comp_values <- as.numeric(comp_values)
-  data_w1$gradewindow_TESTmean[i] <- data_w1$TESTmean[i] - mean(comp_values, na.rm = TRUE)
-}
-
-# Wave 2:
-for (i in 1:nrow(data_w2)) { 
-  comp_values <- data.frame()
-  curr_grade <- data_w2$grade[i]
-  temp_data_w2 <- data_w2[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$grade[j] == curr_grade, temp_data_w2$TESTmean[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
-  comp_values <- as.numeric(comp_values)
-  data_w2$gradewindow_TESTmean[i] <- data_w2$TESTmean[i] - mean(comp_values, na.rm = TRUE)
-}
-```  
-
-```{r Grade DTW - EST mean}
-# Wave 1:
-for (i in 1:nrow(data_w1)) { 
-  comp_values <- data.frame()
-  curr_grade <- data_w1$grade[i]
-  temp_data_w1 <- data_w1[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$grade[j] == curr_grade, temp_data_w1$ESTmean[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
-  comp_values <- as.numeric(comp_values)
-  data_w1$gradewindow_ESTmean[i] <- data_w1$ESTmean[i] - mean(comp_values, na.rm = TRUE)
-}
-
-# Wave 2:
-for (i in 1:nrow(data_w2)) { 
-  comp_values <- data.frame()
-  curr_grade <- data_w2$grade[i]
-  temp_data_w2 <- data_w2[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$grade[j] == curr_grade, temp_data_w2$ESTmean[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
-  comp_values <- as.numeric(comp_values)
-  data_w2$gradewindow_ESTmean[i] <- data_w2$ESTmean[i] - mean(comp_values, na.rm = TRUE)
-}
-```      
-  
-```{r Grade DTW - DHEA basal estimate}
-# Wave 1:
-for (i in 1:nrow(data_w1)) { 
-  comp_values <- data.frame()
-  curr_grade <- data_w1$grade[i]
-  temp_data_w1 <- data_w1[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$grade[j] == curr_grade, temp_data_w1$DHEA_cor[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
-  comp_values <- as.numeric(comp_values)
-  data_w1$gradewindow_DHEA_cor[i] <- data_w1$DHEA_cor[i] - mean(comp_values, na.rm = TRUE)
-}
-
-# Wave 2:
-for (i in 1:nrow(data_w2)) { 
-  comp_values <- data.frame()
-  curr_grade <- data_w2$grade[i]
-  temp_data_w2 <- data_w2[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$grade[j] == curr_grade, temp_data_w2$DHEA_cor[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
-  comp_values <- as.numeric(comp_values)
-  data_w2$gradewindow_DHEA_cor[i] <- data_w2$DHEA_cor[i] - mean(comp_values, na.rm = TRUE)
-}
-``` 
- 
-```{r Grade DTW - TEST basal estimate}
-# Wave 1:
-for (i in 1:nrow(data_w1)) { 
-  comp_values <- data.frame()
-  curr_grade <- data_w1$grade[i]
-  temp_data_w1 <- data_w1[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$grade[j] == curr_grade, temp_data_w1$TEST_cor[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
-  comp_values <- as.numeric(comp_values)
-  data_w1$gradewindow_TEST_cor[i] <- data_w1$TEST_cor[i] - mean(comp_values, na.rm = TRUE)
-}
-
-# Wave 2:
-for (i in 1:nrow(data_w2)) { 
-  comp_values <- data.frame()
-  curr_grade <- data_w2$grade[i]
-  temp_data_w2 <- data_w2[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$grade[j] == curr_grade, temp_data_w2$TEST_cor[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
-  comp_values <- as.numeric(comp_values)
-  data_w2$gradewindow_TEST_cor[i] <- data_w2$TEST_cor[i] - mean(comp_values, na.rm = TRUE)
-}
-```  
-
-```{r Grade DTW - EST basal estimate}
-# Wave 1:
-for (i in 1:nrow(data_w1)) { 
-  comp_values <- data.frame()
-  curr_grade <- data_w1$grade[i]
-  temp_data_w1 <- data_w1[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$grade[j] == curr_grade, temp_data_w1$EST_cor[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
-  comp_values <- as.numeric(comp_values)
-  data_w1$gradewindow_EST_cor[i] <- data_w1$EST_cor[i] - mean(comp_values, na.rm = TRUE)
-}
-
-# Wave 2:
-for (i in 1:nrow(data_w2)) { 
-  comp_values <- data.frame()
-  curr_grade <- data_w2$grade[i]
-  temp_data_w2 <- data_w2[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$grade[j] == curr_grade, temp_data_w2$EST_cor[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
-  comp_values <- as.numeric(comp_values)
-  data_w2$gradewindow_EST_cor[i] <- data_w2$EST_cor[i] - mean(comp_values, na.rm = TRUE)
-}
+# for (i in 1:nrow(data_w1)) { 
+#   comp_values <- data.frame()
+#   
+#   curr_grade <- data_w1$grade[i]
+# 
+#   # modify dataframe
+#   temp_data_w1 <- data_w1[-i, ] # -i b/c don't want to compare to themselves
+#   
+#   for (j in 1:nrow(temp_data_w1)) {
+#     curr_comp_values <- ifelse(temp_data_w1$grade[j] == curr_grade, temp_data_w1$ldstage[j], NA)
+#     comp_values <- c(comp_values, curr_comp_values)
+#   }
+#   # then go back to the original loop and subtract the mean of the current vector of values from the original individual's value  
+#   comp_values <- as.numeric(comp_values)
+#   data_w1$gradewindow_ldstage[i] <- data_w1$ldstage[i] - mean(comp_values, na.rm = TRUE)
+# }
+# 
+# # Wave 2:
+# for (i in 1:nrow(data_w2)) { 
+#   comp_values <- data.frame()
+#   curr_grade <- data_w2$grade[i]
+#   
+#   # modify dataframe
+#   temp_data_w2 <- data_w2[-i, ] # -i b/c don't want to compare to themselves
+#   
+#   for (j in 1:nrow(temp_data_w2)) {
+#     curr_comp_values <- ifelse(temp_data_w2$grade[j] == curr_grade, temp_data_w2$ldstage[j], NA)
+#     comp_values <- c(comp_values, curr_comp_values)
+#   }
+#   # then go back to the original loop and subtract the mean of the current vector of values from the original individual's value  
+#   comp_values <- as.numeric(comp_values)
+#   data_w2$gradewindow_ldstage[i] <- data_w2$ldstage[i] - mean(comp_values, na.rm = TRUE)
+# }
+# ```
+# ```{r Grade DTW - PDS stage}
+# # Wave 1:
+# for (i in 1:nrow(data_w1)) { 
+#   comp_values <- data.frame()
+#   curr_grade <- data_w1$grade[i]
+#   temp_data_w1 <- data_w1[-i, ] 
+#   
+#   for (j in 1:nrow(temp_data_w1)) {
+#     curr_comp_values <- ifelse(temp_data_w1$grade[j] == curr_grade, temp_data_w1$pdsstage[j], NA)
+#     comp_values <- c(comp_values, curr_comp_values)
+#   }
+#   comp_values <- as.numeric(comp_values)
+#   data_w1$gradewindow_pdsstage[i] <- data_w1$pdsstage[i] - mean(comp_values, na.rm = TRUE)
+# }
+# 
+# # Wave 2:
+# for (i in 1:nrow(data_w2)) { 
+#   comp_values <- data.frame()
+#   curr_grade <- data_w2$grade[i]
+#   temp_data_w2 <- data_w2[-i, ] 
+#   
+#   for (j in 1:nrow(temp_data_w2)) {
+#     curr_comp_values <- ifelse(temp_data_w2$grade[j] == curr_grade, temp_data_w2$pdsstage[j], NA)
+#     comp_values <- c(comp_values, curr_comp_values)
+#   }
+#   comp_values <- as.numeric(comp_values)
+#   data_w2$gradewindow_pdsstage[i] <- data_w2$pdsstage[i] - mean(comp_values, na.rm = TRUE)
+# }
+# ```
+# 
+# ```{r Grade DTW - ADRENcomp}
+# # Wave 1:
+# for (i in 1:nrow(data_w1)) { 
+#   comp_values <- data.frame()
+#   curr_grade <- data_w1$grade[i]
+#   temp_data_w1 <- data_w1[-i, ] 
+#   
+#   for (j in 1:nrow(temp_data_w1)) {
+#     curr_comp_values <- ifelse(temp_data_w1$grade[j] == curr_grade, temp_data_w1$ADRENcomp[j], NA)
+#     comp_values <- c(comp_values, curr_comp_values)
+#   }
+#   comp_values <- as.numeric(comp_values)
+#   data_w1$gradewindow_ADRENcomp[i] <- data_w1$ADRENcomp[i] - mean(comp_values, na.rm = TRUE)
+# }
+# 
+# # Wave 2:
+# for (i in 1:nrow(data_w2)) { 
+#   comp_values <- data.frame()
+#   curr_grade <- data_w2$grade[i]
+#   temp_data_w2 <- data_w2[-i, ] 
+#   
+#   for (j in 1:nrow(temp_data_w2)) {
+#     curr_comp_values <- ifelse(temp_data_w2$grade[j] == curr_grade, temp_data_w2$ADRENcomp[j], NA)
+#     comp_values <- c(comp_values, curr_comp_values)
+#   }
+#   comp_values <- as.numeric(comp_values)
+#   data_w2$gradewindow_ADRENcomp[i] <- data_w2$ADRENcomp[i] - mean(comp_values, na.rm = TRUE)
+# }
+# ```
+#         
+# ```{r Grade DTW - GONADcomp}
+# # Wave 1:
+# # Wave 1:
+# for (i in 1:nrow(data_w1)) { 
+#   comp_values <- data.frame()
+#   curr_grade <- data_w1$grade[i]
+#   temp_data_w1 <- data_w1[-i, ] 
+#   
+#   for (j in 1:nrow(temp_data_w1)) {
+#     curr_comp_values <- ifelse(temp_data_w1$grade[j] == curr_grade, temp_data_w1$GONADcomp[j], NA)
+#     comp_values <- c(comp_values, curr_comp_values)
+#   }
+#   comp_values <- as.numeric(comp_values)
+#   data_w1$gradewindow_GONADcomp[i] <- data_w1$GONADcomp[i] - mean(comp_values, na.rm = TRUE)
+# }
+# 
+# # Wave 2:
+# for (i in 1:nrow(data_w2)) { 
+#   comp_values <- data.frame()
+#   curr_grade <- data_w2$grade[i]
+#   temp_data_w2 <- data_w2[-i, ] 
+#   
+#   for (j in 1:nrow(temp_data_w2)) {
+#     curr_comp_values <- ifelse(temp_data_w2$grade[j] == curr_grade, temp_data_w2$GONADcomp[j], NA)
+#     comp_values <- c(comp_values, curr_comp_values)
+#   }
+#   comp_values <- as.numeric(comp_values)
+#   data_w2$gradewindow_GONADcomp[i] <- data_w2$GONADcomp[i] - mean(comp_values, na.rm = TRUE)
+# }
+# ```
+#         
+# ```{r Grade DTW - PUBcomp}
+# 
+# # Wave 1:
+# # Wave 1:
+# for (i in 1:nrow(data_w1)) { 
+#   comp_values <- data.frame()
+#   curr_grade <- data_w1$grade[i]
+#   temp_data_w1 <- data_w1[-i, ] 
+#   
+#   for (j in 1:nrow(temp_data_w1)) {
+#     curr_comp_values <- ifelse(temp_data_w1$grade[j] == curr_grade, temp_data_w1$PUBcomp[j], NA)
+#     comp_values <- c(comp_values, curr_comp_values)
+#   }
+#   comp_values <- as.numeric(comp_values)
+#   data_w1$gradewindow_PUBcomp[i] <- data_w1$PUBcomp[i] - mean(comp_values, na.rm = TRUE)
+# }
+# 
+# # Wave 2:
+# for (i in 1:nrow(data_w2)) { 
+#   comp_values <- data.frame()
+#   curr_grade <- data_w2$grade[i]
+#   temp_data_w2 <- data_w2[-i, ] 
+#   
+#   for (j in 1:nrow(temp_data_w2)) {
+#     curr_comp_values <- ifelse(temp_data_w2$grade[j] == curr_grade, temp_data_w2$PUBcomp[j], NA)
+#     comp_values <- c(comp_values, curr_comp_values)
+#   }
+#   comp_values <- as.numeric(comp_values)
+#   data_w2$gradewindow_PUBcomp[i] <- data_w2$PUBcomp[i] - mean(comp_values, na.rm = TRUE)
+# }
+# ```
+# 
+# ```{r Grade DTW - Parent PDS stage}
+# # Wave 1:
+# for (i in 1:nrow(data_w1)) { 
+#   comp_values <- data.frame()
+#   curr_grade <- data_w1$grade[i]
+#   temp_data_w1 <- data_w1[-i, ] 
+#   
+#   for (j in 1:nrow(temp_data_w1)) {
+#     curr_comp_values <- ifelse(temp_data_w1$grade[j] == curr_grade, temp_data_w1$parent_pdsstage[j], NA)
+#     comp_values <- c(comp_values, curr_comp_values)
+#   }
+#   comp_values <- as.numeric(comp_values)
+#   data_w1$gradewindow_parent_pdsstage[i] <- data_w1$parent_pdsstage[i] - mean(comp_values, na.rm = TRUE)
+# }
+# 
+# # Wave 2:
+# for (i in 1:nrow(data_w2)) { 
+#   comp_values <- data.frame()
+#   curr_grade <- data_w2$grade[i]
+#   temp_data_w2 <- data_w2[-i, ] 
+#   
+#   for (j in 1:nrow(temp_data_w2)) {
+#     curr_comp_values <- ifelse(temp_data_w2$grade[j] == curr_grade, temp_data_w2$parent_pdsstage[j], NA)
+#     comp_values <- c(comp_values, curr_comp_values)
+#   }
+#   comp_values <- as.numeric(comp_values)
+#   data_w2$gradewindow_parent_pdsstage[i] <- data_w2$parent_pdsstage[i] - mean(comp_values, na.rm = TRUE)
+# }
+# ```
+#  
+# ```{r Grade DTW - DHEA mean}
+# # Wave 1:
+# for (i in 1:nrow(data_w1)) { 
+#   comp_values <- data.frame()
+#   curr_grade <- data_w1$grade[i]
+#   temp_data_w1 <- data_w1[-i, ] 
+#   
+#   for (j in 1:nrow(temp_data_w1)) {
+#     curr_comp_values <- ifelse(temp_data_w1$grade[j] == curr_grade, temp_data_w1$DHEAmean[j], NA)
+#     comp_values <- c(comp_values, curr_comp_values)
+#   }
+#   comp_values <- as.numeric(comp_values)
+#   data_w1$gradewindow_DHEAmean[i] <- data_w1$DHEAmean[i] - mean(comp_values, na.rm = TRUE)
+# }
+# 
+# # Wave 2:
+# for (i in 1:nrow(data_w2)) { 
+#   comp_values <- data.frame()
+#   curr_grade <- data_w2$grade[i]
+#   temp_data_w2 <- data_w2[-i, ] 
+#   
+#   for (j in 1:nrow(temp_data_w2)) {
+#     curr_comp_values <- ifelse(temp_data_w2$grade[j] == curr_grade, temp_data_w2$DHEAmean[j], NA)
+#     comp_values <- c(comp_values, curr_comp_values)
+#   }
+#   comp_values <- as.numeric(comp_values)
+#   data_w2$gradewindow_DHEAmean[i] <- data_w2$DHEAmean[i] - mean(comp_values, na.rm = TRUE)
+# }
+# ``` 
+#  
+# ```{r Grade DTW - TEST mean}
+# # Wave 1:
+# for (i in 1:nrow(data_w1)) { 
+#   comp_values <- data.frame()
+#   curr_grade <- data_w1$grade[i]
+#   temp_data_w1 <- data_w1[-i, ] 
+#   
+#   for (j in 1:nrow(temp_data_w1)) {
+#     curr_comp_values <- ifelse(temp_data_w1$grade[j] == curr_grade, temp_data_w1$TESTmean[j], NA)
+#     comp_values <- c(comp_values, curr_comp_values)
+#   }
+#   comp_values <- as.numeric(comp_values)
+#   data_w1$gradewindow_TESTmean[i] <- data_w1$TESTmean[i] - mean(comp_values, na.rm = TRUE)
+# }
+# 
+# # Wave 2:
+# for (i in 1:nrow(data_w2)) { 
+#   comp_values <- data.frame()
+#   curr_grade <- data_w2$grade[i]
+#   temp_data_w2 <- data_w2[-i, ] 
+#   
+#   for (j in 1:nrow(temp_data_w2)) {
+#     curr_comp_values <- ifelse(temp_data_w2$grade[j] == curr_grade, temp_data_w2$TESTmean[j], NA)
+#     comp_values <- c(comp_values, curr_comp_values)
+#   }
+#   comp_values <- as.numeric(comp_values)
+#   data_w2$gradewindow_TESTmean[i] <- data_w2$TESTmean[i] - mean(comp_values, na.rm = TRUE)
+# }
+# ```  
+# 
+# ```{r Grade DTW - EST mean}
+# # Wave 1:
+# for (i in 1:nrow(data_w1)) { 
+#   comp_values <- data.frame()
+#   curr_grade <- data_w1$grade[i]
+#   temp_data_w1 <- data_w1[-i, ] 
+#   
+#   for (j in 1:nrow(temp_data_w1)) {
+#     curr_comp_values <- ifelse(temp_data_w1$grade[j] == curr_grade, temp_data_w1$ESTmean[j], NA)
+#     comp_values <- c(comp_values, curr_comp_values)
+#   }
+#   comp_values <- as.numeric(comp_values)
+#   data_w1$gradewindow_ESTmean[i] <- data_w1$ESTmean[i] - mean(comp_values, na.rm = TRUE)
+# }
+# 
+# # Wave 2:
+# for (i in 1:nrow(data_w2)) { 
+#   comp_values <- data.frame()
+#   curr_grade <- data_w2$grade[i]
+#   temp_data_w2 <- data_w2[-i, ] 
+#   
+#   for (j in 1:nrow(temp_data_w2)) {
+#     curr_comp_values <- ifelse(temp_data_w2$grade[j] == curr_grade, temp_data_w2$ESTmean[j], NA)
+#     comp_values <- c(comp_values, curr_comp_values)
+#   }
+#   comp_values <- as.numeric(comp_values)
+#   data_w2$gradewindow_ESTmean[i] <- data_w2$ESTmean[i] - mean(comp_values, na.rm = TRUE)
+# }
+# ```      
+#   
+# ```{r Grade DTW - DHEA basal estimate}
+# # Wave 1:
+# for (i in 1:nrow(data_w1)) { 
+#   comp_values <- data.frame()
+#   curr_grade <- data_w1$grade[i]
+#   temp_data_w1 <- data_w1[-i, ] 
+#   
+#   for (j in 1:nrow(temp_data_w1)) {
+#     curr_comp_values <- ifelse(temp_data_w1$grade[j] == curr_grade, temp_data_w1$DHEA_cor[j], NA)
+#     comp_values <- c(comp_values, curr_comp_values)
+#   }
+#   comp_values <- as.numeric(comp_values)
+#   data_w1$gradewindow_DHEA_cor[i] <- data_w1$DHEA_cor[i] - mean(comp_values, na.rm = TRUE)
+# }
+# 
+# # Wave 2:
+# for (i in 1:nrow(data_w2)) { 
+#   comp_values <- data.frame()
+#   curr_grade <- data_w2$grade[i]
+#   temp_data_w2 <- data_w2[-i, ] 
+#   
+#   for (j in 1:nrow(temp_data_w2)) {
+#     curr_comp_values <- ifelse(temp_data_w2$grade[j] == curr_grade, temp_data_w2$DHEA_cor[j], NA)
+#     comp_values <- c(comp_values, curr_comp_values)
+#   }
+#   comp_values <- as.numeric(comp_values)
+#   data_w2$gradewindow_DHEA_cor[i] <- data_w2$DHEA_cor[i] - mean(comp_values, na.rm = TRUE)
+# }
+# ``` 
+#  
+# ```{r Grade DTW - TEST basal estimate}
+# # Wave 1:
+# for (i in 1:nrow(data_w1)) { 
+#   comp_values <- data.frame()
+#   curr_grade <- data_w1$grade[i]
+#   temp_data_w1 <- data_w1[-i, ] 
+#   
+#   for (j in 1:nrow(temp_data_w1)) {
+#     curr_comp_values <- ifelse(temp_data_w1$grade[j] == curr_grade, temp_data_w1$TEST_cor[j], NA)
+#     comp_values <- c(comp_values, curr_comp_values)
+#   }
+#   comp_values <- as.numeric(comp_values)
+#   data_w1$gradewindow_TEST_cor[i] <- data_w1$TEST_cor[i] - mean(comp_values, na.rm = TRUE)
+# }
+# 
+# # Wave 2:
+# for (i in 1:nrow(data_w2)) { 
+#   comp_values <- data.frame()
+#   curr_grade <- data_w2$grade[i]
+#   temp_data_w2 <- data_w2[-i, ] 
+#   
+#   for (j in 1:nrow(temp_data_w2)) {
+#     curr_comp_values <- ifelse(temp_data_w2$grade[j] == curr_grade, temp_data_w2$TEST_cor[j], NA)
+#     comp_values <- c(comp_values, curr_comp_values)
+#   }
+#   comp_values <- as.numeric(comp_values)
+#   data_w2$gradewindow_TEST_cor[i] <- data_w2$TEST_cor[i] - mean(comp_values, na.rm = TRUE)
+# }
+# ```  
+# 
+# ```{r Grade DTW - EST basal estimate}
+# # Wave 1:
+# for (i in 1:nrow(data_w1)) { 
+#   comp_values <- data.frame()
+#   curr_grade <- data_w1$grade[i]
+#   temp_data_w1 <- data_w1[-i, ] 
+#   
+#   for (j in 1:nrow(temp_data_w1)) {
+#     curr_comp_values <- ifelse(temp_data_w1$grade[j] == curr_grade, temp_data_w1$EST_cor[j], NA)
+#     comp_values <- c(comp_values, curr_comp_values)
+#   }
+#   comp_values <- as.numeric(comp_values)
+#   data_w1$gradewindow_EST_cor[i] <- data_w1$EST_cor[i] - mean(comp_values, na.rm = TRUE)
+# }
+# 
+# # Wave 2:
+# for (i in 1:nrow(data_w2)) { 
+#   comp_values <- data.frame()
+#   curr_grade <- data_w2$grade[i]
+#   temp_data_w2 <- data_w2[-i, ] 
+#   
+#   for (j in 1:nrow(temp_data_w2)) {
+#     curr_comp_values <- ifelse(temp_data_w2$grade[j] == curr_grade, temp_data_w2$EST_cor[j], NA)
+#     comp_values <- c(comp_values, curr_comp_values)
+#   }
+#   comp_values <- as.numeric(comp_values)
+#   data_w2$gradewindow_EST_cor[i] <- data_w2$EST_cor[i] - mean(comp_values, na.rm = TRUE)
+# }
 ```      
 
 
@@ -908,8 +914,8 @@ for (i in 1:nrow(data_w2)) {
 library(Hmisc)
 library(corrplot)
 
-# wave 1:
-w1_all <- select (data_w1, "resid_ldstage", "window_ldstage", "resid_pdsstage", "window_pdsstage", "resid_ADRENcomp", "window_ADRENcomp", "resid_GONADcomp", "window_GONADcomp", "resid_PUBcomp", "window_PUBcomp", "resid_parent_pdsstage", "window_parent_pdsstage", "resid_DHEAmean", "window_DHEAmean", "resid_TESTmean", "window_TESTmean", "resid_ESTmean", "window_ESTmean", "resid_DHEA_cor", "window_DHEA_cor", "resid_TEST_cor", "window_TEST_cor", "resid_EST_cor", "window_EST_cor", "gradewindow_ldstage", "gradewindow_pdsstage", "gradewindow_ADRENcomp", "gradewindow_GONADcomp", "gradewindow_PUBcomp", "gradewindow_parent_pdsstage", "gradewindow_DHEAmean", "gradewindow_TESTmean", "gradewindow_ESTmean", "gradewindow_DHEA_cor", "gradewindow_TEST_cor", "gradewindow_EST_cor")
+# wave 1 (note that parent_pdsstage residuals are from non-imputed data):
+w1_all <- select (data_w1, "resid_ldstage_im", "window_ldstage", "resid_pdsstage_im", "window_pdsstage", "resid_ADRENcomp_im", "window_ADRENcomp", "resid_GONADcomp_im", "window_GONADcomp", "resid_PUBcomp_im", "window_PUBcomp", "resid_parent_pdsstage", "window_parent_pdsstage", "resid_DHEAmean_im", "window_DHEAmean", "resid_TESTmean_im", "window_TESTmean", "resid_ESTmean_im", "window_ESTmean", "resid_DHEA_cor_im", "window_DHEA_cor", "resid_TEST_cor_im", "window_TEST_cor", "resid_EST_cor_im", "window_EST_cor")
 
 library(moments)
 skewness(w1_all, na.rm = TRUE)
@@ -959,29 +965,29 @@ w1_tau_plot <- ggplot(data=corr_w1_taubar, aes(x=timing_measure, y=resid_window_
   labs(title="W1 Kendall corr of age residual & 6 mo dynamic timing windows", x ="Wave 1 measure of timing", y = "correlation (tau)") +
   ylim(0,1)
 
-# Then for GRADE windows (pearson only) - age resid vs grade windows:
-corr_w1_rbar_grade <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEAmean", "TESTmean", "ESTmean", "DHEA_cor", "TEST_cor", "EST_cor"), resid_window_r_grade=c(corr_w1_r[1,25], corr_w1_r[3,26], corr_w1_r[5,27], corr_w1_r[7,28], corr_w1_r[9,29], corr_w1_r[11,30], corr_w1_r[13,31], corr_w1_r[15,32], corr_w1_r[17,33], corr_w1_r[19,34], corr_w1_r[21,35], corr_w1_r[23,36]))
-w1_plot_grade <- ggplot(data=corr_w1_rbar_grade, aes(x=timing_measure, y=resid_window_r_grade, fill=timing_measure)) +
-  geom_bar(stat="identity") +
-  geom_text(aes(label=round(resid_window_r_grade, digits=2)), vjust=-0.5, color="black", size=3) +
-  scale_x_discrete(limits=corr_w1_rbar_grade$timing_measure) +
-  scale_fill_viridis(discrete=TRUE) +
-  theme(text = element_text(size=10),
-        axis.text.x = element_text(angle=45, hjust=1), legend.position = "none") +
-  labs(title="W1 Pearson corr of age residual & GRADE dynamic timing windows", x ="Wave 1 measure of timing", y = "correlation (r)")
-
-# Then for GRADE vs. age windows (no residuals) - pearson only:
-corr_w1_rbar_windows <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEAmean", "TESTmean", "ESTmean", "DHEA_cor", "TEST_cor", "EST_cor"), age_grade_window_r=c(corr_w1_r[2,25], corr_w1_r[4,26], corr_w1_r[6,27], corr_w1_r[8,28], corr_w1_r[10,29], corr_w1_r[12,30], corr_w1_r[14,31], corr_w1_r[16,32], corr_w1_r[18,33], corr_w1_r[20,34], corr_w1_r[22,35], corr_w1_r[24,36]))
-
-w1_plot_windows <- ggplot(data=corr_w1_rbar_windows, aes(x=timing_measure, y=age_grade_window_r, fill=timing_measure)) +
-  geom_bar(stat="identity") +
-  geom_text(aes(label=round(age_grade_window_r, digits=2)), vjust=-0.5, color="black", size=3) +
-  scale_x_discrete(limits=corr_w1_rbar_windows$timing_measure) +
-  scale_fill_viridis(discrete=TRUE) +
-  theme(text = element_text(size=10),
-        axis.text.x = element_text(angle=45, hjust=1), legend.position = "none") +
-  labs(title="W1 Pearson corr of AGE (6 mo) vs. GRADE dynamic timing windows", x ="Wave 1 measure of timing", y = "correlation (r)")
-
+# # Then for GRADE windows (pearson only) - age resid vs grade windows (THIS IS NOT UPDATED BECAUSE EARLIER ANALYSIS SHOWED NO DIFFERENCE BETWEEN AGE AND GRADE):
+# corr_w1_rbar_grade <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEAmean", "TESTmean", "ESTmean", "DHEA_cor", "TEST_cor", "EST_cor"), resid_window_r_grade=c(corr_w1_r[1,25], corr_w1_r[3,26], corr_w1_r[5,27], corr_w1_r[7,28], corr_w1_r[9,29], corr_w1_r[11,30], corr_w1_r[13,31], corr_w1_r[15,32], corr_w1_r[17,33], corr_w1_r[19,34], corr_w1_r[21,35], corr_w1_r[23,36]))
+# w1_plot_grade <- ggplot(data=corr_w1_rbar_grade, aes(x=timing_measure, y=resid_window_r_grade, fill=timing_measure)) +
+#   geom_bar(stat="identity") +
+#   geom_text(aes(label=round(resid_window_r_grade, digits=2)), vjust=-0.5, color="black", size=3) +
+#   scale_x_discrete(limits=corr_w1_rbar_grade$timing_measure) +
+#   scale_fill_viridis(discrete=TRUE) +
+#   theme(text = element_text(size=10),
+#         axis.text.x = element_text(angle=45, hjust=1), legend.position = "none") +
+#   labs(title="W1 Pearson corr of age residual & GRADE dynamic timing windows", x ="Wave 1 measure of timing", y = "correlation (r)")
+# 
+# # Then for GRADE vs. age windows (no residuals) - pearson only:
+# corr_w1_rbar_windows <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEAmean", "TESTmean", "ESTmean", "DHEA_cor", "TEST_cor", "EST_cor"), age_grade_window_r=c(corr_w1_r[2,25], corr_w1_r[4,26], corr_w1_r[6,27], corr_w1_r[8,28], corr_w1_r[10,29], corr_w1_r[12,30], corr_w1_r[14,31], corr_w1_r[16,32], corr_w1_r[18,33], corr_w1_r[20,34], corr_w1_r[22,35], corr_w1_r[24,36]))
+# 
+# w1_plot_windows <- ggplot(data=corr_w1_rbar_windows, aes(x=timing_measure, y=age_grade_window_r, fill=timing_measure)) +
+#   geom_bar(stat="identity") +
+#   geom_text(aes(label=round(age_grade_window_r, digits=2)), vjust=-0.5, color="black", size=3) +
+#   scale_x_discrete(limits=corr_w1_rbar_windows$timing_measure) +
+#   scale_fill_viridis(discrete=TRUE) +
+#   theme(text = element_text(size=10),
+#         axis.text.x = element_text(angle=45, hjust=1), legend.position = "none") +
+#   labs(title="W1 Pearson corr of AGE (6 mo) vs. GRADE dynamic timing windows", x ="Wave 1 measure of timing", y = "correlation (r)")
+# 
 
 corr_w1_rcorr <- rcorr(as.matrix(w1_all)) # for saving later
 library(ggcorrplot)
@@ -1035,29 +1041,29 @@ w2_tau_plot <- ggplot(data=corr_w2_taubar, aes(x=timing_measure, y=resid_window_
   labs(title="w2 Kendall corr of age residual & 6 mo dynamic timing windows", x ="Wave 1 measure of timing", y = "correlation (tau)") +
   ylim(0,1)
 
-# Then for GRADE windows - age resid vs grade windows (pearson only):
-corr_w2_rbar_grade <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEAmean", "TESTmean", "ESTmean", "DHEA_cor", "TEST_cor", "EST_cor"), resid_window_r_grade=c(corr_w2_r[1,25], corr_w2_r[3,26], corr_w2_r[5,27], corr_w2_r[7,28], corr_w2_r[9,29], corr_w2_r[11,30], corr_w2_r[13,31], corr_w2_r[15,32], corr_w2_r[17,33], corr_w2_r[19,34], corr_w2_r[21,35], corr_w2_r[23,36]))
-
-w2_plot_grade <- ggplot(data=corr_w2_rbar_grade, aes(x=timing_measure, y=resid_window_r_grade, fill=timing_measure)) +
-  geom_bar(stat="identity") +
-  geom_text(aes(label=round(resid_window_r_grade, digits=2)), vjust=-0.5, color="black", size=3) +
-  scale_x_discrete(limits=corr_w2_rbar_grade$timing_measure) +
-  scale_fill_viridis(discrete=TRUE) +
-  theme(text = element_text(size=10),
-        axis.text.x = element_text(angle=45, hjust=1), legend.position = "none") +
-  labs(title="W2 Pearson corr of age residual & GRADE dynamic timing windows", x ="Wave 2 measure of timing", y = "correlation (r)")
-
-# Then for GRADE vs. age windows (no residuals):
-corr_w2_rbar_windows <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEAmean", "TESTmean", "ESTmean", "DHEA_cor", "TEST_cor", "EST_cor"), age_grade_window_r=c(corr_w2_r[2,25], corr_w2_r[4,26], corr_w2_r[6,27], corr_w2_r[8,28], corr_w2_r[10,29], corr_w2_r[12,30], corr_w2_r[14,31], corr_w2_r[16,32], corr_w2_r[18,33], corr_w2_r[20,34], corr_w2_r[22,35], corr_w2_r[24,36]))
-
-w2_plot_windows <- ggplot(data=corr_w2_rbar_windows, aes(x=timing_measure, y=age_grade_window_r, fill=timing_measure)) +
-  geom_bar(stat="identity") +
-  geom_text(aes(label=round(age_grade_window_r, digits=2)), vjust=-0.5, color="black", size=3) +
-  scale_x_discrete(limits=corr_w2_rbar_windows$timing_measure) +
-  scale_fill_viridis(discrete=TRUE) +
-  theme(text = element_text(size=10),
-        axis.text.x = element_text(angle=45, hjust=1), legend.position = "none") +
-  labs(title="w2 Pearson corr of AGE (6 mo) vs. GRADE dynamic timing windows", x ="Wave 2 measure of timing", y = "correlation (r)")
+# # Then for GRADE windows - age resid vs grade windows (pearson only):
+# corr_w2_rbar_grade <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEAmean", "TESTmean", "ESTmean", "DHEA_cor", "TEST_cor", "EST_cor"), resid_window_r_grade=c(corr_w2_r[1,25], corr_w2_r[3,26], corr_w2_r[5,27], corr_w2_r[7,28], corr_w2_r[9,29], corr_w2_r[11,30], corr_w2_r[13,31], corr_w2_r[15,32], corr_w2_r[17,33], corr_w2_r[19,34], corr_w2_r[21,35], corr_w2_r[23,36]))
+# 
+# w2_plot_grade <- ggplot(data=corr_w2_rbar_grade, aes(x=timing_measure, y=resid_window_r_grade, fill=timing_measure)) +
+#   geom_bar(stat="identity") +
+#   geom_text(aes(label=round(resid_window_r_grade, digits=2)), vjust=-0.5, color="black", size=3) +
+#   scale_x_discrete(limits=corr_w2_rbar_grade$timing_measure) +
+#   scale_fill_viridis(discrete=TRUE) +
+#   theme(text = element_text(size=10),
+#         axis.text.x = element_text(angle=45, hjust=1), legend.position = "none") +
+#   labs(title="W2 Pearson corr of age residual & GRADE dynamic timing windows", x ="Wave 2 measure of timing", y = "correlation (r)")
+# 
+# # Then for GRADE vs. age windows (no residuals):
+# corr_w2_rbar_windows <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEAmean", "TESTmean", "ESTmean", "DHEA_cor", "TEST_cor", "EST_cor"), age_grade_window_r=c(corr_w2_r[2,25], corr_w2_r[4,26], corr_w2_r[6,27], corr_w2_r[8,28], corr_w2_r[10,29], corr_w2_r[12,30], corr_w2_r[14,31], corr_w2_r[16,32], corr_w2_r[18,33], corr_w2_r[20,34], corr_w2_r[22,35], corr_w2_r[24,36]))
+# 
+# w2_plot_windows <- ggplot(data=corr_w2_rbar_windows, aes(x=timing_measure, y=age_grade_window_r, fill=timing_measure)) +
+#   geom_bar(stat="identity") +
+#   geom_text(aes(label=round(age_grade_window_r, digits=2)), vjust=-0.5, color="black", size=3) +
+#   scale_x_discrete(limits=corr_w2_rbar_windows$timing_measure) +
+#   scale_fill_viridis(discrete=TRUE) +
+#   theme(text = element_text(size=10),
+#         axis.text.x = element_text(angle=45, hjust=1), legend.position = "none") +
+#   labs(title="w2 Pearson corr of AGE (6 mo) vs. GRADE dynamic timing windows", x ="Wave 2 measure of timing", y = "correlation (r)")
 
 corr_w2_rcorr <- rcorr(as.matrix(w2_all)) # for saving later
 w2_corrmat <- ggcorrplot(corr_w2_r) + 
