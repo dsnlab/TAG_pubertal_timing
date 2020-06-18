@@ -10,7 +10,7 @@ if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
 }
 lapply(packages, library, character.only = TRUE)
 
-cas_dir="Y:/dsnlab/TAG/"
+cas_dir="Z:/dsnlab/TAG/"
 ```
 
 ```{r Combine all puberty measures in long format, include=FALSE}
@@ -90,8 +90,15 @@ Puberty_allways <- Puberty_allways %>% filter(tagid %in% overview$tagid)
 
 ```{r checks on parent pds}
 
-# First check missing data percentages:
-Puberty_allways
+# First check missing data percentages and mechanism:
+library(MissMech)
+Missinginfo_pub <- OrderMissing(Puberty_allways, del.lesscases = 0)
+summary(Missinginfo_pub)
+
+data.nummat <- data.matrix(Puberty_allways, rownames.force = NA)
+data.out <- TestMCARNormality(data.nummat) # tests (parametric and nonparametric) for MCAR. Note, as of 6/18, system is computationally singular which is probs why our imputation model is so shitty 
+# !!!!!!!!! NEED TO ADDRESS !!!!!!!!! 
+print(data.out)
 
 # Next, for the W1 parent_PDSstage, which is the only variable assumed missing not at random (because we introduced it at W1 halfway through, and we recruited older girls first), check if any observed vars at W1 are associated with whether or not they were given the parent PDS (0 = not given, 1 = given).
 have_parPDS <- read.csv(file.path(cas_dir,"projects/W1_W2_pubertal_timing/before_after_parentPDSw1.csv", fsep=""))
