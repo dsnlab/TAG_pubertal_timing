@@ -4,13 +4,14 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-packages <- c("lme4" , "ggplot2","tidyr","dplyr", "psych","ggcorrplot","mice","BaylorEdPsych","readxl")
+packages <- c("lme4" , "ggplot2","tidyr","dplyr", "psych","ggcorrplot","mice","BaylorEdPsych","readxl","Amelia","MissMech")
 if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
   install.packages(setdiff(packages, rownames(installed.packages())))  
 }
 lapply(packages, library, character.only = TRUE)
 
-cas_dir="Z:/dsnlab/TAG/"
+cas_dir="Y:/dsnlab/TAG/"
+set.seed(88)
 ```
 
 ```{r Combine all puberty measures in long format, include=FALSE}
@@ -67,7 +68,7 @@ Puberty_allways <- Puberty_all %>% filter(wave<3)
 
 #Add hormones
 Hormones <- read.table(paste0(cas_dir,'behavior/Puberty/Saliva//TAG_W1W2_Saliva_basalestimates.csv'), header=T, sep=",") %>% 
-  select(SID,DHEAmean_wave1,TESTmean_wave1,ESTmean_wave1,DHEAmean_wave2,TESTmean_wave2,ESTmean_wave2,DHEAcoef_imp_wave1,TESTcoef_imp_wave1,ESTcoef_imp_wave1,DHEAcoef_imp_wave2,TESTcoef_imp_wave2,ESTcoef_imp_wave2) %>%
+  select(SID,DHEAcoef_imp_wave1,TESTcoef_imp_wave1,ESTcoef_imp_wave1,DHEAcoef_imp_wave2,TESTcoef_imp_wave2,ESTcoef_imp_wave2) %>%
   mutate(tagid=sprintf("TAG%03d", SID)) %>% select(-SID) %>%
   pivot_longer(cols=contains("wave"),names_to = c(".value","wave"), names_pattern = "(.*)_wave(.*)") %>%
   rename(DHEA_cor=DHEAcoef_imp,TEST_cor=TESTcoef_imp,EST_cor=ESTcoef_imp)
@@ -91,7 +92,6 @@ Puberty_allways <- Puberty_allways %>% filter(tagid %in% overview$tagid)
 ```{r checks on parent pds}
 
 # First check missing data percentages and mechanism:
-library(MissMech)
 Missinginfo_pub <- OrderMissing(Puberty_allways, del.lesscases = 0)
 summary(Missinginfo_pub)
 
@@ -141,13 +141,13 @@ Puberty_allways <- Puberty_allways[!duplicated(Puberty_allways[c("tagid","wave")
 Internalizing_all <- read.csv(paste0(cas_dir,"projects/W1_W2_pubertal_timing/Internalizing_allways.csv"),header=T,sep=",")
 Internalizing_all_long <- pivot_longer(Internalizing_all,cols=contains("w"),names_to = c(".value","wave"), names_pattern = "(.*)_w(.*)")
 #merge
-all_for_imp <- merge(Puberty_allways,Internalizing_all_long,by=c("tagid","wave"))
+all_pub_int <- merge(Puberty_allways,Internalizing_all_long,by=c("tagid","wave"))
 #covariates
 CTQ <- read.csv(paste0(cas_dir,"projects/W1_W2_pubertal_timing/W1_CTQ_threatscoring.csv")) 
 CTQ <- CTQ %>% 
   rename(CTQ_threat=CTQ_threat_total_75perc) %>% 
   mutate(tagid=sprintf("TAG%03d", SID))
-all_for_imp <- all_for_imp %>% merge(.,have_parPDS,by=c("tagid","wave"),all.x=T) %>%
+all_pub_int <- all_pub_int %>% merge(.,have_parPDS,by=c("tagid","wave"),all.x=T) %>%
                               merge(.,CTQ[,c("tagid","CTQ_threat")],by=c("tagid"),all.x=T)
 
 ```
@@ -159,30 +159,41 @@ all_for_imp <- all_for_imp %>% merge(.,have_parPDS,by=c("tagid","wave"),all.x=T)
 #check missingness pattern
 md.pattern(all_for_imp)
 
-all_for_imp$const <- 1
-all_for_imp$PP <- as.integer(all_for_imp$tagid)
-all_for_imp <- all_for_imp %>% 
-    mutate(depres_d=as.factor(depres_d),anx_d=as.factor(anx_d),int_d=as.factor(int_d),distress_d=as.factor(distress_d),fear_d=as.factor(fear_d),before_after_parentPDSw1=as.factor(before_after_parentPDSw1))
-#impute
-ini <- mice(all_for_imp, maxit=0, print=F)
-meth <- ini$meth
-meth["PUBcomp"]<- "~ I((ADRENcomp + GONADcomp) / 2)" #tell mice that PUBcomp is calculated from ADREN and GONAD
-meth[which(meth == "pmm")] <- "2l.norm" #2-level data with heterogeneous within pp variance
-meth[c("depres_d","anx_d","int_d","distress_d","fear_d")] <- "logreg"
-meth["CTQ_threat"] <- "2lonly.norm"
-pred<- quickpred(all_for_imp,method="spearman",exclude= 'tagid') # exclude tagid
-pred[c("GONADcomp", "ADRENcomp"), "PUBcomp"] <- 0 # avoid circular prediction from PUBcomp
-pred[,"PP"]<- -2 # set ID as class variable for 2l.norm
-pred[,"const"]<- 2 # random intercept
-pred["wave",]<- 0
-pred[,"wave"]<- 0
-post <- ini$post
-post[c("subj_timing","parent_subj_timing","ldstage","pdsstage","parent_pdsstage","ADRENcomp","GONADcomp","PUBcomp")] <- "imp[[j]][, i] <- squeeze(imp[[j]][, i], c(1, 5))" #constrain the self-report variables to their range of 1-5
-post["SCARED_mean"] <- "imp[[j]][, i] <- squeeze(imp[[j]][, i], c(0, 2))" #constrain the scared
-post["CESDC_total"] <- "imp[[j]][, i] <- squeeze(imp[[j]][, i], c(0, 60))" #constrain the cesdc
-post["CTQ_threat"] <- "imp[[j]][, i] <- squeeze(imp[[j]][, i], c(0, 68))" #constrain the ctq
+all_for_imp <- all_pub_int %>% 
+  mutate(wave=as.numeric(wave)) %>%
+  select(-PUBcomp,-ADRENcomp,-int_d,-before_after_parentPDSw1)
+imp <- amelia(all_for_imp,m=25,p2s=0,idvars="wave",ts="age",cs="tagid",polytime=1,
+              noms=c("depres_d","anx_d","distress_d","fear_d"),
+              ords=c("subj_timing","parent_subj_timing"))
+#!!!! ADD BOUNDS AND LOG-TRANFORM SKEWED VARIABLES
+#!!!! FIND SOLUTION FOR ADRENCOMP AND GONADCOMP CAUSING COLLEINEARITY 
+#!!!! LEAVE OUT THE BEFORE AND AFTER PARENT PDS VAR?
+#RECALCULATE PUBCOMP AND INT_D
 
-imp <- mice(all_for_imp, m=25,maxit=15,meth=meth,pred=pred,post=post,print=FALSE,seed=500)
+#all_for_imp$const <- 1
+#all_for_imp$PP <- as.integer(all_for_imp$tagid)
+#all_for_imp <- all_for_imp %>% 
+#    mutate(depres_d=as.factor(depres_d),anx_d=as.factor(anx_d),int_d=as.factor(int_d),distress_d=as.factor(distress_d),fear_d=as.factor(fear_d),before_after_parentPDSw1=as.factor(before_after_parentPDSw1))
+#impute
+#ini <- mice(all_for_imp, maxit=0, print=F)
+#meth <- ini$meth
+#meth["PUBcomp"]<- "~ I((ADRENcomp + GONADcomp) / 2)" #tell mice that PUBcomp is calculated from ADREN and GONAD
+#meth[which(meth == "pmm")] <- "2l.norm" #2-level data with heterogeneous within pp variance
+#meth[c("depres_d","anx_d","int_d","distress_d","fear_d")] <- "logreg"
+#meth["CTQ_threat"] <- "2lonly.norm"
+#pred<- quickpred(all_for_imp,method="spearman",exclude= 'tagid') # exclude tagid
+#pred[c("GONADcomp", "ADRENcomp"), "PUBcomp"] <- 0 # avoid circular prediction from PUBcomp
+#pred[,"PP"]<- -2 # set ID as class variable for 2l.norm
+#pred[,"const"]<- 2 # random intercept
+#pred["wave",]<- 0
+#pred[,"wave"]<- 0
+#post <- ini$post
+#post[c("subj_timing","parent_subj_timing","ldstage","pdsstage","parent_pdsstage","ADRENcomp","GONADcomp","PUBcomp")] <- "imp[[j]][, i] <- squeeze(imp[[j]][, i], c(1, 5))" #constrain the self-report variables to their range of 1-5
+#post["SCARED_mean"] <- "imp[[j]][, i] <- squeeze(imp[[j]][, i], c(0, 2))" #constrain the scared
+#post["CESDC_total"] <- "imp[[j]][, i] <- squeeze(imp[[j]][, i], c(0, 60))" #constrain the cesdc
+#post["CTQ_threat"] <- "imp[[j]][, i] <- squeeze(imp[[j]][, i], c(0, 68))" #constrain the ctq
+
+#imp <- mice(all_for_imp, m=25,maxit=15,meth=meth,pred=pred,post=post,print=FALSE,seed=500)
 
 #Plotting to check the imputations
 plot(imp)
