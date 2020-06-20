@@ -59,7 +59,7 @@ ParentPDS <- ParentPDS %>%
 #ParentPDS$parent_pdsscore <- rowMeans(ParentPDS[,c("PDS_F1","PDS_F2","PDS_F3","PDS_F4","menarchescore")], na.rm=TRUE)
 
 #merge all the measures in one dataframe
-Puberty_all <- merge(PubertyComposite[,c("tagid","wave","pdsstage","ldstage","ADRENcomp","GONADcomp","PUBcomp")], ChildPDS[,c("tagid","wave","subj_timing")], by=c("tagid","wave"),all=T)
+Puberty_all <- merge(PubertyComposite[,c("tagid","wave","adrenf2","gonadf2","PBIP_1A","PBIP_2A")], ChildPDS[,c("tagid","wave","subj_timing")], by=c("tagid","wave"),all=T)
 Puberty_all <- merge(Puberty_all, ParentPDS[,c("tagid","wave", "parent_pdsstage","parent_subj_timing")], by=c("tagid","wave"),all=T)
 Puberty_all <- merge(Puberty_all, Age, by=c("tagid","wave"),all=T)
 
@@ -147,8 +147,10 @@ CTQ <- read.csv(paste0(cas_dir,"projects/W1_W2_pubertal_timing/W1_CTQ_threatscor
 CTQ <- CTQ %>% 
   rename(CTQ_threat=CTQ_threat_total_75perc) %>% 
   mutate(tagid=sprintf("TAG%03d", SID))
-all_pub_int <- all_pub_int %>% merge(.,have_parPDS,by=c("tagid","wave"),all.x=T) %>%
-                              merge(.,CTQ[,c("tagid","CTQ_threat")],by=c("tagid"),all.x=T)
+all_pub_int <- all_pub_int %>%
+  merge(.,CTQ[,c("tagid","CTQ_threat")],by=c("tagid"),all.x=T)
+#  merge(.,have_parPDS,by=c("tagid","wave")) 
+                              
 
 ```
 
@@ -159,16 +161,47 @@ all_pub_int <- all_pub_int %>% merge(.,have_parPDS,by=c("tagid","wave"),all.x=T)
 #check missingness pattern
 md.pattern(all_for_imp)
 
+#impute
 all_for_imp <- all_pub_int %>% 
   mutate(wave=as.numeric(wave)) %>%
-  select(-PUBcomp,-ADRENcomp,-int_d,-before_after_parentPDSw1)
+  select(-int_d)
 imp <- amelia(all_for_imp,m=25,p2s=0,idvars="wave",ts="age",cs="tagid",polytime=1,
-              noms=c("depres_d","anx_d","distress_d","fear_d"),
-              ords=c("subj_timing","parent_subj_timing"))
-#!!!! ADD BOUNDS AND LOG-TRANFORM SKEWED VARIABLES
-#!!!! FIND SOLUTION FOR ADRENCOMP AND GONADCOMP CAUSING COLLEINEARITY 
-#!!!! LEAVE OUT THE BEFORE AND AFTER PARENT PDS VAR?
-#RECALCULATE PUBCOMP AND INT_D
+             noms=c("depres_d","anx_d","distress_d","fear_d"),
+              ords=c("subj_timing","parent_subj_timing","adrenf2","gonadf2","PBIP_1A","PBIP_2A"),
+              logs=c("CESDC_total","SCARED_mean","CTQ_threat"))
+#!!!! ISSUES
+#I left out the before vs after parent pds var because it was causing collinearity issues, imputation of parent pds looks ok though
+#AGE IS THE TIME SERIES VARIABLE BECAUSE USING WAVE CAUSED COLLINEARITY ERROR, BUT NOW AGE IS NOT IMPUTED. WAVE IS COLLINEAR WITH THE HORMONE VARIABLES, I DON'T UNDERSTAND HOW
+#The imputation does a shitty job for SCARED_mean and CTQ_threat, the rest looks ok
+
+# check the performance of Amelia
+for (vari in c("CESDC_total","SCARED_mean","CTQ_threat","DHEA_cor","TEST_cor","EST_cor")) {
+ densityplot <- compare.density(imp,vari)
+ densityplot }
+for (vari in c("CESDC_total","SCARED_mean","CTQ_threat","DHEA_cor","TEST_cor","EST_cor",
+               "subj_timing","parent_subj_timing","parent_pdsstage","adrenf2","gonadf2","PBIP_1A","PBIP_2A")) {
+ overimputeplot <- overimpute(imp,var=vari)
+ overimputeplot }
+
+#average imputations
+completedData <- do.call(rbind.data.frame, imp$imputations)
+completedData <- setDT(completedData, keep.rownames = "imputation")[] 
+completedData <- completedData %>% 
+  mutate(imputation=gsub("\\..*","",imputation)) %>%
+  select(tagid,imputation,wave,depres_d,anx_d,distress_d,fear_d,subj_timing,parent_subj_timing,adrenf2,gonadf2,PBIP_1A,PBIP_2A,everything()) 
+agg <- aggregate(completedData[,14:21] , by = list(tagid=completedData$tagid,wave=completedData$wave),FUN= mean)
+agg2 <- aggregate(completedData[,4:13] , by = list(tagid=completedData$tagid,wave=completedData$wave),FUN= median)
+all_im <- agg %>% left_join(.,agg2) %>% select(tagid, wave, everything())
+
+#recalculate ldstage, pdsstage, composites and int_d
+all_im <- all_im %>%
+  mutate(ldstage=(PBIP_1A+PBIP_2A)/2,
+         pdsstage=(adrenf2+gonadf2)/2,
+         ADRENcomp=(adrenf2+PBIP_2A)/2,
+         GONADcomp=(gonadf2+PBIP_1A)/2,
+         PUBcomp=mean(gonadf2,PBIP_1A,adrenf2,PBIP_2A),
+         int_d=ifelse(depres_d==1|anx_d==1,1,0))
+
 
 #all_for_imp$const <- 1
 #all_for_imp$PP <- as.integer(all_for_imp$tagid)
@@ -196,21 +229,21 @@ imp <- amelia(all_for_imp,m=25,p2s=0,idvars="wave",ts="age",cs="tagid",polytime=
 #imp <- mice(all_for_imp, m=25,maxit=15,meth=meth,pred=pred,post=post,print=FALSE,seed=500)
 
 #Plotting to check the imputations
-plot(imp)
-miss <- is.na(imp$data$PUBcomp)
-xyplot(imp, PUBcomp ~ I ((ADRENcomp + GONADcomp) / 2),
-       na.groups = miss,     ylab = "Imputed", xlab = "Calculated")
-stripplot(imp, pch = 20, cex = 1.2) 
-densityplot(imp) 
+#plot(imp)
+#miss <- is.na(imp$data$PUBcomp)
+#xyplot(imp, PUBcomp ~ I ((ADRENcomp + GONADcomp) / 2),
+#       na.groups = miss,     ylab = "Imputed", xlab = "Calculated")
+#stripplot(imp, pch = 20, cex = 1.2) 
+#densityplot(imp) 
 
 #average imputations
-completedData <- complete(imp, 'long') %>%   
-    select(before_after_parentPDSw1,depres_d,anx_d,int_d,distress_d,fear_d,everything()) %>%
-    mutate(depres_d=as.numeric(as.character(depres_d)),anx_d=as.numeric(as.character(anx_d)),int_d=as.numeric(as.character(int_d)),distress_d=as.numeric(as.character(distress_d)),fear_d=as.numeric(as.character(fear_d)))
-agg <- aggregate(completedData[,11:28] , by = list(completedData$.id),FUN= mean)
-agg2 <- aggregate(completedData[,2:6] , by = list(completedData$.id),FUN= median)
-ids <- completedData %>% filter(.imp==1) %>% select(.id,tagid,wave) %>% mutate(Group.1=.id) 
-all_im <- agg %>% left_join(.,ids) %>% left_join(.,agg2) %>% select(tagid, wave, everything(), -Group.1,-.id)
+#completedData <- complete(imp, 'long') %>%   
+#    select(before_after_parentPDSw1,depres_d,anx_d,int_d,distress_d,fear_d,everything()) %>%
+#    mutate(depres_d=as.numeric(as.character(depres_d)),anx_d=as.numeric(as.character(anx_d)),int_d=as.numeric(as.character(int_d)),distress_d=as.numeric(as.character(distress_d)),fear_d=as.numeric(as.character(fear_d)))
+#agg <- aggregate(completedData[,11:28] , by = list(completedData$.id),FUN= mean)
+#agg2 <- aggregate(completedData[,2:6] , by = list(completedData$.id),FUN= median)
+#ids <- completedData %>% filter(.imp==1) %>% select(.id,tagid,wave) %>% mutate(Group.1=.id) 
+#all_im <- agg %>% left_join(.,ids) %>% left_join(.,agg2) %>% select(tagid, wave, everything(), -Group.1,-.id)
 
 #check distribution imputed variables
 #put in short format
