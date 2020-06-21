@@ -59,7 +59,7 @@ ParentPDS <- ParentPDS %>%
 #ParentPDS$parent_pdsscore <- rowMeans(ParentPDS[,c("PDS_F1","PDS_F2","PDS_F3","PDS_F4","menarchescore")], na.rm=TRUE)
 
 #merge all the measures in one dataframe
-Puberty_all <- merge(PubertyComposite[,c("tagid","wave","adrenf2","gonadf2","PBIP_1A","PBIP_2A")], ChildPDS[,c("tagid","wave","subj_timing")], by=c("tagid","wave"),all=T)
+Puberty_all <- merge(PubertyComposite[,c("tagid","wave","adrenf2","gonadf2","PBIP_1A","PBIP_2A","pdsstage","ldstage","ADRENcomp","GONADcomp","PUBcomp")], ChildPDS[,c("tagid","wave","subj_timing")], by=c("tagid","wave"),all=T)
 Puberty_all <- merge(Puberty_all, ParentPDS[,c("tagid","wave", "parent_pdsstage","parent_subj_timing")], by=c("tagid","wave"),all=T)
 Puberty_all <- merge(Puberty_all, Age, by=c("tagid","wave"),all=T)
 
@@ -164,15 +164,15 @@ md.pattern(all_for_imp)
 #impute
 all_for_imp <- all_pub_int %>% 
   mutate(wave=as.numeric(wave)) %>%
-  select(-int_d)
+  select(-int_d,-pdsstage,-ldstage,-ADRENcomp,-GONADcomp,-PUBcomp,)
 imp <- amelia(all_for_imp,m=25,p2s=0,idvars="wave",ts="age",cs="tagid",polytime=1,
              noms=c("depres_d","anx_d","distress_d","fear_d"),
               ords=c("subj_timing","parent_subj_timing","adrenf2","gonadf2","PBIP_1A","PBIP_2A"),
-              logs=c("CESDC_total","SCARED_mean","CTQ_threat"))
-#!!!! ISSUES
+              logs=c("CESDC_total"))
+# ISSUES
 #I left out the before vs after parent pds var because it was causing collinearity issues, imputation of parent pds looks ok though
-#AGE IS THE TIME SERIES VARIABLE BECAUSE USING WAVE CAUSED COLLINEARITY ERROR, BUT NOW AGE IS NOT IMPUTED. WAVE IS COLLINEAR WITH THE HORMONE VARIABLES, I DON'T UNDERSTAND HOW
-#The imputation does a shitty job for SCARED_mean and CTQ_threat, the rest looks ok
+#AGE IS THE TIME SERIES VARIABLE BECAUSE USING WAVE CAUSED A COLLINEARITY ERROR, BUT NOW AGE IS NOT IMPUTED. WAVE IS COLLINEAR WITH THE HORMONE VARIABLES, I DON'T UNDERSTAND HOW
+#The imputation does a shitty job for CTQ_threat, the rest looks ok
 
 # check the performance of Amelia
 for (vari in c("CESDC_total","SCARED_mean","CTQ_threat","DHEA_cor","TEST_cor","EST_cor")) {
@@ -195,11 +195,11 @@ all_im <- agg %>% left_join(.,agg2) %>% select(tagid, wave, everything())
 
 #recalculate ldstage, pdsstage, composites and int_d
 all_im <- all_im %>%
-  mutate(ldstage=(PBIP_1A+PBIP_2A)/2,
-         pdsstage=(adrenf2+gonadf2)/2,
-         ADRENcomp=(adrenf2+PBIP_2A)/2,
-         GONADcomp=(gonadf2+PBIP_1A)/2,
-         PUBcomp=mean(gonadf2,PBIP_1A,adrenf2,PBIP_2A),
+  mutate(ldstage=rowMeans(select(.,PBIP_1A,PBIP_2A)),
+         pdsstage=rowMeans(select(.,adrenf2,gonadf2)),
+         ADRENcomp=rowMeans(select(.,adrenf2,PBIP_2A)),
+         GONADcomp=rowMeans(select(.,gonadf2,PBIP_1A)),
+         PUBcomp=rowMeans(select(.,gonadf2,PBIP_1A,adrenf2,PBIP_2A)),
          int_d=ifelse(depres_d==1|anx_d==1,1,0))
 
 
@@ -247,8 +247,8 @@ all_im <- all_im %>%
 
 #check distribution imputed variables
 #put in short format
-all_for_imp_short <- all_for_imp %>% pivot_wider(id_cols= tagid, names_from = wave, names_prefix = "wave", values_from = c(age,pdsstage,ldstage,parent_pdsstage,ADRENcomp,GONADcomp,PUBcomp,subj_timing,parent_subj_timing,DHEAmean,DHEA_cor,TESTmean,TEST_cor,ESTmean,EST_cor,SCARED_mean,CESDC_total,depres_d,anx_d,int_d,distress_d,fear_d,CTQ_threat)) 
-all_im_short <- all_im %>% pivot_wider(id_cols= tagid, names_from = wave, names_prefix = "im_wave", values_from = c(age,pdsstage,ldstage,parent_pdsstage,ADRENcomp,GONADcomp,PUBcomp,subj_timing,parent_subj_timing,DHEAmean,DHEA_cor,TESTmean,TEST_cor,ESTmean,EST_cor,SCARED_mean,CESDC_total,depres_d,anx_d,int_d,distress_d,fear_d,CTQ_threat)) 
+all_for_imp_short <- all_pub_int %>% pivot_wider(id_cols= tagid, names_from = wave, names_prefix = "wave", values_from = c(age,pdsstage,ldstage,parent_pdsstage,ADRENcomp,GONADcomp,PUBcomp,subj_timing,parent_subj_timing,DHEA_cor,TEST_cor,EST_cor,SCARED_mean,CESDC_total,depres_d,anx_d,int_d,distress_d,fear_d,CTQ_threat)) 
+all_im_short <- all_im %>% pivot_wider(id_cols= tagid, names_from = wave, names_prefix = "im_wave", values_from = c(age,pdsstage,ldstage,parent_pdsstage,ADRENcomp,GONADcomp,PUBcomp,subj_timing,parent_subj_timing,DHEA_cor,TEST_cor,EST_cor,SCARED_mean,CESDC_total,depres_d,anx_d,int_d,distress_d,fear_d,CTQ_threat)) 
 #plot
 all_for_imp_short %>% 
   select(-tagid,-depres_d_wave1,-anx_d_wave1,-int_d_wave1,-distress_d_wave1,-fear_d_wave1,-depres_d_wave2,-anx_d_wave2,-int_d_wave2,-distress_d_wave2,-fear_d_wave2) %>% gather() %>%
@@ -267,14 +267,14 @@ Timing_allways <- all_im_short %>%
   merge(.,all_for_imp_short[,c("tagid","subj_timing_wave1","parent_subj_timing_wave1","SCARED_mean_wave1","CESDC_total_wave1","depres_d_wave1","anx_d_wave1","int_d_wave1","distress_d_wave1","fear_d_wave1","subj_timing_wave2","parent_subj_timing_wave2","SCARED_mean_wave2","CESDC_total_wave2","depres_d_wave2","anx_d_wave2","int_d_wave2","distress_d_wave2","fear_d_wave2","CTQ_threat_wave1")],by="tagid")
 
 #create residuals for each wave separately BEFORE IMPUTATION
-pubcolumns1 <- list("ldstage_wave1","pdsstage_wave1","ADRENcomp_wave1","GONADcomp_wave1","PUBcomp_wave1","parent_pdsstage_wave1","DHEAmean_wave1","TESTmean_wave1","ESTmean_wave1","DHEA_cor_wave1","TEST_cor_wave1","EST_cor_wave1")
+pubcolumns1 <- list("ldstage_wave1","pdsstage_wave1","ADRENcomp_wave1","GONADcomp_wave1","PUBcomp_wave1","parent_pdsstage_wave1","DHEA_cor_wave1","TEST_cor_wave1","EST_cor_wave1")
 for(Pub in pubcolumns1){
   modelap1 <- lm(formula = paste(Pub, "~ age_wave1"),data=all_for_imp_short,na.action=na.exclude)
   summary(modelap1)
   Timing_allways[[paste('resid',Pub, sep="_")]] <- resid(modelap1)
 }
 
-pubcolumns2 <- c("ldstage_wave2","pdsstage_wave2","ADRENcomp_wave2","GONADcomp_wave2","PUBcomp_wave2","parent_pdsstage_wave2","DHEAmean_wave2","TESTmean_wave2","ESTmean_wave2","DHEA_cor_wave2","TEST_cor_wave2","EST_cor_wave2")
+pubcolumns2 <- c("ldstage_wave2","pdsstage_wave2","ADRENcomp_wave2","GONADcomp_wave2","PUBcomp_wave2","parent_pdsstage_wave2","DHEA_cor_wave2","TEST_cor_wave2","EST_cor_wave2")
 for(Pub in pubcolumns2){
   modelap2 <- lm(formula = paste(Pub, "~ age_wave2"),data=all_for_imp_short,na.action=na.exclude)
   summary(modelap2)
@@ -282,14 +282,14 @@ for(Pub in pubcolumns2){
 }
 
 #create residuals for each wave separately AFTER IMPUTATION
-pubcolumns1a <- list("ldstage_im_wave1","pdsstage_im_wave1","ADRENcomp_im_wave1","GONADcomp_im_wave1","PUBcomp_im_wave1","DHEAmean_im_wave1","TESTmean_im_wave1","ESTmean_im_wave1","DHEA_cor_im_wave1","TEST_cor_im_wave1","EST_cor_im_wave1")
+pubcolumns1a <- list("ldstage_im_wave1","pdsstage_im_wave1","ADRENcomp_im_wave1","GONADcomp_im_wave1","PUBcomp_im_wave1","DHEA_cor_im_wave1","TEST_cor_im_wave1","EST_cor_im_wave1")
 for(Pub in pubcolumns1a){
   modelap1a <- lm(formula = paste(Pub, "~ age_im_wave1"),data=Timing_allways,na.action=na.exclude)
   summary(modelap1a)
   Timing_allways[[paste('resid',Pub, sep="_")]] <- resid(modelap1a)
 }
 
-pubcolumns2a <- c("ldstage_im_wave2","pdsstage_im_wave2","ADRENcomp_im_wave2","GONADcomp_im_wave2","PUBcomp_im_wave2","DHEAmean_im_wave2","TESTmean_im_wave2","ESTmean_im_wave2","DHEA_cor_im_wave2","TEST_cor_im_wave2","EST_cor_im_wave2")
+pubcolumns2a <- c("ldstage_im_wave2","pdsstage_im_wave2","ADRENcomp_im_wave2","GONADcomp_im_wave2","PUBcomp_im_wave2","DHEA_cor_im_wave2","TEST_cor_im_wave2","EST_cor_im_wave2")
 for(Pub in pubcolumns2a){
   modelap2a <- lm(formula = paste(Pub, "~ age_im_wave2"),data=Timing_allways,na.action=na.exclude)
   summary(modelap2a)
