@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r Set Directory, message=FALSE, warning=FALSE, include=FALSE}
 getwd()
 #You should set this to the TAG directory on the CAS file server 
-workdir='Z:/dsnlab/TAG/' 
+workdir='Z:/TAG/' 
 ```
 
 
@@ -24,9 +24,9 @@ library(zoo)
 # Note that parent_pdsstage is NOT imputed because reasons
 
 data <- read.csv(file.path(workdir,"projects/W1_W2_pubertal_timing/Timing_and_internalizing.csv", fsep=""))
-data_imputed <- select(data, "tagid", "age_im_wave2", "age_im_wave1", "pdsstage_im_wave2", "pdsstage_im_wave1", "ldstage_im_wave2", "ldstage_im_wave1", "parent_pdsstage_im_wave2", "parent_pdsstage_im_wave1", "ADRENcomp_im_wave2", "ADRENcomp_im_wave1", "GONADcomp_im_wave2", "GONADcomp_im_wave1", "PUBcomp_im_wave2", "PUBcomp_im_wave1", "subj_timing_im_wave2", "subj_timing_im_wave1", "parent_subj_timing_im_wave2", "parent_subj_timing_im_wave1", "DHEAmean_im_wave2", "DHEAmean_im_wave1", "DHEA_cor_im_wave2", "DHEA_cor_im_wave1", "TESTmean_im_wave2", "TESTmean_im_wave1", "TEST_cor_im_wave2", "TEST_cor_im_wave1", "ESTmean_im_wave2", "ESTmean_im_wave1", "EST_cor_im_wave2", "EST_cor_im_wave1", "resid_ldstage_im_wave1", "resid_ldstage_im_wave2", "resid_pdsstage_im_wave1", "resid_pdsstage_im_wave2", "resid_parent_pdsstage_wave1", "resid_parent_pdsstage_wave2", "resid_ADRENcomp_im_wave1", "resid_ADRENcomp_im_wave2", "resid_GONADcomp_im_wave1", "resid_GONADcomp_im_wave2", "resid_PUBcomp_im_wave1", "resid_PUBcomp_im_wave2", "resid_DHEAmean_im_wave1", "resid_DHEAmean_im_wave2", "resid_DHEA_cor_im_wave1", "resid_DHEA_cor_im_wave2", "resid_TESTmean_im_wave1", "resid_TESTmean_im_wave2", "resid_TEST_cor_im_wave1", "resid_TEST_cor_im_wave2", "resid_ESTmean_im_wave1", "resid_ESTmean_im_wave2", "resid_EST_cor_im_wave1", "resid_EST_cor_im_wave2", "aam_final")
+data_imputed <- select(data, "tagid", "age_im_wave1", "age_im_wave2", "pdsstage_im_wave1", "pdsstage_im_wave2", "ldstage_im_wave1", "ldstage_im_wave2", "parent_pdsstage_im_wave1", "parent_pdsstage_im_wave2", "ADRENcomp_im_wave1", "ADRENcomp_im_wave2", "GONADcomp_im_wave1", "GONADcomp_im_wave2", "PUBcomp_im_wave1", "PUBcomp_im_wave2", "subj_timing_im_wave1", "subj_timing_im_wave2", "parent_subj_timing_im_wave1", "parent_subj_timing_im_wave2", "DHEA_cor_im_wave1", "DHEA_cor_im_wave2", "TEST_cor_im_wave1", "TEST_cor_im_wave2", "EST_cor_im_wave1", "EST_cor_im_wave2",  "resid_ldstage_im_wave1", "resid_ldstage_im_wave2", "resid_pdsstage_im_wave1", "resid_pdsstage_im_wave2", "resid_parent_pdsstage_wave1", "resid_parent_pdsstage_wave2", "resid_ADRENcomp_im_wave1", "resid_ADRENcomp_im_wave2", "resid_GONADcomp_im_wave1", "resid_GONADcomp_im_wave2", "resid_PUBcomp_im_wave1", "resid_PUBcomp_im_wave2", "resid_DHEA_cor_im_wave1", "resid_DHEA_cor_im_wave2", "resid_TEST_cor_im_wave1", "resid_TEST_cor_im_wave2", "resid_EST_cor_im_wave1", "resid_EST_cor_im_wave2", "aam_final")
 
-data_imp_long <- reshape(as.data.frame(data_imputed), sep = "_wave", times = c(1, 2), direction = "long", varying = c("age_im_wave2", "age_im_wave1", "pdsstage_im_wave2", "pdsstage_im_wave1", "ldstage_im_wave2", "ldstage_im_wave1", "parent_pdsstage_im_wave2", "parent_pdsstage_im_wave1", "ADRENcomp_im_wave2", "ADRENcomp_im_wave1", "GONADcomp_im_wave2", "GONADcomp_im_wave1", "PUBcomp_im_wave2", "PUBcomp_im_wave1", "subj_timing_im_wave2", "subj_timing_im_wave1", "parent_subj_timing_im_wave2", "parent_subj_timing_im_wave1", "DHEAmean_im_wave2", "DHEAmean_im_wave1", "DHEA_cor_im_wave2", "DHEA_cor_im_wave1", "TESTmean_im_wave2", "TESTmean_im_wave1", "TEST_cor_im_wave2", "TEST_cor_im_wave1", "ESTmean_im_wave2", "ESTmean_im_wave1", "EST_cor_im_wave2", "EST_cor_im_wave1", "resid_ldstage_im_wave1", "resid_ldstage_im_wave2", "resid_pdsstage_im_wave1", "resid_pdsstage_im_wave2", "resid_parent_pdsstage_wave1", "resid_parent_pdsstage_wave2", "resid_ADRENcomp_im_wave1", "resid_ADRENcomp_im_wave2", "resid_GONADcomp_im_wave1", "resid_GONADcomp_im_wave2", "resid_PUBcomp_im_wave1", "resid_PUBcomp_im_wave2", "resid_DHEAmean_im_wave1", "resid_DHEAmean_im_wave2", "resid_DHEA_cor_im_wave1", "resid_DHEA_cor_im_wave2", "resid_TESTmean_im_wave1", "resid_TESTmean_im_wave2", "resid_TEST_cor_im_wave1", "resid_TEST_cor_im_wave2", "resid_ESTmean_im_wave1", "resid_ESTmean_im_wave2", "resid_EST_cor_im_wave1", "resid_EST_cor_im_wave2"))
+data_imp_long <- reshape(as.data.frame(data_imputed), sep = "_wave", times = c(1, 2), direction = "long", varying = c("age_im_wave1", "age_im_wave2", "pdsstage_im_wave1", "pdsstage_im_wave2", "ldstage_im_wave1", "ldstage_im_wave2", "parent_pdsstage_im_wave1", "parent_pdsstage_im_wave2", "ADRENcomp_im_wave1", "ADRENcomp_im_wave2", "GONADcomp_im_wave1", "GONADcomp_im_wave2", "PUBcomp_im_wave1", "PUBcomp_im_wave2", "subj_timing_im_wave1", "subj_timing_im_wave2", "parent_subj_timing_im_wave1", "parent_subj_timing_im_wave2", "DHEA_cor_im_wave1", "DHEA_cor_im_wave2", "TEST_cor_im_wave1", "TEST_cor_im_wave2", "EST_cor_im_wave1", "EST_cor_im_wave2",  "resid_ldstage_im_wave1", "resid_ldstage_im_wave2", "resid_pdsstage_im_wave1", "resid_pdsstage_im_wave2", "resid_parent_pdsstage_wave1", "resid_parent_pdsstage_wave2", "resid_ADRENcomp_im_wave1", "resid_ADRENcomp_im_wave2", "resid_GONADcomp_im_wave1", "resid_GONADcomp_im_wave2", "resid_PUBcomp_im_wave1", "resid_PUBcomp_im_wave2", "resid_DHEA_cor_im_wave1", "resid_DHEA_cor_im_wave2", "resid_TEST_cor_im_wave1", "resid_TEST_cor_im_wave2", "resid_EST_cor_im_wave1", "resid_EST_cor_im_wave2"))
 
 data_imp_long <- rename(data_imp_long, wave = time)
 ```
@@ -288,128 +288,7 @@ for (i in 1:nrow(data_w2)) {
 }
 ```
  
-```{r 6 mo DTW - DHEA mean}
-# Wave 1:
-for (i in 1:nrow(data_w1)) { 
-  comp_values <- data.frame()
-  
-  curr_max_age <- data_w1$max_age[i]
-  curr_min_age <- data_w1$min_age[i]
-  
-  temp_data_w1 <- data_w1[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$age_im[j] > curr_min_age & temp_data_w1$age_im[j] < curr_max_age, temp_data_w1$DHEAmean_im[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
  
-  comp_values <- as.numeric(comp_values)
-  data_w1$window_DHEAmean[i] <- data_w1$DHEAmean_im[i] - mean(comp_values, na.rm = TRUE)
-  data_w1$window_DHEAmean_compN[i] <- length(na.omit(comp_values))
-}
-
-# Wave 2:
-for (i in 1:nrow(data_w2)) { 
-  comp_values <- data.frame()
-  
-  curr_max_age <- data_w2$max_age[i]
-  curr_min_age <- data_w2$min_age[i]
-  
-  temp_data_w2 <- data_w2[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$age_im[j] > curr_min_age & temp_data_w2$age_im[j] < curr_max_age, temp_data_w2$DHEAmean_im[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
- 
-  comp_values <- as.numeric(comp_values)
-  data_w2$window_DHEAmean[i] <- data_w2$DHEAmean_im[i] - mean(comp_values, na.rm = TRUE)
-  data_w2$window_DHEAmean_compN[i] <- length(na.omit(comp_values))
-}
-``` 
- 
-```{r 6 mo DTW - TEST mean}
-
-# Wave 1:
-for (i in 1:nrow(data_w1)) { 
-  comp_values <- data.frame()
-  
-  curr_max_age <- data_w1$max_age[i]
-  curr_min_age <- data_w1$min_age[i]
-  
-  temp_data_w1 <- data_w1[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$age_im[j] > curr_min_age & temp_data_w1$age_im[j] < curr_max_age, temp_data_w1$TESTmean_im[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
- 
-  comp_values <- as.numeric(comp_values)
-  data_w1$window_TESTmean[i] <- data_w1$TESTmean_im[i] - mean(comp_values, na.rm = TRUE)
-  data_w1$window_TESTmean_compN[i] <- length(na.omit(comp_values))
-}
-
-# Wave 2:
-for (i in 1:nrow(data_w2)) { 
-  comp_values <- data.frame()
-  
-  curr_max_age <- data_w2$max_age[i]
-  curr_min_age <- data_w2$min_age[i]
-  
-  temp_data_w2 <- data_w2[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$age_im[j] > curr_min_age & temp_data_w2$age_im[j] < curr_max_age, temp_data_w2$TESTmean_im[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
- 
-  comp_values <- as.numeric(comp_values)
-  data_w2$window_TESTmean[i] <- data_w2$TESTmean_im[i] - mean(comp_values, na.rm = TRUE)
-  data_w2$window_TESTmean_compN[i] <- length(na.omit(comp_values))
-}
-```  
-
-```{r 6 mo DTW - EST mean}
-
-# Wave 1:
-for (i in 1:nrow(data_w1)) { 
-  comp_values <- data.frame()
-  
-  curr_max_age <- data_w1$max_age[i]
-  curr_min_age <- data_w1$min_age[i]
-  
-  temp_data_w1 <- data_w1[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w1)) {
-    curr_comp_values <- ifelse(temp_data_w1$age_im[j] > curr_min_age & temp_data_w1$age_im[j] < curr_max_age, temp_data_w1$ESTmean_im[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
- 
-  comp_values <- as.numeric(comp_values)
-  data_w1$window_ESTmean[i] <- data_w1$ESTmean_im[i] - mean(comp_values, na.rm = TRUE)
-  data_w1$window_ESTmean_compN[i] <- length(na.omit(comp_values))
-}
-
-# Wave 2:
-for (i in 1:nrow(data_w2)) { 
-  comp_values <- data.frame()
-  
-  curr_max_age <- data_w2$max_age[i]
-  curr_min_age <- data_w2$min_age[i]
-  
-  temp_data_w2 <- data_w2[-i, ] 
-  
-  for (j in 1:nrow(temp_data_w2)) {
-    curr_comp_values <- ifelse(temp_data_w2$age_im[j] > curr_min_age & temp_data_w2$age_im[j] < curr_max_age, temp_data_w2$ESTmean_im[j], NA)
-    comp_values <- c(comp_values, curr_comp_values)
-  }
- 
-  comp_values <- as.numeric(comp_values)
-  data_w2$window_ESTmean[i] <- data_w2$ESTmean_im[i] - mean(comp_values, na.rm = TRUE)
-  data_w2$window_ESTmean_compN[i] <- length(na.omit(comp_values))
-}
-```      
-  
 ```{r 6 mo DTW - DHEA basal estimate}
 # Wave 1:
 for (i in 1:nrow(data_w1)) { 
@@ -535,7 +414,7 @@ for (i in 1:nrow(data_w2)) {
 
 # At the end of this script are the correlations between residual and windows timing measures. At first, we did it only with AGE dynamic timing windows (+/- 6 months). From that, we learned that at Wave 2 - controlling stage for age was not totally the same as comparing stage with +/- 6 month peers, especially for the adrenarcheal measures.
 
-# So now we also do all the window measures again comparing to the same school grade (instead of same age) - grade dynamic timing windows. At the end we will compare all three (age residual, age DTW, grade DTW) - spoiler alert grade windows are no different to age windows. BECAUSE OF THIS THE GRADE CODE BELOW IS COMMENTED OUT AND HAS NOT BEEN UPDATED
+# So now we also do all the window measures again comparing to the same school grade (instead of same age) - grade dynamic timing windows. At the end we will compare all three (age residual, age DTW, grade DTW) - spoiler alert, grade windows are no different to age windows. BECAUSE OF THIS THE GRADE CODE BELOW IS COMMENTED OUT AND HAS NOT BEEN UPDATED
 
 ```{r Grade DTW - LD stage}
 # for each individual, find the mean of the values from everyone else that is in the same school grade as them, then take that person's value and subtract the mean of that value only within the subset. We do this separately by wave to avoid comparing peers across waves.
@@ -915,7 +794,7 @@ library(Hmisc)
 library(corrplot)
 
 # wave 1 (note that parent_pdsstage residuals are from non-imputed data):
-w1_all <- select (data_w1, "resid_ldstage_im", "window_ldstage", "resid_pdsstage_im", "window_pdsstage", "resid_ADRENcomp_im", "window_ADRENcomp", "resid_GONADcomp_im", "window_GONADcomp", "resid_PUBcomp_im", "window_PUBcomp", "resid_parent_pdsstage", "window_parent_pdsstage", "resid_DHEAmean_im", "window_DHEAmean", "resid_TESTmean_im", "window_TESTmean", "resid_ESTmean_im", "window_ESTmean", "resid_DHEA_cor_im", "window_DHEA_cor", "resid_TEST_cor_im", "window_TEST_cor", "resid_EST_cor_im", "window_EST_cor")
+w1_all <- select (data_w1, "resid_ldstage_im", "window_ldstage", "resid_pdsstage_im", "window_pdsstage", "resid_ADRENcomp_im", "window_ADRENcomp", "resid_GONADcomp_im", "window_GONADcomp", "resid_PUBcomp_im", "window_PUBcomp", "resid_parent_pdsstage", "window_parent_pdsstage", "resid_DHEA_cor_im", "window_DHEA_cor", "resid_TEST_cor_im", "window_TEST_cor", "resid_EST_cor_im", "window_EST_cor")
 
 library(moments)
 skewness(w1_all, na.rm = TRUE)
@@ -927,11 +806,11 @@ corr_w1_r <- cor(w1_all, use="pairwise.complete.obs", method="pearson")
 corr_w1_rho <- cor(w1_all, use="pairwise.complete.obs", method="spearman")
 corr_w1_tau <- cor(w1_all, use="pairwise.complete.obs", method="kendall")
 
-corr_w1_rbar <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEAmean", "TESTmean", "ESTmean", "DHEA_cor", "TEST_cor", "EST_cor"), resid_window_r=c(corr_w1_r[1,2], corr_w1_r[3,4], corr_w1_r[5,6], corr_w1_r[7,8], corr_w1_r[9,10], corr_w1_r[11,12], corr_w1_r[13,14], corr_w1_r[15,16], corr_w1_r[17,18], corr_w1_r[19,20], corr_w1_r[21,22], corr_w1_r[23,24]))
+corr_w1_rbar <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEA_cor", "TEST_cor", "EST_cor"), resid_window_r=c(corr_w1_r[1,2], corr_w1_r[3,4], corr_w1_r[5,6], corr_w1_r[7,8], corr_w1_r[9,10], corr_w1_r[11,12], corr_w1_r[13,14], corr_w1_r[15,16], corr_w1_r[17,18]))
 
-corr_w1_rhobar <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEAmean", "TESTmean", "ESTmean", "DHEA_cor", "TEST_cor", "EST_cor"), resid_window_rho=c(corr_w1_rho[1,2], corr_w1_rho[3,4], corr_w1_rho[5,6], corr_w1_rho[7,8], corr_w1_rho[9,10], corr_w1_rho[11,12], corr_w1_rho[13,14], corr_w1_rho[15,16], corr_w1_rho[17,18], corr_w1_rho[19,20], corr_w1_rho[21,22], corr_w1_rho[23,24]))
+corr_w1_rhobar <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEA_cor", "TEST_cor", "EST_cor"), resid_window_rho=c(corr_w1_rho[1,2], corr_w1_rho[3,4], corr_w1_rho[5,6], corr_w1_rho[7,8], corr_w1_rho[9,10], corr_w1_rho[11,12], corr_w1_rho[13,14], corr_w1_rho[15,16], corr_w1_rho[17,18]))
 
-corr_w1_taubar <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEAmean", "TESTmean", "ESTmean", "DHEA_cor", "TEST_cor", "EST_cor"), resid_window_tau=c(corr_w1_tau[1,2], corr_w1_tau[3,4], corr_w1_tau[5,6], corr_w1_tau[7,8], corr_w1_tau[9,10], corr_w1_tau[11,12], corr_w1_tau[13,14], corr_w1_tau[15,16], corr_w1_tau[17,18], corr_w1_tau[19,20], corr_w1_tau[21,22], corr_w1_tau[23,24]))
+corr_w1_taubar <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEA_cor", "TEST_cor", "EST_cor"), resid_window_tau=c(corr_w1_tau[1,2], corr_w1_tau[3,4], corr_w1_tau[5,6], corr_w1_tau[7,8], corr_w1_tau[9,10], corr_w1_tau[11,12], corr_w1_tau[13,14], corr_w1_tau[15,16], corr_w1_tau[17,18]))
 library(ggplot2)
 library(viridis)
 
@@ -965,30 +844,6 @@ w1_tau_plot <- ggplot(data=corr_w1_taubar, aes(x=timing_measure, y=resid_window_
   labs(title="W1 Kendall corr of age residual & 6 mo dynamic timing windows", x ="Wave 1 measure of timing", y = "correlation (tau)") +
   ylim(0,1)
 
-# # Then for GRADE windows (pearson only) - age resid vs grade windows (THIS IS NOT UPDATED BECAUSE EARLIER ANALYSIS SHOWED NO DIFFERENCE BETWEEN AGE AND GRADE):
-# corr_w1_rbar_grade <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEAmean", "TESTmean", "ESTmean", "DHEA_cor", "TEST_cor", "EST_cor"), resid_window_r_grade=c(corr_w1_r[1,25], corr_w1_r[3,26], corr_w1_r[5,27], corr_w1_r[7,28], corr_w1_r[9,29], corr_w1_r[11,30], corr_w1_r[13,31], corr_w1_r[15,32], corr_w1_r[17,33], corr_w1_r[19,34], corr_w1_r[21,35], corr_w1_r[23,36]))
-# w1_plot_grade <- ggplot(data=corr_w1_rbar_grade, aes(x=timing_measure, y=resid_window_r_grade, fill=timing_measure)) +
-#   geom_bar(stat="identity") +
-#   geom_text(aes(label=round(resid_window_r_grade, digits=2)), vjust=-0.5, color="black", size=3) +
-#   scale_x_discrete(limits=corr_w1_rbar_grade$timing_measure) +
-#   scale_fill_viridis(discrete=TRUE) +
-#   theme(text = element_text(size=10),
-#         axis.text.x = element_text(angle=45, hjust=1), legend.position = "none") +
-#   labs(title="W1 Pearson corr of age residual & GRADE dynamic timing windows", x ="Wave 1 measure of timing", y = "correlation (r)")
-# 
-# # Then for GRADE vs. age windows (no residuals) - pearson only:
-# corr_w1_rbar_windows <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEAmean", "TESTmean", "ESTmean", "DHEA_cor", "TEST_cor", "EST_cor"), age_grade_window_r=c(corr_w1_r[2,25], corr_w1_r[4,26], corr_w1_r[6,27], corr_w1_r[8,28], corr_w1_r[10,29], corr_w1_r[12,30], corr_w1_r[14,31], corr_w1_r[16,32], corr_w1_r[18,33], corr_w1_r[20,34], corr_w1_r[22,35], corr_w1_r[24,36]))
-# 
-# w1_plot_windows <- ggplot(data=corr_w1_rbar_windows, aes(x=timing_measure, y=age_grade_window_r, fill=timing_measure)) +
-#   geom_bar(stat="identity") +
-#   geom_text(aes(label=round(age_grade_window_r, digits=2)), vjust=-0.5, color="black", size=3) +
-#   scale_x_discrete(limits=corr_w1_rbar_windows$timing_measure) +
-#   scale_fill_viridis(discrete=TRUE) +
-#   theme(text = element_text(size=10),
-#         axis.text.x = element_text(angle=45, hjust=1), legend.position = "none") +
-#   labs(title="W1 Pearson corr of AGE (6 mo) vs. GRADE dynamic timing windows", x ="Wave 1 measure of timing", y = "correlation (r)")
-# 
-
 corr_w1_rcorr <- rcorr(as.matrix(w1_all)) # for saving later
 library(ggcorrplot)
 w1_corrmat <- ggcorrplot(corr_w1_r) + 
@@ -996,7 +851,7 @@ w1_corrmat <- ggcorrplot(corr_w1_r) +
   labs(title = "W1 Pearson corrs of timing (incl. age residual & DTW)")
 
 # wave 2:
-w2_all <- select (data_w2, "resid_ldstage_im", "window_ldstage", "resid_pdsstage_im", "window_pdsstage", "resid_ADRENcomp_im", "window_ADRENcomp", "resid_GONADcomp_im", "window_GONADcomp", "resid_PUBcomp_im", "window_PUBcomp", "resid_parent_pdsstage", "window_parent_pdsstage", "resid_DHEAmean_im", "window_DHEAmean", "resid_TESTmean_im", "window_TESTmean", "resid_ESTmean_im", "window_ESTmean", "resid_DHEA_cor_im", "window_DHEA_cor", "resid_TEST_cor_im", "window_TEST_cor", "resid_EST_cor_im", "window_EST_cor")
+w2_all <- select (data_w2, "resid_ldstage_im", "window_ldstage", "resid_pdsstage_im", "window_pdsstage", "resid_ADRENcomp_im", "window_ADRENcomp", "resid_GONADcomp_im", "window_GONADcomp", "resid_PUBcomp_im", "window_PUBcomp", "resid_parent_pdsstage", "window_parent_pdsstage", "resid_DHEA_cor_im", "window_DHEA_cor", "resid_TEST_cor_im", "window_TEST_cor", "resid_EST_cor_im", "window_EST_cor")
 skewness(w2_all, na.rm = TRUE)
 kurtosis(w2_all, na.rm = TRUE)
 #skewness is ok, kurtosis technically a little high, could use method="spearman" for rho if wanted)
@@ -1005,11 +860,11 @@ corr_w2_rho <- cor(w2_all, use="pairwise.complete.obs", method="spearman")
 corr_w2_tau <- cor(w2_all, use="pairwise.complete.obs", method="kendall")
 
 # First for AGE Windows - age resid vs age DTWs
-corr_w2_rbar <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEAmean", "TESTmean", "ESTmean", "DHEA_cor", "TEST_cor", "EST_cor"), resid_window_r=c(corr_w2_r[1,2], corr_w2_r[3,4], corr_w2_r[5,6], corr_w2_r[7,8], corr_w2_r[9,10], corr_w2_r[11,12], corr_w2_r[13,14], corr_w2_r[15,16], corr_w2_r[17,18], corr_w2_r[19,20], corr_w2_r[21,22], corr_w2_r[23,24]))
+corr_w2_rbar <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEA_cor", "TEST_cor", "EST_cor"), resid_window_r=c(corr_w2_r[1,2], corr_w2_r[3,4], corr_w2_r[5,6], corr_w2_r[7,8], corr_w2_r[9,10], corr_w2_r[11,12], corr_w2_r[13,14], corr_w2_r[15,16], corr_w2_r[17,18]))
 
-corr_w2_rhobar <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEAmean", "TESTmean", "ESTmean", "DHEA_cor", "TEST_cor", "EST_cor"), resid_window_rho=c(corr_w2_rho[1,2], corr_w2_rho[3,4], corr_w2_rho[5,6], corr_w2_rho[7,8], corr_w2_rho[9,10], corr_w2_rho[11,12], corr_w2_rho[13,14], corr_w2_rho[15,16], corr_w2_rho[17,18], corr_w2_rho[19,20], corr_w2_rho[21,22], corr_w2_rho[23,24]))
+corr_w2_rhobar <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEA_cor", "TEST_cor", "EST_cor"), resid_window_rho=c(corr_w2_rho[1,2], corr_w2_rho[3,4], corr_w2_rho[5,6], corr_w2_rho[7,8], corr_w2_rho[9,10], corr_w2_rho[11,12], corr_w2_rho[13,14], corr_w2_rho[15,16], corr_w2_rho[17,18]))
 
-corr_w2_taubar <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEAmean", "TESTmean", "ESTmean", "DHEA_cor", "TEST_cor", "EST_cor"), resid_window_tau=c(corr_w2_tau[1,2], corr_w2_tau[3,4], corr_w2_tau[5,6], corr_w2_tau[7,8], corr_w2_tau[9,10], corr_w2_tau[11,12], corr_w2_tau[13,14], corr_w2_tau[15,16], corr_w2_tau[17,18], corr_w2_tau[19,20], corr_w2_tau[21,22], corr_w2_tau[23,24]))
+corr_w2_taubar <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEA_cor", "TEST_cor", "EST_cor"), resid_window_tau=c(corr_w2_tau[1,2], corr_w2_tau[3,4], corr_w2_tau[5,6], corr_w2_tau[7,8], corr_w2_tau[9,10], corr_w2_tau[11,12], corr_w2_tau[13,14], corr_w2_tau[15,16], corr_w2_tau[17,18]))
 
 w2_plot <- ggplot(data=corr_w2_rbar, aes(x=timing_measure, y=resid_window_r, fill=timing_measure)) +
   geom_bar(stat="identity") +
@@ -1041,38 +896,28 @@ w2_tau_plot <- ggplot(data=corr_w2_taubar, aes(x=timing_measure, y=resid_window_
   labs(title="w2 Kendall corr of age residual & 6 mo dynamic timing windows", x ="Wave 1 measure of timing", y = "correlation (tau)") +
   ylim(0,1)
 
-# # Then for GRADE windows - age resid vs grade windows (pearson only):
-# corr_w2_rbar_grade <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEAmean", "TESTmean", "ESTmean", "DHEA_cor", "TEST_cor", "EST_cor"), resid_window_r_grade=c(corr_w2_r[1,25], corr_w2_r[3,26], corr_w2_r[5,27], corr_w2_r[7,28], corr_w2_r[9,29], corr_w2_r[11,30], corr_w2_r[13,31], corr_w2_r[15,32], corr_w2_r[17,33], corr_w2_r[19,34], corr_w2_r[21,35], corr_w2_r[23,36]))
-# 
-# w2_plot_grade <- ggplot(data=corr_w2_rbar_grade, aes(x=timing_measure, y=resid_window_r_grade, fill=timing_measure)) +
-#   geom_bar(stat="identity") +
-#   geom_text(aes(label=round(resid_window_r_grade, digits=2)), vjust=-0.5, color="black", size=3) +
-#   scale_x_discrete(limits=corr_w2_rbar_grade$timing_measure) +
-#   scale_fill_viridis(discrete=TRUE) +
-#   theme(text = element_text(size=10),
-#         axis.text.x = element_text(angle=45, hjust=1), legend.position = "none") +
-#   labs(title="W2 Pearson corr of age residual & GRADE dynamic timing windows", x ="Wave 2 measure of timing", y = "correlation (r)")
-# 
-# # Then for GRADE vs. age windows (no residuals):
-# corr_w2_rbar_windows <- data.frame(timing_measure=c("ldstage", "pdsstage", "ADRENcomp", "GONADcomp", "PUBcomp", "parent_pdsstage", "DHEAmean", "TESTmean", "ESTmean", "DHEA_cor", "TEST_cor", "EST_cor"), age_grade_window_r=c(corr_w2_r[2,25], corr_w2_r[4,26], corr_w2_r[6,27], corr_w2_r[8,28], corr_w2_r[10,29], corr_w2_r[12,30], corr_w2_r[14,31], corr_w2_r[16,32], corr_w2_r[18,33], corr_w2_r[20,34], corr_w2_r[22,35], corr_w2_r[24,36]))
-# 
-# w2_plot_windows <- ggplot(data=corr_w2_rbar_windows, aes(x=timing_measure, y=age_grade_window_r, fill=timing_measure)) +
-#   geom_bar(stat="identity") +
-#   geom_text(aes(label=round(age_grade_window_r, digits=2)), vjust=-0.5, color="black", size=3) +
-#   scale_x_discrete(limits=corr_w2_rbar_windows$timing_measure) +
-#   scale_fill_viridis(discrete=TRUE) +
-#   theme(text = element_text(size=10),
-#         axis.text.x = element_text(angle=45, hjust=1), legend.position = "none") +
-#   labs(title="w2 Pearson corr of AGE (6 mo) vs. GRADE dynamic timing windows", x ="Wave 2 measure of timing", y = "correlation (r)")
 
 corr_w2_rcorr <- rcorr(as.matrix(w2_all)) # for saving later
 w2_corrmat <- ggcorrplot(corr_w2_r) + 
   scale_fill_viridis(discrete = FALSE) +
   labs(title = "W2 Pearson corrs of timing (incl. age residual & DTW)")
 
+# Imputing data really messed up the residual/window correlations again... 
+w1_simplescatter <- ggplot(data_w1, aes(x = resid_ldstage_im, y = window_ldstage)) + 
+ geom_point(size = 3.5, aes()) +
+  scale_color_viridis(discrete=TRUE) +
+  theme_bw() +
+  geom_text(aes(label=paste(tagid)),hjust=0, vjust=0, size = 3)
+
+w2_simplescatter <- ggplot(data_w2, aes(x = resid_ldstage_im, y = window_ldstage)) + 
+ geom_point(size = 3.5, aes()) +
+  scale_color_viridis(discrete=TRUE) +
+  theme_bw() +
+  geom_text(aes(label=paste(tagid)),hjust=0, vjust=0, size = 3)
+
 # Going back to resid vs age windows, what are the correlations between the correlations W1 vs W2
 corr_w1w2 <- merge(corr_w1_rbar, corr_w2_rbar, by = "timing_measure")
-corr_w1w2$adr_gon <- c("ADR", "ADR", "ADR", "GON", "GON", "GON", "PUB", "PUB", "PUB", "PUB", "ADR", "ADR")
+corr_w1w2$adr_gon <- c("ADR", "ADR", "GON", "GON", "PUB", "PUB", "PUB", "PUB", "ADR")
 W1_W2_corr_corrs <- ggplot(corr_w1w2, aes(x = resid_window_r.x, y = resid_window_r.y)) + 
   geom_point(size = 5, aes(colour = factor(adr_gon))) +
   scale_color_viridis(discrete=TRUE) +
@@ -1082,7 +927,7 @@ W1_W2_corr_corrs <- ggplot(corr_w1w2, aes(x = resid_window_r.x, y = resid_window
   labs(title="W1 vs W2 Pearson correlations (residual and window)", x ="W1 correlation", y = "W2 correlation") 
 
 corr_w1w2_rho <- merge(corr_w1_rhobar, corr_w2_rhobar, by = "timing_measure")
-corr_w1w2_rho$adr_gon <- c("ADR", "ADR", "ADR", "GON", "GON", "GON", "PUB", "PUB", "PUB", "PUB", "ADR", "ADR")
+corr_w1w2_rho$adr_gon <- c("ADR", "ADR", "GON", "GON", "PUB", "PUB", "PUB", "PUB", "ADR")
 W1_W2_corr_corrs_rho <- ggplot(corr_w1w2_rho, aes(x = resid_window_rho.x, y = resid_window_rho.y)) + 
   geom_point(size = 5, aes(colour = factor(adr_gon))) +
   scale_color_viridis(discrete=TRUE) +
@@ -1092,7 +937,7 @@ W1_W2_corr_corrs_rho <- ggplot(corr_w1w2_rho, aes(x = resid_window_rho.x, y = re
   labs(title="W1 vs W2 Spearman correlations (residual and window)", x ="W1 correlation", y = "W2 correlation")
 
 corr_w1w2_tau <- merge(corr_w1_taubar, corr_w2_taubar, by = "timing_measure")
-corr_w1w2_tau$adr_gon <- c("ADR", "ADR", "ADR", "GON", "GON", "GON", "PUB", "PUB", "PUB", "PUB", "ADR", "ADR")
+corr_w1w2_tau$adr_gon <- c("ADR", "ADR", "GON", "GON", "PUB", "PUB", "PUB", "PUB", "ADR")
 W1_W2_corr_corrs_tau <- ggplot(corr_w1w2_tau, aes(x = resid_window_tau.x, y = resid_window_tau.y)) + 
   geom_point(size = 5, aes(colour = factor(adr_gon))) +
   scale_color_viridis(discrete=TRUE) +
@@ -1103,10 +948,6 @@ W1_W2_corr_corrs_tau <- ggplot(corr_w1w2_tau, aes(x = resid_window_tau.x, y = re
 
 library(cowplot)
 w1w2_ageage_plots <- plot_grid(w1_plot, w2_plot, labels = "AUTO")
-w1w2_agegrade_plots <- plot_grid(w1_plot_grade, w2_plot_grade, labels = "AUTO")
-w1w1_agegrade_plots <- plot_grid(w1_plot, w1_plot_grade, labels = "AUTO")
-w2w2_agegrade_plots <- plot_grid(w2_plot, w2_plot_grade, labels = "AUTO")
-w1w2_windows_plots <- plot_grid(w1_plot_windows, w2_plot_windows, labels = "AUTO")
 
 w1_r_rho_tau_plots <- plot_grid(w1_plot, w1_rho_plot, w1_tau_plot)
 w2_r_rho_tau_plots <- plot_grid(w2_plot, w2_rho_plot, w2_tau_plot)
@@ -1116,42 +957,42 @@ w2_r_rho_tau_plots <- plot_grid(w2_plot, w2_rho_plot, w2_tau_plot)
 #Some W2 correlations (resid vs. windows, either kind of window) are terrible, so take a look what's going on. Grade vs. age windows are very similar so we'll just examine age residuals vs. age windows.
 
 # Maybe it's the younger/older girls causing problems? Label age and ID on points.
-mean(data_w2$age, na.rm = TRUE)
+#mean(data_w2$age, na.rm = TRUE)
 # Example of worst correlation - check PDS stage as the factor:
-w2_TESTcor_sct_pdsstage <- ggplot(data_w2, aes(x = resid_TEST_cor, y = window_TEST_cor)) + 
-  geom_point(size = 3.5, aes(colour = factor(pdsstage))) +
-  scale_color_viridis(discrete=TRUE) +
-  theme_bw() +
-  geom_text(aes(label=paste(tagid, "(",round(age, digits=2),")")),hjust=0, vjust=0, size = 3)
-
-# Check ADRENcomp factor:
-w2_TESTcor_sct_ADRENcomp <- ggplot(data_w2, aes(x = resid_TEST_cor, y = window_TEST_cor)) + 
-  geom_point(size = 3.5, aes(colour = factor(ADRENcomp))) +
-  scale_color_viridis(discrete=TRUE) +
-  theme_bw() +
-  geom_text(aes(label=paste(tagid, "(",round(age, digits=2),")")),hjust=0, vjust=0, size = 3)
-
-# Check the number of comparable N in the DTWs
-w2_TESTcor_sct_compNs <- ggplot(data_w2, aes(x = resid_TEST_cor, y = window_TEST_cor)) + 
-  geom_point(size = 3.5, aes(colour = factor(window_TEST_cor_compN))) +
-  scale_color_viridis(discrete=TRUE) +
-  theme_bw() +
-  geom_text(aes(label=paste(tagid, "(",window_TEST_cor_compN,")")),hjust=0, vjust=0, size = 3) +
-  geom_smooth(method=lm)
-
-#Check ADRENcomp on its own:
-w2_ADRENcomp_sct <- ggplot(data_w2, aes(x = resid_ADRENcomp, y = window_ADRENcomp)) + 
-  geom_point(size = 3.5) +
-  scale_color_viridis(discrete=TRUE) +
-  theme_bw() +
-  geom_text(aes(label=paste(tagid, "(",round(age, digits=2),")")),hjust=0, vjust=0, size = 3)
-
-# Example of tightest correlation:
-w2_ESTcor_scatter <- ggplot(data_w2, aes(x = resid_EST_cor, y = window_EST_cor)) + 
-  geom_point(size = 3.5, aes(colour = factor(pdsstage))) +
-  scale_color_viridis(discrete=TRUE) +
-  theme_bw() +
-  geom_text(aes(label=paste(tagid, "(",round(age, digits=2),")")),hjust=0, vjust=0, size = 3)
+#w2_TESTcor_sct_pdsstage <- ggplot(data_w2, aes(x = resid_TEST_cor, y = window_TEST_cor)) + 
+#  geom_point(size = 3.5, aes(colour = factor(pdsstage))) +
+#   scale_color_viridis(discrete=TRUE) +
+#   theme_bw() +
+#   geom_text(aes(label=paste(tagid, "(",round(age, digits=2),")")),hjust=0, vjust=0, size = 3)
+# 
+# # Check ADRENcomp factor:
+# w2_TESTcor_sct_ADRENcomp <- ggplot(data_w2, aes(x = resid_TEST_cor, y = window_TEST_cor)) + 
+#   geom_point(size = 3.5, aes(colour = factor(ADRENcomp))) +
+#   scale_color_viridis(discrete=TRUE) +
+#   theme_bw() +
+#   geom_text(aes(label=paste(tagid, "(",round(age, digits=2),")")),hjust=0, vjust=0, size = 3)
+# 
+# # Check the number of comparable N in the DTWs
+# w2_TESTcor_sct_compNs <- ggplot(data_w2, aes(x = resid_TEST_cor, y = window_TEST_cor)) + 
+#   geom_point(size = 3.5, aes(colour = factor(window_TEST_cor_compN))) +
+#   scale_color_viridis(discrete=TRUE) +
+#   theme_bw() +
+#   geom_text(aes(label=paste(tagid, "(",window_TEST_cor_compN,")")),hjust=0, vjust=0, size = 3) +
+#   geom_smooth(method=lm)
+# 
+# #Check ADRENcomp on its own:
+# w2_ADRENcomp_sct <- ggplot(data_w2, aes(x = resid_ADRENcomp, y = window_ADRENcomp)) + 
+#   geom_point(size = 3.5) +
+#   scale_color_viridis(discrete=TRUE) +
+#   theme_bw() +
+#   geom_text(aes(label=paste(tagid, "(",round(age, digits=2),")")),hjust=0, vjust=0, size = 3)
+# 
+# # Example of tightest correlation:
+# w2_ESTcor_scatter <- ggplot(data_w2, aes(x = resid_EST_cor, y = window_EST_cor)) + 
+#   geom_point(size = 3.5, aes(colour = factor(pdsstage))) +
+#   scale_color_viridis(discrete=TRUE) +
+#   theme_bw() +
+#   geom_text(aes(label=paste(tagid, "(",round(age, digits=2),")")),hjust=0, vjust=0, size = 3)
 
 
 ## The above correlations were based on residuals that were calculated with one linear model across both wave 1 and 2.
