@@ -29,6 +29,9 @@ data_imputed <- select(data, "tagid", "age_im_wave1", "age_im_wave2", "pdsstage_
 data_imp_long <- reshape(as.data.frame(data_imputed), sep = "_wave", times = c(1, 2), direction = "long", varying = c("age_im_wave1", "age_im_wave2", "pdsstage_im_wave1", "pdsstage_im_wave2", "ldstage_im_wave1", "ldstage_im_wave2", "parent_pdsstage_im_wave1", "parent_pdsstage_im_wave2", "ADRENcomp_im_wave1", "ADRENcomp_im_wave2", "GONADcomp_im_wave1", "GONADcomp_im_wave2", "PUBcomp_im_wave1", "PUBcomp_im_wave2", "subj_timing_im_wave1", "subj_timing_im_wave2", "parent_subj_timing_im_wave1", "parent_subj_timing_im_wave2", "DHEA_cor_im_wave1", "DHEA_cor_im_wave2", "TEST_cor_im_wave1", "TEST_cor_im_wave2", "EST_cor_im_wave1", "EST_cor_im_wave2",  "resid_ldstage_im_wave1", "resid_ldstage_im_wave2", "resid_pdsstage_im_wave1", "resid_pdsstage_im_wave2", "resid_parent_pdsstage_wave1", "resid_parent_pdsstage_wave2", "resid_ADRENcomp_im_wave1", "resid_ADRENcomp_im_wave2", "resid_GONADcomp_im_wave1", "resid_GONADcomp_im_wave2", "resid_PUBcomp_im_wave1", "resid_PUBcomp_im_wave2", "resid_DHEA_cor_im_wave1", "resid_DHEA_cor_im_wave2", "resid_TEST_cor_im_wave1", "resid_TEST_cor_im_wave2", "resid_EST_cor_im_wave1", "resid_EST_cor_im_wave2"))
 
 data_imp_long <- rename(data_imp_long, wave = time)
+
+# NOTE: In final dataset, residuals are multipled by -1 to ensure that higher values are later timing and lower values are earlier timing, in order to match the direction measured by subjective timing and age at menarche. The dynamic timing windows as calculate below, however, will show higher values as being earlier and lower values as being later than peers. When comparing residuals to windows, make sure to use original residuals (i.e., *not* muliplied by -1; this is the data *this* script is pulling from), or expect negative correlations between them (or change windows to be multiplied by -1)
+
 ```
 
 ```{r 6 month Dynamic Timing Windows (DTW) - LD stage}
