@@ -4,7 +4,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-packages <- c("lme4" , "ggplot2","tidyr","dplyr", "psych","ggcorrplot","mice","BaylorEdPsych","readxl","Amelia","MissMech")
+packages <- c("lme4" , "ggplot2","tidyr","dplyr", "psych","ggcorrplot","mice","BaylorEdPsych","readxl","Amelia","MissMech","data.table")
 if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
   install.packages(setdiff(packages, rownames(installed.packages())))  
 }
@@ -162,19 +162,24 @@ all_pub_int <- all_pub_int %>%
 md.pattern(all_for_imp)
 
 #impute
-all_for_imp <- all_pub_int %>% 
-  mutate(wave=as.numeric(wave)) %>%
-  select(-int_d,-pdsstage,-ldstage,-ADRENcomp,-GONADcomp,-PUBcomp,)
-imp <- amelia(all_for_imp,m=25,p2s=0,idvars="wave",ts="age",cs="tagid",polytime=1,
+#age is imputed to be 1.5 years after wave 1 if it's missing, then used as time variable in Amelia
+age_imp <- pivot_wider(all_pub_int[,c("tagid","wave","age")],names_from="wave",values_from="age",names_prefix="age_wave")
+age_imp <- age_imp %>%
+  mutate(age_wave2=ifelse(is.na(age_wave2),age_wave1+1.5,age_wave2)) %>%
+  pivot_longer(.,cols=contains("age"),names_to = c(".value","wave"), names_pattern = "(.*)_wave(.*)")
+
+all_for_imp <- merge(age_imp,
+                     subset(all_pub_int, select = -c(age,int_d,pdsstage,ldstage,ADRENcomp,GONADcomp,PUBcomp)),
+                     by=c("tagid","wave"))
+    
+imp <- amelia(all_for_imp,m=25,p2s=0,idvars="wave",ts="age",cs="tagid",
              noms=c("depres_d","anx_d","distress_d","fear_d"),
               ords=c("subj_timing","parent_subj_timing","adrenf2","gonadf2","PBIP_1A","PBIP_2A"),
-              logs=c("CESDC_total"))
-# ISSUES
-#I left out the before vs after parent pds var because it was causing collinearity issues, imputation of parent pds looks ok though
-#AGE IS THE TIME SERIES VARIABLE BECAUSE USING WAVE CAUSED A COLLINEARITY ERROR, BUT NOW AGE IS NOT IMPUTED. WAVE IS COLLINEAR WITH THE HORMONE VARIABLES, I DON'T UNDERSTAND HOW
-#The imputation does a shitty job for CTQ_threat, the rest looks ok
+              logs=c("CESDC_total"),priors = NULL, lags = NULL, empri = 0, intercs = FALSE, 
+             leads = NULL, splinetime = NULL,bounds = NULL, max.resample = 1000, tolerance = 1e-04)
 
 # check the performance of Amelia
+#The imputation does a bad job for CTQ_threat, the rest looks ok
 for (vari in c("CESDC_total","SCARED_mean","CTQ_threat","DHEA_cor","TEST_cor","EST_cor")) {
  densityplot <- compare.density(imp,vari)
  densityplot }
@@ -202,49 +207,6 @@ all_im <- all_im %>%
          PUBcomp=rowMeans(select(.,gonadf2,PBIP_1A,adrenf2,PBIP_2A)),
          int_d=ifelse(depres_d==1|anx_d==1,1,0))
 
-
-#all_for_imp$const <- 1
-#all_for_imp$PP <- as.integer(all_for_imp$tagid)
-#all_for_imp <- all_for_imp %>% 
-#    mutate(depres_d=as.factor(depres_d),anx_d=as.factor(anx_d),int_d=as.factor(int_d),distress_d=as.factor(distress_d),fear_d=as.factor(fear_d),before_after_parentPDSw1=as.factor(before_after_parentPDSw1))
-#impute
-#ini <- mice(all_for_imp, maxit=0, print=F)
-#meth <- ini$meth
-#meth["PUBcomp"]<- "~ I((ADRENcomp + GONADcomp) / 2)" #tell mice that PUBcomp is calculated from ADREN and GONAD
-#meth[which(meth == "pmm")] <- "2l.norm" #2-level data with heterogeneous within pp variance
-#meth[c("depres_d","anx_d","int_d","distress_d","fear_d")] <- "logreg"
-#meth["CTQ_threat"] <- "2lonly.norm"
-#pred<- quickpred(all_for_imp,method="spearman",exclude= 'tagid') # exclude tagid
-#pred[c("GONADcomp", "ADRENcomp"), "PUBcomp"] <- 0 # avoid circular prediction from PUBcomp
-#pred[,"PP"]<- -2 # set ID as class variable for 2l.norm
-#pred[,"const"]<- 2 # random intercept
-#pred["wave",]<- 0
-#pred[,"wave"]<- 0
-#post <- ini$post
-#post[c("subj_timing","parent_subj_timing","ldstage","pdsstage","parent_pdsstage","ADRENcomp","GONADcomp","PUBcomp")] <- "imp[[j]][, i] <- squeeze(imp[[j]][, i], c(1, 5))" #constrain the self-report variables to their range of 1-5
-#post["SCARED_mean"] <- "imp[[j]][, i] <- squeeze(imp[[j]][, i], c(0, 2))" #constrain the scared
-#post["CESDC_total"] <- "imp[[j]][, i] <- squeeze(imp[[j]][, i], c(0, 60))" #constrain the cesdc
-#post["CTQ_threat"] <- "imp[[j]][, i] <- squeeze(imp[[j]][, i], c(0, 68))" #constrain the ctq
-
-#imp <- mice(all_for_imp, m=25,maxit=15,meth=meth,pred=pred,post=post,print=FALSE,seed=500)
-
-#Plotting to check the imputations
-#plot(imp)
-#miss <- is.na(imp$data$PUBcomp)
-#xyplot(imp, PUBcomp ~ I ((ADRENcomp + GONADcomp) / 2),
-#       na.groups = miss,     ylab = "Imputed", xlab = "Calculated")
-#stripplot(imp, pch = 20, cex = 1.2) 
-#densityplot(imp) 
-
-#average imputations
-#completedData <- complete(imp, 'long') %>%   
-#    select(before_after_parentPDSw1,depres_d,anx_d,int_d,distress_d,fear_d,everything()) %>%
-#    mutate(depres_d=as.numeric(as.character(depres_d)),anx_d=as.numeric(as.character(anx_d)),int_d=as.numeric(as.character(int_d)),distress_d=as.numeric(as.character(distress_d)),fear_d=as.numeric(as.character(fear_d)))
-#agg <- aggregate(completedData[,11:28] , by = list(completedData$.id),FUN= mean)
-#agg2 <- aggregate(completedData[,2:6] , by = list(completedData$.id),FUN= median)
-#ids <- completedData %>% filter(.imp==1) %>% select(.id,tagid,wave) %>% mutate(Group.1=.id) 
-#all_im <- agg %>% left_join(.,ids) %>% left_join(.,agg2) %>% select(tagid, wave, everything(), -Group.1,-.id)
-
 #check distribution imputed variables
 #put in short format
 all_for_imp_short <- all_pub_int %>% pivot_wider(id_cols= tagid, names_from = wave, names_prefix = "wave", values_from = c(age,pdsstage,ldstage,parent_pdsstage,ADRENcomp,GONADcomp,PUBcomp,subj_timing,parent_subj_timing,DHEA_cor,TEST_cor,EST_cor,SCARED_mean,CESDC_total,depres_d,anx_d,int_d,distress_d,fear_d,CTQ_threat)) 
@@ -263,8 +225,7 @@ all_im_short %>%
 Pubertal timing
 ```{r Pubertal timing from residuals}
 #set up timing dataframe
-Timing_allways <- all_im_short %>%
-  merge(.,all_for_imp_short[,c("tagid","subj_timing_wave1","parent_subj_timing_wave1","SCARED_mean_wave1","CESDC_total_wave1","depres_d_wave1","anx_d_wave1","int_d_wave1","distress_d_wave1","fear_d_wave1","subj_timing_wave2","parent_subj_timing_wave2","SCARED_mean_wave2","CESDC_total_wave2","depres_d_wave2","anx_d_wave2","int_d_wave2","distress_d_wave2","fear_d_wave2","CTQ_threat_wave1")],by="tagid")
+Timing_allways <- merge(all_im_short,all_for_imp_short,by="tagid")
 
 #create residuals for each wave separately BEFORE IMPUTATION
 pubcolumns1 <- list("ldstage_wave1","pdsstage_wave1","ADRENcomp_wave1","GONADcomp_wave1","PUBcomp_wave1","parent_pdsstage_wave1","DHEA_cor_wave1","TEST_cor_wave1","EST_cor_wave1")
