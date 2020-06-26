@@ -10,7 +10,7 @@ if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
 }
 lapply(packages, library, character.only = TRUE)
 
-cas_dir="Y:/dsnlab/TAG/"
+cas_dir="Z:/TAG/"
 set.seed(88)
 ```
 
@@ -323,7 +323,27 @@ ggcorrplot(cor_waves_rho, p.mat=p_waves_rho, lab=T,lab_size=2, title="Pubertal t
 
 
 ```{r save}
+
+# This ("Timing_and_internalizing.csv") is the final file with all data (imputed and non-imputed), and the residuals are original, meaning that for residuals on age, higher values are earlier timing (more advanced compared to peers) and lower values are later timing (less advanced). This is in contrast to the timing variables "subj_timing", "parent_subj_timing", and "aam_final" where lower values indicate earlier timing:
 write.csv(Timing_allways,paste0(cas_dir,'projects/W1_W2_pubertal_timing/Timing_and_internalizing.csv'),row.names=F)
 
-# NOTE: Run the dynamic timing window script after this - it calculates timing based on stage of windows of 6 month age peers (and also school grade peers) per person.
+# But, in further analyses (like the SCA), we want all timing variables to go in the same direction (and we can't reverse code age at menarche), so here we will multiply the residuals only by -1. This way, all timing variables will be coded so that higher values are later timing (less advanced compared to peers), and lower values are earlier timing (more advanced compared to peers)
+Timing_neg1_resid <- Timing_allways
+resid_vars <- c("resid_ldstage_wave1", "resid_pdsstage_wave1", "resid_ADRENcomp_wave1", "resid_GONADcomp_wave1", "resid_PUBcomp_wave1", "resid_parent_pdsstage_wave1", "resid_DHEA_cor_wave1", "resid_TEST_cor_wave1", "resid_EST_cor_wave1", "resid_ldstage_wave2", "resid_pdsstage_wave2", "resid_ADRENcomp_wave2", "resid_GONADcomp_wave2", "resid_PUBcomp_wave2", "resid_parent_pdsstage_wave2", "resid_DHEA_cor_wave2", "resid_TEST_cor_wave2", "resid_EST_cor_wave2")
+resid_vars_im <- c("resid_ldstage_im_wave1", "resid_pdsstage_im_wave1", "resid_ADRENcomp_im_wave1", "resid_GONADcomp_im_wave1", "resid_PUBcomp_im_wave1", "resid_DHEA_cor_im_wave1", "resid_TEST_cor_im_wave1", "resid_EST_cor_im_wave1", "resid_ldstage_im_wave2", "resid_pdsstage_im_wave2", "resid_ADRENcomp_im_wave2", "resid_GONADcomp_im_wave2", "resid_PUBcomp_im_wave2", "resid_DHEA_cor_im_wave2", "resid_TEST_cor_im_wave2", "resid_EST_cor_im_wave2")
+resid_neg_vars <- c("resid_neg_ldstage_wave1", "resid_neg_pdsstage_wave1", "resid_neg_ADRENcomp_wave1", "resid_neg_GONADcomp_wave1", "resid_neg_PUBcomp_wave1", "resid_neg_parent_pdsstage_wave1", "resid_neg_DHEA_cor_wave1", "resid_neg_TEST_cor_wave1", "resid_neg_EST_cor_wave1", "resid_neg_ldstage_wave2", "resid_neg_pdsstage_wave2", "resid_neg_ADRENcomp_wave2", "resid_neg_GONADcomp_wave2", "resid_neg_PUBcomp_wave2", "resid_neg_parent_pdsstage_wave2", "resid_neg_DHEA_cor_wave2", "resid_neg_TEST_cor_wave2", "resid_neg_EST_cor_wave2")
+resid_neg_vars_im <- c("resid_neg_ldstage_im_wave1", "resid_neg_pdsstage_im_wave1", "resid_neg_ADRENcomp_im_wave1", "resid_neg_GONADcomp_im_wave1", "resid_neg_PUBcomp_im_wave1", "resid_neg_DHEA_cor_im_wave1", "resid_neg_TEST_cor_im_wave1", "resid_neg_EST_cor_im_wave1", "resid_neg_ldstage_im_wave2", "resid_neg_pdsstage_im_wave2", "resid_neg_ADRENcomp_im_wave2", "resid_neg_GONADcomp_im_wave2", "resid_neg_PUBcomp_im_wave2", "resid_neg_DHEA_cor_im_wave2", "resid_neg_TEST_cor_im_wave2", "resid_neg_EST_cor_im_wave2")
+Timing_neg1_resid[resid_neg_vars] <- Timing_neg1_resid[resid_vars]*-1
+Timing_neg1_resid[resid_neg_vars_im] <- Timing_neg1_resid[resid_vars_im]*-1
+
+# Now separate out the imputed and non imputed datasets and save. Both of these are with reversed residuals so their directions match subjective timing and age at menarche:
+im_vars <- c("tagid", "age_im_wave1", "age_im_wave2", "pdsstage_im_wave1", "pdsstage_im_wave2", "ldstage_im_wave1", "ldstage_im_wave2", "parent_pdsstage_im_wave1", "parent_pdsstage_im_wave2", "ADRENcomp_im_wave1", "ADRENcomp_im_wave2", "GONADcomp_im_wave1", "GONADcomp_im_wave2", "PUBcomp_im_wave1", "PUBcomp_im_wave2", "subj_timing_im_wave1", "subj_timing_im_wave2", "parent_subj_timing_im_wave1", "parent_subj_timing_im_wave2", "DHEA_cor_im_wave1", "DHEA_cor_im_wave2", "TEST_cor_im_wave1", "TEST_cor_im_wave2", "EST_cor_im_wave1", "EST_cor_im_wave2", "SCARED_mean_im_wave1", "SCARED_mean_im_wave2", "CESDC_total_im_wave1", "CESDC_total_im_wave2", "depres_d_im_wave1", "depres_d_im_wave2", "anx_d_im_wave1", "anx_d_im_wave2", "int_d_im_wave1", "int_d_im_wave2", "distress_d_im_wave1", "distress_d_im_wave2", "fear_d_im_wave1", "fear_d_im_wave2", "CTQ_threat_im_wave1", "CTQ_threat_im_wave2", "aam_final", resid_neg_vars_im)
+Final_timing_int_imputed <- select(Timing_neg1_resid, im_vars)
+write.csv(Final_timing_int_imputed,paste0(cas_dir,'projects/W1_W2_pubertal_timing/Final_timing_int_imputed.csv'),row.names=F)
+
+nonim_vars <- c("tagid", "age_wave2", "age_wave1", "pdsstage_wave2", "pdsstage_wave1", "ldstage_wave2", "ldstage_wave1", "parent_pdsstage_wave2", "parent_pdsstage_wave1", "ADRENcomp_wave2", "ADRENcomp_wave1", "GONADcomp_wave2", "GONADcomp_wave1", "PUBcomp_wave2", "PUBcomp_wave1", "subj_timing_wave2", "subj_timing_wave1", "parent_subj_timing_wave2", "parent_subj_timing_wave1", "DHEA_cor_wave2", "DHEA_cor_wave1", "TEST_cor_wave2", "TEST_cor_wave1", "EST_cor_wave2", "EST_cor_wave1", "SCARED_mean_wave2", "SCARED_mean_wave1", "CESDC_total_wave2", "CESDC_total_wave1", "depres_d_wave2", "depres_d_wave1", "anx_d_wave2", "anx_d_wave1", "int_d_wave2", "int_d_wave1", "distress_d_wave2", "distress_d_wave1", "fear_d_wave2", "fear_d_wave1", "CTQ_threat_wave2", "CTQ_threat_wave1", "aam_final", resid_neg_vars)
+Final_timing_int_nonimputed <- select(Timing_neg1_resid, nonim_vars)
+write.csv(Final_timing_int_nonimputed,paste0(cas_dir,'projects/W1_W2_pubertal_timing/Final_timing_int_nonimputed.csv'),row.names=F)
+
+# NOTE: Run the dynamic timing window script after this - it calculates timing based on stage of windows of 6 month age peers (and also school grade peers) per person. It calls on the "Timing_and_internalizing.csv" which is all data, imputed and nonimputed, and where the residuals are original (i.e., not multiplied by -1) (the first outputted dataset)
 ```
