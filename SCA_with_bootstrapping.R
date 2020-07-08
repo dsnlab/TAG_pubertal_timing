@@ -9,15 +9,16 @@
 ### 4. Run bootstrap models
 ### 5. Analyse bootstrap models 
 ### The output includes specification curve analyses and one csv file of the bootstrap tests
+###
+### Adapted from Amy Orben's scripts for the screens, teens, and well-being study https://github.com/OrbenAmy/PS_2019
 ##########################################################################################################
 
 #########
 # Issues to solve:
 # -Two participants still have no wave 2 data after imputation because they had no observed values at wave 2
 # -the script pulls effects sizes but only works for lm, not logistic models
-# -calculating the Y_null changes the dv so that it is not binary anymore for diagnoses,
-# so we can't do logistic regression anymore for the bootstrapping
-
+# -I forgot to include parent_pdsstage!!
+# -Unsure if bootstrapping of OBSERVED DATA (for conf interval and rsquared) is going right
 
 ##########################################################################################################
 # 1. Loading libraries, controlling analyses and loading data ############################################
@@ -33,6 +34,7 @@ library("lavaan")
 library("heplots")
 set.seed(98)
 cas_dir="Y:/dsnlab/TAG/"
+samplesize <- 174
 
 #####################################################################################
 # b) Turn on analyses ####
@@ -415,18 +417,41 @@ get_ynull <- function(get_model_list) {
   reg <- get_model_list[[1]]
   data <- get_model_list[[3]]
   
-  # extract coefficient
-  b.i <-
-    summary(reg)$coef[[2, 1]] %>% {
-      ifelse(. == 0, NA, .)
+  if (results_frame$model[i] == "lm") {
+    # extract coefficient
+    b.i <-
+     summary(reg)$coef[[2, 1]] %>% {
+        ifelse(. == 0, NA, .)
+     }
+    #make null model
+    y.null.i <- data$dv-(b.i*data$iv)
+
+#We use an alternative approach for binary y variables, predicting each person's probability of having a 1, 
+#then for each bootstrap replicate, regenerating their observed score (0, 1) from their probability    
+  } else {
+    if (results_frame$control[i]=="none") {
+    y_p_star = arm::invlogit(coef(reg)[[1]])
+    y.null.i = rbinom(size = 1, prob = y_p_star, n = samplesize)
     }
-  
-  #make null model
-  y.null.i <- data$dv-(b.i*data$iv)
+    else if (results_frame$control[i]=="mh") {
+      control_coef <- replace(coef(reg)[[3]], is.na(coef(reg)[[3]]), 0) 
+      y_p_star = arm::invlogit(coef(reg)[[1]] + control_coef*data$wave1_control)
+      y.null.i = rbinom(size = 1, prob = y_p_star, n = samplesize)
+    }
+    else if (results_frame$control[i]=="ctq") {
+      control_coef <- replace(coef(reg)[[3]], is.na(coef(reg)[[3]]), 0) 
+      y_p_star = arm::invlogit(coef(reg)[[1]] + control_coef*data$ctq_control)
+      y.null.i = rbinom(size = 1, prob = y_p_star, n = samplesize)
+    }
+    else {
+      control_coef <- replace(coef(reg)[[3]], is.na(coef(reg)[[3]]), 0) 
+      y_p_star = arm::invlogit(coef(reg)[[1]] + control_coef*data$wave1_control + coef(reg)[[4]]*data$ctq_control)
+      y.null.i = rbinom(size = 1, prob = y_p_star, n = samplesize)
+    }
+  }
   
   return(y.null.i)
 }
-
 
 ###############################
 # i) Run Null Models
@@ -524,7 +549,7 @@ if (run_boot == 1){
     bootstraps_full[[b]] <- results_frame_it
   }
   
-  write_rds(bootstraps, paste0(cas_dir,"projects/W1_W2_pubertal_timing/3_1_boot.rds"))
+  write_rds(bootstraps_full, paste0(cas_dir,"projects/W1_W2_pubertal_timing/3_1_boot.rds"))
 
 } else {
   
