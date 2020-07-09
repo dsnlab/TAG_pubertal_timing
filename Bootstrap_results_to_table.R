@@ -70,7 +70,7 @@ fill_per <- function(boot_results, frame){
     boot_results_m <- as.data.frame(boot_results[m])
     n <- 2
     
-    for (i in 1:12){
+    for (i in 1:13){
       
       if(i == 1){
         results_subset <- boot_results_m
@@ -83,18 +83,20 @@ fill_per <- function(boot_results, frame){
       } else if (i == 5){
         results_subset <- boot_results_m %>% filter(grepl(pattern="neg_pdsstage", predictor))
       } else if (i == 6){
-        results_subset <- boot_results_m %>% filter(grepl(pattern="ldstage", predictor))
+        results_subset <- boot_results_m %>% filter(grepl(pattern="parent_pdsstage", predictor))
       } else if (i == 7){
-        results_subset <- boot_results_m %>% filter(grepl(pattern="aam", predictor))
+        results_subset <- boot_results_m %>% filter(grepl(pattern="ldstage", predictor))
       } else if (i == 8){
-        results_subset <- boot_results_m %>% filter(grepl(pattern="^subj_timing", predictor))
+        results_subset <- boot_results_m %>% filter(grepl(pattern="aam", predictor))
       } else if (i == 9){
-        results_subset <- boot_results_m %>% filter(grepl(pattern="parent_subj_timing", predictor))
+        results_subset <- boot_results_m %>% filter(grepl(pattern="^subj_timing", predictor))
       } else if (i == 10){
-        results_subset <- boot_results_m %>% filter(grepl(pattern="DHEA", predictor))
+        results_subset <- boot_results_m %>% filter(grepl(pattern="parent_subj_timing", predictor))
       } else if (i == 11){
-        results_subset <- boot_results_m %>% filter(grepl(pattern="TEST", predictor))
+        results_subset <- boot_results_m %>% filter(grepl(pattern="DHEA", predictor))
       } else if (i == 12){
+        results_subset <- boot_results_m %>% filter(grepl(pattern="TEST", predictor))
+      } else if (i == 13){
         results_subset <- boot_results_m %>% filter(grepl(pattern="_EST", predictor))
       }
       
@@ -127,7 +129,7 @@ fill_per <- function(boot_results, frame){
 # a) Make dataframe to hold the results ####
 #####################################################################################
 permutation_frame <-
-  data.frame(matrix(NA, nrow = bootstraps, ncol = 61))
+  data.frame(matrix(NA, nrow = bootstraps, ncol = 66))
 names(permutation_frame) <-
   c("permutation_number",
     "effect.tot", "sign.neg.tot", "sign.pos.tot", "sign.sig.neg.tot", "sign.sig.pos.tot",
@@ -143,6 +145,9 @@ names(permutation_frame) <-
     
     #pdsstage
     "effect.pds","sign.neg.pds","sign.pos.pds","sign.sig.neg.pds","sign.sig.pos.pds",
+    
+    #parent pdsstage
+    "effect.ppds","sign.neg.ppds","sign.pos.ppds","sign.sig.neg.ppds","sign.sig.pos.ppds",
     
     #ldstage
     "effect.ld","sign.neg.ld","sign.pos.ld","sign.sig.neg.ld","sign.sig.pos.ld",
@@ -195,9 +200,9 @@ per_frame <- fill_per(bootstraps_full, per_frame)
 #####################################################################################
 analyse_boot <- function(boot_results){
 
-  results_table <- data.frame(matrix(NA, nrow = 12, ncol = 3))
+  results_table <- data.frame(matrix(NA, nrow = 13, ncol = 3))
   names(results_table) <- c("median_effect","share_neg","share_sig_neg")
-  results_table$timing_var <- c("tot","pcomp","acomp","gcomp","pds","ld","aam","subj","psubj","dhea","test","est")
+  results_table$timing_var <- c("tot","pcomp","acomp","gcomp","pds","ppds","ld","aam","subj","psubj","dhea","test","est")
 
   for(i in 1:nrow(results_table)){
     suffix <- results_table$timing_var[i]
@@ -232,16 +237,15 @@ bootstrap_summary <- analyse_boot(per_frame)
 ##########################################################################################################
 results_table2 <- data.frame(predictor = NA, sig_measure = NA,
                             observed = NA, lower = NA, upper = NA, p = NA)
-empty_rows <- data.frame(matrix(nrow = 32, ncol = ncol(results_table2)))
+empty_rows <- data.frame(matrix(nrow = 35, ncol = ncol(results_table2)))
 names(empty_rows) <- names(results_table2)
 results_table2 <- rbind(results_table2, empty_rows)
 
-results_table2$predictor <- c("aam_final","subj_timing","parent_subj_timing","resid_neg_ldstage",
-                              "resid_neg_pdsstage","resid_neg_ADRENcomp","resid_neg_GONADcomp",
-                              "resid_neg_PUBcomp","resid_neg_DHEA_cor","resid_neg_TEST_cor",
-                              "resid_neg_EST_cor")
-results_table2 <- results_table2[order(results_table2$predictor),]
-results_table2$sig_measure <- rep(c("median ES", "share of results", "share of sig results"), 11)
+results_table2$predictor <- c("aam_final","parent_subj_timing","resid_neg_ADRENcomp",
+                           "resid_neg_DHEA_cor", "resid_neg_EST_cor", "resid_neg_GONADcomp", 
+                              "resid_neg_ldstage", "resid_neg_parent_pdsstage" , "resid_neg_pdsstage",
+                              "resid_neg_PUBcomp", "resid_neg_TEST_cor", "subj_timing")
+results_table2$sig_measure <- rep(c("median ES", "share of results", "share of sig results"),each= 12)
 
 #make a results frame with variable names collapsed over imp and wave
 results_frame_forwide <- results_frame %>% 
@@ -261,9 +265,9 @@ results_frame_forwide$outcome <- sub("_wave2$", "", results_frame_forwide$outcom
 ### (observed median point estimate, share of results or share of sig results)
 populate_table_observed <- function(results_frame, table){
   
-  medians <- results_frame_forwide %>% group_by(predictor) %>% dplyr::summarise(median = median(effect))
-  signs <- results_frame_forwide %>% group_by(predictor, sign) %>% dplyr::summarise(counts = n())
-  sig_signs <- results_frame_forwide %>% group_by(predictor, sig_sign) %>% dplyr::summarise(counts = n()) %>% filter(is.na(sig_sign) == FALSE)
+  medians <- results_frame %>% group_by(predictor) %>% dplyr::summarise(median = median(effect))
+  signs <- results_frame %>% group_by(predictor, sign) %>% dplyr::summarise(counts = n())
+  sig_signs <- results_frame %>% group_by(predictor, sig_sign) %>% dplyr::summarise(counts = n()) %>% filter(is.na(sig_sign) == FALSE)
     
     for(i in 1:nrow(table)){
       if((table[i,"sig_measure"]) == "median ES"){
@@ -271,7 +275,7 @@ populate_table_observed <- function(results_frame, table){
       } else if ((table[i,"sig_measure"]) == "share of results") {
         table[i, "observed"] <- signs %>% filter(predictor == table[i, "predictor"]) %>% dplyr::summarise(max = max(counts)) %>% pull(max) %>% round(1)
       } else if ((table[i,"sig_measure"]) == "share of sig results") {
-        sig_results <- results_frame_forwide %>% filter(predictor == table[i, "predictor"]) %>% filter(is.na(sig_sign) == FALSE)
+        sig_results <- results_frame %>% filter(predictor == table[i, "predictor"]) %>% filter(is.na(sig_sign) == FALSE)
         sig_results_sign <- sig_signs %>% filter(predictor == table[i, "predictor"]) %>% dplyr::summarise(max = max(counts)) %>% pull(max) %>% round(1)
         table[i, "observed"] <- ifelse(nrow(sig_results) == 0, 0, sig_results_sign)
       } else {
@@ -297,6 +301,8 @@ populate_table_bootstrap <- function(bootstrap, table){
       pubtim <- "ld"
     } else if (table[i, "predictor"] == "resid_neg_pdsstage") {
       pubtim <- "pds"
+    } else if (table[i, "predictor"] == "resid_neg_parent_pdsstage") {
+      pubtim <- "ppds"
     } else if (table[i, "predictor"] == "resid_neg_ADRENcomp") {
       pubtim <- "acomp"
     } else if (table[i, "predictor"] == "resid_neg_GONADcomp") {
@@ -326,11 +332,10 @@ populate_table_bootstrap <- function(bootstrap, table){
 ### this function populates the results table with the bootstrapped confidence intervals for the median point estimates
 populate_table_bounds <- function(boot, table){
 
-  results_frame_medians <- data.frame("aam_final" = NA, "subj_timing" = NA, "parent_subj_timing" = NA,
-                                        "resid_neg_ldstage" = NA, "resid_neg_pdsstage" = NA,
-                                        "resid_neg_ADRENcomp" = NA, "resid_neg_GONADcomp" = NA, 
-                                        "resid_neg_PUBcomp" = NA, "resid_neg_DHEA_cor" = NA, 
-                                        "resid_neg_TEST_cor" = NA, "resid_neg_EST_cor" = NA)  
+  results_frame_medians <- data.frame("aam_final" = NA, "parent_subj_timing" = NA,"resid_neg_ADRENcomp" = NA,
+                                      "resid_neg_DHEA_cor" = NA, "resid_neg_EST_cor" = NA, "resid_neg_GONADcomp" = NA, 
+                                        "resid_neg_ldstage" = NA, "resid_neg_parent_pdsstage" = NA, "resid_neg_pdsstage" = NA,
+                                        "resid_neg_PUBcomp" = NA, "resid_neg_TEST_cor" = NA, "subj_timing" = NA) #needs to be alphabetical order 
     
   for(b in 1:(length(boot)-1)){
     boot_sh <- boot[[b]] %>% mutate(predictor= sub("_wave[1:2]|_im_wave[1:2]$", "", predictor))  
@@ -352,7 +357,7 @@ populate_table_bounds <- function(boot, table){
 }
 
 
-results_table_complete <- populate_table_observed(results_frame = results_frame, 
+results_table_complete <- populate_table_observed(results_frame = results_frame_forwide, 
                                                   table = results_table2)
 results_table_complete <- populate_table_bootstrap(bootstrap_summary, results_table_complete)
 results_table_complete <- populate_table_bounds(boot = boot_sca, results_table_complete)
@@ -360,7 +365,7 @@ results_table_complete <- populate_table_bounds(boot = boot_sca, results_table_c
 ##########################################################################################################
 # 4. Save Table ##########################################################################################
 ##########################################################################################################
-write.csv(results_table_complete, file = paste0(cas_dir,"projects/W1_W2_pubertal_timing//table_complete.csv"))
+write.csv(results_table_complete, file = paste0(cas_dir,"projects/W1_W2_pubertal_timing/table_complete.csv"))
 
 
 ##########################################################################################################

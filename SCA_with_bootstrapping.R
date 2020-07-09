@@ -14,11 +14,10 @@
 ##########################################################################################################
 
 #########
-# Issues to solve:
+# Issues:
 # -Two participants still have no wave 2 data after imputation because they had no observed values at wave 2
-# -the script pulls effects sizes but only works for lm, not logistic models
-# -I forgot to include parent_pdsstage!!
-# -Unsure if bootstrapping of OBSERVED DATA (for conf interval and rsquared) is going right
+# -the script pulls eta-squared effect sizes but only works for lm, not logistic models. These are not really necessary though
+
 
 ##########################################################################################################
 # 1. Loading libraries, controlling analyses and loading data ############################################
@@ -274,13 +273,14 @@ get_coef <- function(get_model_list) {
     summary(reg)$coef[[2, 1]] %>% {
       ifelse(. == 0, NA, .)
     }
-  results_frame$p_value[i] <- summary(reg)$coef[[2, 4]]
+  results_frame$p_value[i] <- 
+    summary(reg)$coef[[2, 4]]
   results_frame$standard_error[i] <-
     summary(reg)$coef[[2, 2]] %>% {
       ifelse(. == 0, NA, .)
     }
   results_frame$number[i] <- nobs(reg)
-  results_frame$rsqrd[i] <- etasq(reg)["scale(iv)", "Partial eta^2"]
+  results_frame$etasqrd[i] <- etasq(reg)["scale(iv)", "Partial eta^2"]
   return(results_frame[i,])
 }
 
@@ -313,8 +313,8 @@ get_results_frame <- function(outcome, predictor, control_set, ctq){
   results_frame <- expand.grid(outcome, predictor, control_set, ctq)
   names(results_frame) <- c("outcome", "predictor", "control","ctq_control")
   results_frame$wave1_control <- str_replace(outcome,"2","1")
-  results_frame$model <- ifelse(str_detect(outcome,"_d"),'logisitc',"lm")
-  results_frame[, c("t_value", "effect", "p_value", "standard_error", "number", "rsqrd")] <- NA
+  results_frame$model <- ifelse(str_detect(outcome,"_d"),'logistic',"lm")
+  results_frame[, c("t_value", "effect", "p_value", "standard_error", "number", "etasqrd")] <- NA
   return(results_frame)
 }
 
@@ -330,17 +330,18 @@ outcome_nonim <- c("int_d_wave2","depres_d_wave2","anx_d_wave2","distress_d_wave
 
 ### define predictors 
 predictor_im <- c("aam_final","subj_timing_im_wave1","parent_subj_timing_im_wave1","resid_neg_ldstage_im_wave1",
-                  "resid_neg_pdsstage_im_wave1","resid_neg_ADRENcomp_im_wave1","resid_neg_GONADcomp_im_wave1",
+                  "resid_neg_pdsstage_im_wave1","resid_neg_parent_pdsstage_im_wave1","resid_neg_ADRENcomp_im_wave1","resid_neg_GONADcomp_im_wave1",
                   "resid_neg_PUBcomp_im_wave1","resid_neg_DHEA_cor_im_wave1","resid_neg_TEST_cor_im_wave1",
                   "resid_neg_EST_cor_im_wave1","subj_timing_im_wave2","parent_subj_timing_im_wave2",
-                  "resid_neg_ldstage_im_wave2","resid_neg_pdsstage_im_wave2","resid_neg_ADRENcomp_im_wave2",
-                  "resid_neg_GONADcomp_im_wave2","resid_neg_PUBcomp_im_wave2","resid_neg_DHEA_cor_im_wave2",
-                  "resid_neg_TEST_cor_im_wave2","resid_neg_EST_cor_im_wave2")
+                  "resid_neg_ldstage_im_wave2","resid_neg_pdsstage_im_wave2","resid_neg_parent_pdsstage_im_wave2",
+                  "resid_neg_ADRENcomp_im_wave2","resid_neg_GONADcomp_im_wave2","resid_neg_PUBcomp_im_wave2",
+                  "resid_neg_DHEA_cor_im_wave2","resid_neg_TEST_cor_im_wave2","resid_neg_EST_cor_im_wave2")
 predictor_nonim <- c("aam_final","subj_timing_wave1","parent_subj_timing_wave1","resid_neg_ldstage_wave1",
-                  "resid_neg_pdsstage_wave1","resid_neg_ADRENcomp_wave1","resid_neg_GONADcomp_wave1",
-                  "resid_neg_PUBcomp_wave1","resid_neg_DHEA_cor_wave1","resid_neg_TEST_cor_wave1",
-                  "resid_neg_EST_cor_wave1","subj_timing_wave2","parent_subj_timing_wave2",
-                  "resid_neg_ldstage_wave2","resid_neg_pdsstage_wave2","resid_neg_ADRENcomp_wave2",
+                  "resid_neg_pdsstage_wave1","resid_neg_parent_pdsstage_wave1","resid_neg_ADRENcomp_wave1",
+                  "resid_neg_GONADcomp_wave1","resid_neg_PUBcomp_wave1","resid_neg_DHEA_cor_wave1",
+                  "resid_neg_TEST_cor_wave1","resid_neg_EST_cor_wave1","subj_timing_wave2",
+                  "parent_subj_timing_wave2","resid_neg_ldstage_wave2","resid_neg_pdsstage_wave2",
+                  "resid_neg_parent_pdsstage_wave2","resid_neg_ADRENcomp_wave2",
                   "resid_neg_GONADcomp_wave2","resid_neg_PUBcomp_wave2","resid_neg_DHEA_cor_wave2",
                   "resid_neg_TEST_cor_wave2","resid_neg_EST_cor_wave2")
 
@@ -554,6 +555,6 @@ if (run_boot == 1){
 } else {
   
   # Read null models
-  bootstraps <- read_rds(paste0(cas_dir,"projects/W1_W2_pubertal_timing/3_1_boot.rds"))
+  bootstraps_full <- read_rds(paste0(cas_dir,"projects/W1_W2_pubertal_timing/3_1_boot.rds"))
 
 }
