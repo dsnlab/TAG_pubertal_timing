@@ -431,23 +431,19 @@ get_ynull <- function(get_model_list) {
 #then for each bootstrap replicate, regenerating their observed score (0, 1) from their probability    
   } else {
     if (results_frame$control[i]=="none") {
-    y_p_star = arm::invlogit(coef(reg)[[1]])
-    y.null.i = rbinom(size = 1, prob = y_p_star, n = samplesize)
+      y.null.i = arm::invlogit(coef(reg)[[1]] + 0*data$wave1_control)
     }
     else if (results_frame$control[i]=="mh") {
       control_coef <- replace(coef(reg)[[3]], is.na(coef(reg)[[3]]), 0) 
-      y_p_star = arm::invlogit(coef(reg)[[1]] + control_coef*data$wave1_control)
-      y.null.i = rbinom(size = 1, prob = y_p_star, n = samplesize)
+      y.null.i = arm::invlogit(coef(reg)[[1]] + control_coef*data$wave1_control)
     }
     else if (results_frame$control[i]=="ctq") {
       control_coef <- replace(coef(reg)[[3]], is.na(coef(reg)[[3]]), 0) 
-      y_p_star = arm::invlogit(coef(reg)[[1]] + control_coef*data$ctq_control)
-      y.null.i = rbinom(size = 1, prob = y_p_star, n = samplesize)
+      y.null.i = arm::invlogit(coef(reg)[[1]] + control_coef*data$ctq_control)
     }
     else {
       control_coef <- replace(coef(reg)[[3]], is.na(coef(reg)[[3]]), 0) 
-      y_p_star = arm::invlogit(coef(reg)[[1]] + control_coef*data$wave1_control + coef(reg)[[4]]*data$ctq_control)
-      y.null.i = rbinom(size = 1, prob = y_p_star, n = samplesize)
+      y.null.i = arm::invlogit(coef(reg)[[1]] + control_coef*data$wave1_control + coef(reg)[[4]]*data$ctq_control)
     }
   }
   
@@ -520,12 +516,23 @@ get_boot_data <- function(results_frame, dataset, data, y.null) {
   } else {
    data$dv <- data[,as.character(results_frame$outcome[i])]
   }
+
+  if (results_frame$model[[i]]=="lm"){
+    if (b <= bootstraps){
+      k=sample(nrow(data),replace=T)
+      data <- data[k, ]
+    } else {}
+  } else {
+    if (b <= bootstraps){
+      data$dv = rbinom(size = 1, prob = y.null[[i]], n = samplesize)
+      k=sample(nrow(data),replace=T)
+      data <- data[k, ]
+    } else {}
+  }
+ 
   
   # Do bootstrapping
-  if (b <= bootstraps){
-    k=sample(nrow(data),replace=T)
-    data <- data[k, ]
-  } else {}
+  
   
   #make output into list
   get_data_list <- list(results_frame, dataset, data)

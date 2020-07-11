@@ -362,6 +362,7 @@ results_table_complete <- populate_table_observed(results_frame = results_frame_
 results_table_complete <- populate_table_bootstrap(bootstrap_summary, results_table_complete)
 results_table_complete <- populate_table_bounds(boot = boot_sca, results_table_complete)
 
+
 ##########################################################################################################
 # 4. Save Table ##########################################################################################
 ##########################################################################################################
@@ -417,3 +418,180 @@ t.test(results_frame_wide_wave$wave1,
        results_frame_wide_wave$wave2, 
        paired=TRUE, 
        conf.level=0.95)
+
+########################################################################################
+# 6. create inferential statistics separately for each wave 
+# Same approach as above but filter only wave 1 or only wave 2
+#
+########################################################################################
+
+#adjusted fill_per function 
+fill_per_w <- function(boot_results, frame, wave){
+  for (m in 1:(bootstraps+1)){
+    
+    boot_results_m <- as.data.frame(boot_results[m])
+    n <- 2
+    if (wave=="wave1") {
+
+      for (i in 1:13){      
+        if(i == 1){
+          results_subset <- boot_results_m
+        } else if (i == 2) {
+          results_subset <- boot_results_m %>% filter(grepl(pattern="PUBcomp.*wave1", predictor))
+        } else if (i == 3) {
+          results_subset <- boot_results_m %>% filter(grepl(pattern="ADRENcomp.*wave1", predictor))
+        } else if (i == 4){
+          results_subset <- boot_results_m %>% filter(grepl(pattern="GONADcomp.*wave1", predictor))
+        } else if (i == 5){
+          results_subset <- boot_results_m %>% filter(grepl(pattern="neg_pdsstage.*wave1", predictor))
+        } else if (i == 6){
+          results_subset <- boot_results_m %>% filter(grepl(pattern="parent_pdsstage.*wave1", predictor))
+        } else if (i == 7){
+          results_subset <- boot_results_m %>% filter(grepl(pattern="ldstage.*wave1", predictor))
+        } else if (i == 8){
+          results_subset <- boot_results_m %>% filter(grepl(pattern="aam", predictor))
+        } else if (i == 9){
+          results_subset <- boot_results_m %>% filter(grepl(pattern="^subj_timing.*wave1", predictor))
+        } else if (i == 10){
+          results_subset <- boot_results_m %>% filter(grepl(pattern="parent_subj_timing.*wave1", predictor))
+        } else if (i == 11){
+          results_subset <- boot_results_m %>% filter(grepl(pattern="DHEA.*wave1", predictor))
+        } else if (i == 12){
+          results_subset <- boot_results_m %>% filter(grepl(pattern="TEST.*wave1", predictor))
+        } else if (i == 13){
+          results_subset <- boot_results_m %>% filter(grepl(pattern="_EST.*wave1", predictor))
+        }
+        
+        frame[m, n] <- median(results_subset[["effect"]], na.rm = TRUE)
+        n <- n+1
+        frame[m, n] <- length(results_subset[results_subset$effect < 0, "effect"])
+        n <- n+1
+        frame[m, n] <- length(results_subset[results_subset$effect > 0, "effect"])
+        n <- n+1
+        sig_data <- filter(results_subset, p_value < 0.05)
+        
+        if(nrow(sig_data) > 0){
+          frame[m, n] <- length(sig_data[sig_data$effect < 0, "effect"])
+          n <- n+1
+          frame[m, n] <- length(sig_data[sig_data$effect > 0, "effect"])
+          n <- n+1
+        } else {
+          frame[m, n] <- 0
+          n <- n+1
+          frame[m, n] <- 0
+          n <- n+1
+        }    
+      }
+    } else if (wave=="wave2") {
+        
+        for (i in 1:13){      
+          if(i == 1){
+            results_subset <- boot_results_m
+          } else if (i == 2) {
+            results_subset <- boot_results_m %>% filter(grepl(pattern="PUBcomp.*wave2", predictor))
+          } else if (i == 3) {
+            results_subset <- boot_results_m %>% filter(grepl(pattern="ADRENcomp.*wave2", predictor))
+          } else if (i == 4){
+            results_subset <- boot_results_m %>% filter(grepl(pattern="GONADcomp.*wave2", predictor))
+          } else if (i == 5){
+            results_subset <- boot_results_m %>% filter(grepl(pattern="neg_pdsstage.*wave2", predictor))
+          } else if (i == 6){
+            results_subset <- boot_results_m %>% filter(grepl(pattern="parent_pdsstage.*wave2", predictor))
+          } else if (i == 7){
+            results_subset <- boot_results_m %>% filter(grepl(pattern="ldstage.*wave2", predictor))
+          } else if (i == 8){
+            results_subset <- boot_results_m %>% filter(grepl(pattern="aam", predictor))
+          } else if (i == 9){
+            results_subset <- boot_results_m %>% filter(grepl(pattern="^subj_timing.*wave2", predictor))
+          } else if (i == 10){
+            results_subset <- boot_results_m %>% filter(grepl(pattern="parent_subj_timing.*wave2", predictor))
+          } else if (i == 11){
+            results_subset <- boot_results_m %>% filter(grepl(pattern="DHEA.*wave2", predictor))
+          } else if (i == 12){
+            results_subset <- boot_results_m %>% filter(grepl(pattern="TEST.*wave2", predictor))
+          } else if (i == 13){
+            results_subset <- boot_results_m %>% filter(grepl(pattern="_EST.*wave2", predictor))
+          }
+          
+          frame[m, n] <- median(results_subset[["effect"]], na.rm = TRUE)
+          n <- n+1
+          frame[m, n] <- length(results_subset[results_subset$effect < 0, "effect"])
+          n <- n+1
+          frame[m, n] <- length(results_subset[results_subset$effect > 0, "effect"])
+          n <- n+1
+          sig_data <- filter(results_subset, p_value < 0.05)
+          
+          if(nrow(sig_data) > 0){
+            frame[m, n] <- length(sig_data[sig_data$effect < 0, "effect"])
+            n <- n+1
+            frame[m, n] <- length(sig_data[sig_data$effect > 0, "effect"])
+            n <- n+1
+          } else {
+            frame[m, n] <- 0
+            n <- n+1
+            frame[m, n] <- 0
+            n <- n+1
+          }    
+      }
+   }
+  }
+  return(frame)
+}
+
+#adjusted function to get confidence intervals
+populate_table_bounds_w <- function(boot, table, wave){
+  
+  results_frame_medians <- data.frame("aam_final" = NA, "parent_subj_timing" = NA,"resid_neg_ADRENcomp" = NA,
+                                      "resid_neg_DHEA_cor" = NA, "resid_neg_EST_cor" = NA, "resid_neg_GONADcomp" = NA, 
+                                      "resid_neg_ldstage" = NA, "resid_neg_parent_pdsstage" = NA, "resid_neg_pdsstage" = NA,
+                                      "resid_neg_PUBcomp" = NA, "resid_neg_TEST_cor" = NA, "subj_timing" = NA) #needs to be alphabetical order 
+  if (wave=="wave1") {
+    for(b in 1:(length(boot)-1)){
+      boot_sh <- boot[[b]] %>% 
+        filter(grepl(pattern="wave1|aam", predictor)) %>% 
+        mutate(predictor= sub("_wave[1:2]|_im_wave[1:2]$", "", predictor))  
+      medians <- boot_sh %>% group_by(predictor) %>% dplyr::summarise(median = median(effect))
+      results_frame_medians <- rbind(results_frame_medians, as.numeric(t(medians)[2,]))
+    }
+  } else {
+      for(b in 1:(length(boot)-1)){
+        boot_sh <- boot[[b]] %>% 
+          filter(grepl(pattern="wave2|aam", predictor)) %>% 
+          mutate(predictor= sub("_wave[1:2]|_im_wave[1:2]$", "", predictor))  
+        medians <- boot_sh %>% group_by(predictor) %>% dplyr::summarise(median = median(effect))
+        results_frame_medians <- rbind(results_frame_medians, as.numeric(t(medians)[2,]))
+    }
+  }    
+  
+  results_frame_medians <- results_frame_medians[2:nrow(results_frame_medians),]
+  
+  for(i in 1:nrow(table)){
+    if((table[i,"sig_measure"]) == "median ES"){
+      table[i, c("lower", "upper")] <- round(quantile(results_frame_medians[, paste0(table[i, "predictor"])], probs = c(0.025, 0.975),na.rm=T), 2)
+    } else {
+      table[i, c("lower", "upper")] <- NA
+    }
+  }
+  
+  return(table)
+}
+
+per_frame_w1 <- fill_per_w(bootstraps_full, permutation_frame, wave="wave1")
+per_frame_w2 <- fill_per_w(bootstraps_full, permutation_frame, wave="wave2")
+bootstrap_summary_w1 <- analyse_boot(per_frame_w1)
+bootstrap_summary_w2 <- analyse_boot(per_frame_w2)
+
+results_frame_wave1pred <- results_frame_forwide %>% filter(wave=="wave1"|predictor=="aam_final")
+results_table_wave1 <- populate_table_observed(results_frame = results_frame_wave1pred, table = results_table2)
+results_table_wave1 <- populate_table_bootstrap(bootstrap_summary_w1, results_table_wave1)
+results_table_wave1 <- populate_table_bounds_w(boot = boot_sca, results_table_wave1, wave="wave1")
+results_table_wave1$predictor_wave  <- "wave1"
+
+results_frame_wave2pred <- results_frame_forwide %>% filter(wave=="wave2"|predictor=="aam_final")
+results_table_wave2 <- populate_table_observed(results_frame = results_frame_wave2pred, table = results_table2)
+results_table_wave2 <- populate_table_bootstrap(bootstrap_summary_w2, results_table_wave2)
+results_table_wave2 <- populate_table_bounds_w(boot = boot_sca, results_table_wave2, wave="wave2")
+results_table_wave2$predictor_wave  <- "wave2"
+
+results_table_bywave <- rbind(results_table_wave1,results_table_wave2)
+write.csv(results_table_bywave, file = paste0(cas_dir,"projects/W1_W2_pubertal_timing/table_bywave.csv"))
