@@ -427,8 +427,8 @@ get_ynull <- function(get_model_list) {
     #make null model
     y.null.i <- data$dv-(b.i*data$iv)
 
-#We use an alternative approach for binary y variables, predicting each person's probability of having a 1, 
-#then for each bootstrap replicate, regenerating their observed score (0, 1) from their probability    
+#We use an alternative approach for binary y variables, predicting each person's probability of having a 1 when the effect of iv is zero, 
+#then regenerating observed scores (0, 1) from the probability    
   } else {
     if (results_frame$control[i]=="none") {
       y.null.i = arm::invlogit(coef(reg)[[1]] + 0*data$wave1_control)
