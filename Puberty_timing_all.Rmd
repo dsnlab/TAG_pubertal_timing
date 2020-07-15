@@ -28,38 +28,30 @@ Age <- read.csv(paste0(cas_dir,'behavior/Demographics/Age/TAG_age.csv'),header=T
         dplyr::rename(age=age_excel)
 
 #Get PDS_F5(subjective timing) all waves 
-file_list_cpds = Sys.glob(paste0(cas_dir, 'behavior/Questionnaires/Wave*/PDS_Wave*.csv'))
-ChildPDS = data.frame()
-for (file in file_list_cpds) {
-  temp <- read.table(file, header=TRUE, sep=",") %>%
-    select(tagid, PDS_F1, PDS_F2, PDS_F3, PDS_F4, PDS_F5, PDS_F6, pdss) %>%
-    mutate(wave = regmatches(file, regexpr("[[:digit:]]+", file)))
-  ChildPDS = rbind(ChildPDS, temp)
-  rm(temp) }
-ChildPDS <- ChildPDS %>%
-#  mutate(menarchescore=ifelse(PDS_F6==1,4,ifelse(PDS_F6==0,1,NA))) %>%
-  dplyr::rename(subj_timing=PDS_F5)
-#ChildPDS$pdsscore <- rowMeans(ChildPDS[,c("PDS_F1","PDS_F2","PDS_F3","PDS_F4","menarchescore")], na.rm=TRUE)
+ChildPDS_wave1 <- read.csv(paste0(cas_dir,'behavior/Questionnaires/Wave1/PDS_Wave1.csv')) %>%
+  select(tagid, PDS_F1, PDS_F2, PDS_F3, PDS_F4, PDS_F5, PDS_F6, pdss) %>%
+  mutate(wave = 1) %>%
+  dplyr::rename(subj_timing=PDS_F5,pdsstage=pdss)
+ChildPDS_wave2 <- read.csv(paste0(cas_dir,'behavior/Questionnaires/Wave2/PDS_Wave2.csv')) %>%
+  select(tagid, PDS_F1, PDS_F2, PDS_F3, PDS_F4, PDS_F5, PDS_F6, pdss) %>%
+  mutate(wave = 2) %>%
+  dplyr::rename(subj_timing=PDS_F5,pdsstage=pdss)
+ChildPDS <- rbind(ChildPDS_wave1,ChildPDS_wave2)
 
 #Get parent pds 
 #Note that Parent PDS is missing for half of pp at wave 1
-file_list_ppds = Sys.glob(paste0(cas_dir, 'behavior/Questionnaires/Wave*/PDS_parent_Wave*.csv'))
-
-ParentPDS = data.frame()
-for (file in file_list_ppds) {
-  temp <- read.table(file, header=TRUE, sep=",") %>%
-    select(tagid, PDS_F1, PDS_F2, PDS_F3, PDS_F4, PDS_F5, PDS_F6, pdss) %>%
-    mutate(wave = regmatches(file, regexpr("[[:digit:]]+", file)))
-  ParentPDS = rbind(ParentPDS, temp)
-  rm(temp) }
-
-ParentPDS <- ParentPDS %>% 
-  dplyr::rename(parent_pdsstage=pdss, parent_subj_timing=PDS_F5)  
-#  mutate(menarchescore=ifelse(PDS_F6==1,4,ifelse(PDS_F6==0,1,NA)))
-#ParentPDS$parent_pdsscore <- rowMeans(ParentPDS[,c("PDS_F1","PDS_F2","PDS_F3","PDS_F4","menarchescore")], na.rm=TRUE)
+ParentPDS_wave1 <- read.csv(paste0(cas_dir,'behavior/Questionnaires/Wave1/PDS_parent_Wave1.csv')) %>%
+  select(tagid, PDS_F1, PDS_F2, PDS_F3, PDS_F4, PDS_F5, PDS_F6, pdss) %>%
+  mutate(wave = 1) %>%
+  dplyr::rename(parent_subj_timing=PDS_F5,parent_pdsstage=pdss)
+ParentPDS_wave2 <- read.csv(paste0(cas_dir,'behavior/Questionnaires/Wave2/PDS_parent_Wave2.csv')) %>%
+  select(tagid, PDS_F1, PDS_F2, PDS_F3, PDS_F4, PDS_F5, PDS_F6, pdss) %>%
+  mutate(wave = 2) %>%
+  dplyr::rename(parent_subj_timing=PDS_F5,parent_pdsstage=pdss)
+ParentPDS <- rbind(ParentPDS_wave1,ParentPDS_wave2)
 
 #merge all the measures in one dataframe
-Puberty_all <- merge(PubertyComposite[,c("tagid","wave","adrenf2","gonadf2","PBIP_1A","PBIP_2A","pdsstage","ldstage","ADRENcomp","GONADcomp","PUBcomp")], ChildPDS[,c("tagid","wave","subj_timing")], by=c("tagid","wave"),all=T)
+Puberty_all <- merge(PubertyComposite[,c("tagid","wave","adrenf2","gonadf2","PBIP_1A","PBIP_2A","ldstage","ADRENcomp","GONADcomp","PUBcomp")], ChildPDS[,c("tagid","wave","pdsstage","subj_timing")], by=c("tagid","wave"),all=T)
 Puberty_all <- merge(Puberty_all, ParentPDS[,c("tagid","wave", "parent_pdsstage","parent_subj_timing")], by=c("tagid","wave"),all=T)
 Puberty_all <- merge(Puberty_all, Age, by=c("tagid","wave"),all=T)
 
@@ -159,7 +151,7 @@ all_pub_int <- all_pub_int %>%
 #Note: we're not imputing age at menarche (added below) because missings are mostly pre-menarcheal girls (=MNAR)
 
 #check missingness pattern
-md.pattern(all_for_imp)
+md.pattern(all_pub_int)
 
 #impute
 #age is imputed to be 1.5 years after wave 1 if it's missing, then used as time variable in Amelia
@@ -287,39 +279,41 @@ Timing_allways <- merge(Timing_allways,age_at_menarche,by="tagid",all=T)
 ```
 
 ```{r reorder and correlate all measures}
-Timing_allways <- Timing_allways %>% select(age,pdsstage,ldstage,ADRENcomp,GONADcomp,PUBcomp,parent_pdsstage,DHEAmean,TESTmean,ESTmean,DHEA_cor,TEST_cor,EST_cor,subj_timing,parent_subj_timing,everything())
 
+#Wave 1
+Timing_allways1 <- Timing_allways %>% select(resid_pdsstage_wave1,resid_parent_pdsstage_wave1,resid_ldstage_wave1,resid_PUBcomp_wave1,resid_ADRENcomp_wave1,resid_GONADcomp_wave1,subj_timing_wave1,parent_subj_timing_wave1,resid_DHEA_cor_wave1,resid_TEST_cor_wave1,resid_EST_cor_wave1,aam_final)
+
+Timing_allways1 <- select_if(Timing_allways1, is.numeric) 
+cor_timing1_r <- cor(Timing_allways1, use="pairwise.complete.obs", method="pearson")
+colnames(cor_timing1_r) <- c("Residualized self-report PDS stage", "Residualized parent-report PDS stage", "Residualized LD stage", "Residualized puberty composite", "Residualized adrenal composite", "Residualized gonadal composite", "Self-report subjective timing", "Parent-report Subjective timing", "Residualized DHEA", "Residualized testosterone", "Residualized estradiol", "Age at menarche")
+rownames(cor_timing1_r) <- colnames(cor_timing1_r)
+p_timing1_r <- cor_pmat(Timing_allways1)
+colnames(p_timing1_r) <- colnames(cor_timing1_r) 
+rownames(p_timing1_r) <- rownames(cor_timing1_r) 
+ggcorrplot(cor_timing1_r, p.mat=p_timing1_r, lab=T,lab_size=3,type="lower",title="Pubertal timing correlations Time 1")
+
+#Wave 2
+Timing_allways2 <- Timing_allways %>% select(resid_pdsstage_wave2,resid_parent_pdsstage_wave2,resid_ldstage_wave2,resid_PUBcomp_wave2,resid_ADRENcomp_wave2,resid_GONADcomp_wave2,subj_timing_wave2,parent_subj_timing_wave2,resid_DHEA_cor_wave2,resid_TEST_cor_wave2,resid_EST_cor_wave2,aam_final)
+
+Timing_allways2 <- select_if(Timing_allways2, is.numeric) 
+cor_timing2_r <- cor(Timing_allways2, use="pairwise.complete.obs", method="pearson")
+colnames(cor_timing2_r) <- colnames(cor_timing1_r)
+rownames(cor_timing2_r) <- rownames(cor_timing1_r)
+p_timing2 <- cor_pmat(Timing_allways2)
+colnames(p_timing2) <- colnames(cor_timing1_r)
+rownames(p_timing2) <- rownames(cor_timing1_r)
+ggcorrplot(cor_timing2_r, p.mat=p_timing2, lab=T, lab_size=3,type="lower", title="Pubertal timing correlations Time 2")
+
+#Both waves and all pubertal dev variables
 Timing_allwaysn <- select_if(Timing_allways, is.numeric) 
 cor_timing_r <- cor(Timing_allwaysn, use="pairwise.complete.obs", method="pearson")
 cor_timing_rho <- cor(Timing_allwaysn, use="pairwise.complete.obs", method="spearman")
-p_timing_rho <- cor_pmat(Timing_allwaysn)
-ggcorrplot(cor_timing_rho, p.mat=p_timing_rho, lab=T, title="Pubertal timing correlations both waves")
+p_timing <- cor_pmat(Timing_allwaysn)
+ggcorrplot(cor_timing_r, p.mat=p_timing, lab=T,lab_size=2,type="lower", title="Pubertal timing correlations both waves")
 
-Timing_allways1 <- Timing_allways %>% filter(wave<2) 
-Timing_allways1 <- select_if(Timing_allways1, is.numeric) 
-cor_timing1_r <- cor(Timing_allways1, use="pairwise.complete.obs", method="pearson")
-cor_timing1_rho <- cor(Timing_allways1, use="pairwise.complete.obs", method="spearman")
-p_timing1_rho <- cor_pmat(Timing_allways1)
-ggcorrplot(cor_timing1_rho, p.mat=p_timing1_rho, lab=T, lab_size=3, title="Pubertal timing correlations wave 1")
-
-Timing_allways2 <- Timing_allways %>% filter(wave>1) 
-Timing_allways2 <- select_if(Timing_allways2, is.numeric) 
-cor_timing2_r <- cor(Timing_allways2, use="pairwise.complete.obs", method="pearson")
-cor_timing2_rho <- cor(Timing_allways2, use="pairwise.complete.obs", method="spearman")
-p_timing2_rho <- cor_pmat(Timing_allways2)
-ggcorrplot(cor_timing2_rho, p.mat=p_timing2_rho, lab=T, lab_size=3, title="Pubertal timing correlations wave 2")
 
 ```
 
-``` {r correlate wave 1 with wave 2}
-Timing_allways_short <-  dcast(melt(Timing_allways, id.vars=c("tagid", "wave")), tagid~variable+wave)
-Timing_allways_shortn <- select_if(Timing_allways_short, is.numeric) 
-cor_waves_r <- cor(Timing_allways_shortn, use="pairwise.complete.obs", method="pearson")
-cor_waves_rho <- cor(Timing_allways_shortn, use="pairwise.complete.obs", method="spearman")
-p_waves_rho <- cor_pmat(Timing_allways_shortn)
-ggcorrplot(cor_waves_rho, p.mat=p_waves_rho, lab=T,lab_size=2, title="Pubertal timing correlations between waves")
-
-```
 
 
 ```{r save}
