@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r Set Directory, message=FALSE, warning=FALSE, include=FALSE}
 getwd()
 #You should set this to the TAG directory on the CAS file server 
-workdir='Y:/dsnlab/TAG/' 
+workdir='Z:/TAG/' 
 ```
 
 ```{r Load Data}
@@ -21,7 +21,7 @@ require(dplyr)
 require(zoo)
 library(lme4)
 # Load Data (Wave 1 and 2) first - see Marjolein's code for how this all got put together
-data <- read.csv(file.path(workdir,"projects/W1_W2_pubertal_timing/Timing_and_Internalizing.csv", fsep=""))
+data <- read.csv(file.path(workdir,"projects/W1_W2_pubertal_timing/Final_timing_int.csv", fsep=""))
 
 
 ```
@@ -33,17 +33,14 @@ data <- read.csv(file.path(workdir,"projects/W1_W2_pubertal_timing/Timing_and_In
 require(specr)
 require (tidyverse)
 
-
-# RECODE SUBJ TIMING VARS + AAM SO HIGHER = EARLIER, OR RESID VARS SO THAT HIGHER = LATER !!
 # Replace CTQ_threat with ELA variable !!  
 
-#check out the data and model specifications (example)
+#check out the data and model specifications (example). Idk why this is here really.
 setup_specs(y = c("CESDC_total_wave2"),     #dependent variable
-              x = c("aam_final","subj_timing_wave1","parent_subj_timing_wave1","resid_im_ldstage_wave1","resid_im_pdsstage_wave1","resid_im_ADRENcomp_wave1","resid_im_GONADcomp_wave1","resid_im_PUBcomp_wave1","resid_im_DHEA_cor_wave1","resid_im_TEST_cor_wave1","resid_im_EST_cor_wave1","subj_timing_wave2","parent_subj_timing_wave2","resid_im_ldstage_wave2","resid_im_pdsstage_wave2","resid_im_ADRENcomp_wave2","resid_im_GONADcomp_wave2","resid_im_PUBcomp_wave2","resid_im_DHEA_cor_wave2","resid_im_TEST_cor_wave2","resid_im_EST_cor_wave2"),       #independent variables
+              x = c("aam_final","subj_timing_im_wave1","parent_subj_timing_im_wave1","resid_neg_ldstage_im_wave1","resid_neg_pdsstage_im_wave1","resid_neg_ADRENcomp_im_wave1","resid_neg_GONADcomp_im_wave1","resid_neg_PUBcomp_im_wave1", "resid_neg_parent_pdsstage_im_wave1","resid_neg_DHEA_cor_im_wave1","resid_neg_TEST_cor_im_wave1","resid_neg_EST_cor_im_wave1",
+                    "subj_timing_im_wave2","parent_subj_timing_im_wave2","resid_neg_ldstage_im_wave2","resid_neg_pdsstage_im_wave2","resid_neg_ADRENcomp_im_wave2","resid_neg_GONADcomp_im_wave2","resid_neg_PUBcomp_im_wave2","resid_neg_parent_pdsstage_im_wave2","resid_neg_DHEA_cor_im_wave2","resid_neg_TEST_cor_im_wave2","resid_neg_EST_cor_im_wave2"),       #independent variables
             model = c("lm"),           # linear model
             controls = c("CTQ_threat_wave1", "CESDC_total_wave1"))  # control variables 
-
-
 
 ```
 
@@ -63,49 +60,56 @@ logistic <- function(formula, data) {
 # Any internalising diagnosis from KSADS
 results_intd <- run_specs(df = data, 
                      y = c("int_d_im_wave2"),     #dependent variables
-              x = c("aam_final","subj_timing_im_wave1","parent_subj_timing_im_wave1","resid_ldstage_im_wave1","resid_pdsstage_im_wave1","resid_ADRENcomp_im_wave1","resid_GONADcomp_im_wave1","resid_PUBcomp_im_wave1","resid_DHEA_cor_im_wave1","resid_TEST_cor_im_wave1","resid_EST_cor_im_wave1","subj_timing_im_wave2","parent_subj_timing_im_wave2","resid_ldstage_im_wave2","resid_pdsstage_im_wave2","resid_ADRENcomp_im_wave2","resid_GONADcomp_im_wave2","resid_PUBcomp_im_wave2","resid_DHEA_cor_im_wave2","resid_TEST_cor_im_wave2","resid_EST_cor_im_wave2"),       #independent variables
+              x = c("aam_final","subj_timing_im_wave1","parent_subj_timing_im_wave1","resid_neg_ldstage_im_wave1","resid_neg_pdsstage_im_wave1","resid_neg_ADRENcomp_im_wave1","resid_neg_GONADcomp_im_wave1","resid_neg_PUBcomp_im_wave1", "resid_neg_parent_pdsstage_im_wave1","resid_neg_DHEA_cor_im_wave1","resid_neg_TEST_cor_im_wave1","resid_neg_EST_cor_im_wave1",
+                    "subj_timing_im_wave2","parent_subj_timing_im_wave2","resid_neg_ldstage_im_wave2","resid_neg_pdsstage_im_wave2","resid_neg_ADRENcomp_im_wave2","resid_neg_GONADcomp_im_wave2","resid_neg_PUBcomp_im_wave2","resid_neg_parent_pdsstage_im_wave2","resid_neg_DHEA_cor_im_wave2","resid_neg_TEST_cor_im_wave2","resid_neg_EST_cor_im_wave2"),       #independent variables
             model = c("logistic"),           # logistic regression model
             controls = c("CTQ_threat_im_wave1", "int_d_im_wave1"))  # control variables 
 
 # Continuous CESD scores
 results_cesdc <- run_specs(df = data, 
                      y = c("CESDC_total_im_wave2"),     #dependent variables
-              x = c("aam_final","subj_timing_im_wave1","parent_subj_timing_im_wave1","resid_ldstage_im_wave1","resid_pdsstage_im_wave1","resid_ADRENcomp_im_wave1","resid_GONADcomp_im_wave1","resid_PUBcomp_im_wave1","resid_DHEA_cor_im_wave1","resid_TEST_cor_im_wave1","resid_EST_cor_im_wave1","subj_timing_im_wave2","parent_subj_timing_im_wave2","resid_ldstage_im_wave2","resid_pdsstage_im_wave2","resid_ADRENcomp_im_wave2","resid_GONADcomp_im_wave2","resid_PUBcomp_im_wave2","resid_DHEA_cor_im_wave2","resid_TEST_cor_im_wave2","resid_EST_cor_im_wave2"),       #independent variables
+              x = c("aam_final","subj_timing_im_wave1","parent_subj_timing_im_wave1","resid_neg_ldstage_im_wave1","resid_neg_pdsstage_im_wave1","resid_neg_ADRENcomp_im_wave1","resid_neg_GONADcomp_im_wave1","resid_neg_PUBcomp_im_wave1", "resid_neg_parent_pdsstage_im_wave1","resid_neg_DHEA_cor_im_wave1","resid_neg_TEST_cor_im_wave1","resid_neg_EST_cor_im_wave1",
+                    "subj_timing_im_wave2","parent_subj_timing_im_wave2","resid_neg_ldstage_im_wave2","resid_neg_pdsstage_im_wave2","resid_neg_ADRENcomp_im_wave2","resid_neg_GONADcomp_im_wave2","resid_neg_PUBcomp_im_wave2","resid_neg_parent_pdsstage_im_wave2","resid_neg_DHEA_cor_im_wave2","resid_neg_TEST_cor_im_wave2","resid_neg_EST_cor_im_wave2"),       #independent variables
             model = c("lm"),           # linear model
             controls = c("CTQ_threat_im_wave1", "CESDC_total_im_wave1"))  # control variables 
 
 # Any depressive DSM-IV disorder from KSADS
 results_deprd <- run_specs(df = data, 
                      y = c("depres_d_im_wave2"),     #dependent variables
-              x = c("aam_final","subj_timing_im_wave1","parent_subj_timing_im_wave1","resid_ldstage_im_wave1","resid_pdsstage_im_wave1","resid_ADRENcomp_im_wave1","resid_GONADcomp_im_wave1","resid_PUBcomp_im_wave1","resid_DHEA_cor_im_wave1","resid_TEST_cor_im_wave1","resid_EST_cor_im_wave1","subj_timing_im_wave2","parent_subj_timing_im_wave2","resid_ldstage_im_wave2","resid_pdsstage_im_wave2","resid_ADRENcomp_im_wave2","resid_GONADcomp_im_wave2","resid_PUBcomp_im_wave2","resid_DHEA_cor_im_wave2","resid_TEST_cor_im_wave2","resid_EST_cor_im_wave2"),       #independent variables
+              x = c("aam_final","subj_timing_im_wave1","parent_subj_timing_im_wave1","resid_neg_ldstage_im_wave1","resid_neg_pdsstage_im_wave1","resid_neg_ADRENcomp_im_wave1","resid_neg_GONADcomp_im_wave1","resid_neg_PUBcomp_im_wave1", "resid_neg_parent_pdsstage_im_wave1","resid_neg_DHEA_cor_im_wave1","resid_neg_TEST_cor_im_wave1","resid_neg_EST_cor_im_wave1",
+                    "subj_timing_im_wave2","parent_subj_timing_im_wave2","resid_neg_ldstage_im_wave2","resid_neg_pdsstage_im_wave2","resid_neg_ADRENcomp_im_wave2","resid_neg_GONADcomp_im_wave2","resid_neg_PUBcomp_im_wave2","resid_neg_parent_pdsstage_im_wave2","resid_neg_DHEA_cor_im_wave2","resid_neg_TEST_cor_im_wave2","resid_neg_EST_cor_im_wave2"),       #independent variables
             model = c("logistic"),           # logistic regression  model
             controls = c("CTQ_threat_im_wave1", "depres_d_im_wave1"))  # control variables 
 
 # Any "distress" diagnosis according to HITOP (Dep dx + GAD)
 results_distressd <- run_specs(df = data, 
                      y = c("distress_d_im_wave2"),     #dependent variables
-              x = c("aam_final","subj_timing_im_wave1","parent_subj_timing_im_wave1","resid_ldstage_im_wave1","resid_pdsstage_im_wave1","resid_ADRENcomp_im_wave1","resid_GONADcomp_im_wave1","resid_PUBcomp_im_wave1","resid_DHEA_cor_im_wave1","resid_TEST_cor_im_wave1","resid_EST_cor_im_wave1","subj_timing_im_wave2","parent_subj_timing_im_wave2","resid_ldstage_im_wave2","resid_pdsstage_im_wave2","resid_ADRENcomp_im_wave2","resid_GONADcomp_im_wave2","resid_PUBcomp_im_wave2","resid_DHEA_cor_im_wave2","resid_TEST_cor_im_wave2","resid_EST_cor_im_wave2"),       #independent variables
+              x = c("aam_final","subj_timing_im_wave1","parent_subj_timing_im_wave1","resid_neg_ldstage_im_wave1","resid_neg_pdsstage_im_wave1","resid_neg_ADRENcomp_im_wave1","resid_neg_GONADcomp_im_wave1","resid_neg_PUBcomp_im_wave1", "resid_neg_parent_pdsstage_im_wave1","resid_neg_DHEA_cor_im_wave1","resid_neg_TEST_cor_im_wave1","resid_neg_EST_cor_im_wave1",
+                    "subj_timing_im_wave2","parent_subj_timing_im_wave2","resid_neg_ldstage_im_wave2","resid_neg_pdsstage_im_wave2","resid_neg_ADRENcomp_im_wave2","resid_neg_GONADcomp_im_wave2","resid_neg_PUBcomp_im_wave2","resid_neg_parent_pdsstage_im_wave2","resid_neg_DHEA_cor_im_wave2","resid_neg_TEST_cor_im_wave2","resid_neg_EST_cor_im_wave2"),       #independent variables
             model = c("logistic"),           # logistic regression  model
             controls = c("CTQ_threat_im_wave1", "distress_d_im_wave1"))  # control variables 
 
 # Continuous SCARED scores
 results_scared <- run_specs(df = data, 
                   y = c("SCARED_mean_im_wave2"),     #dependent variables
-              x = c("aam_final","subj_timing_im_wave1","parent_subj_timing_im_wave1","resid_ldstage_im_wave1","resid_pdsstage_im_wave1","resid_ADRENcomp_im_wave1","resid_GONADcomp_im_wave1","resid_PUBcomp_im_wave1","resid_DHEA_cor_im_wave1","resid_TEST_cor_im_wave1","resid_EST_cor_im_wave1","subj_timing_im_wave2","parent_subj_timing_im_wave2","resid_ldstage_im_wave2","resid_pdsstage_im_wave2","resid_ADRENcomp_im_wave2","resid_GONADcomp_im_wave2","resid_PUBcomp_im_wave2","resid_DHEA_cor_im_wave2","resid_TEST_cor_im_wave2","resid_EST_cor_im_wave2"),       #independent variables
+              x = c("aam_final","subj_timing_im_wave1","parent_subj_timing_im_wave1","resid_neg_ldstage_im_wave1","resid_neg_pdsstage_im_wave1","resid_neg_ADRENcomp_im_wave1","resid_neg_GONADcomp_im_wave1","resid_neg_PUBcomp_im_wave1", "resid_neg_parent_pdsstage_im_wave1","resid_neg_DHEA_cor_im_wave1","resid_neg_TEST_cor_im_wave1","resid_neg_EST_cor_im_wave1",
+                    "subj_timing_im_wave2","parent_subj_timing_im_wave2","resid_neg_ldstage_im_wave2","resid_neg_pdsstage_im_wave2","resid_neg_ADRENcomp_im_wave2","resid_neg_GONADcomp_im_wave2","resid_neg_PUBcomp_im_wave2","resid_neg_parent_pdsstage_im_wave2","resid_neg_DHEA_cor_im_wave2","resid_neg_TEST_cor_im_wave2","resid_neg_EST_cor_im_wave2"),       #independent variables
             model = c("lm"),           # linear model
             controls = c("CTQ_threat_im_wave1", "SCARED_mean_im_wave1"))  # control variables 
 
 # Any Anxiety Disorder DSM-IV KSADS
 results_anxd <- run_specs(df = data, 
                      y = c("anx_d_im_wave2"),     #dependent variables
-              x = c("aam_final","subj_timing_im_wave1","parent_subj_timing_im_wave1","resid_ldstage_im_wave1","resid_pdsstage_im_wave1","resid_ADRENcomp_im_wave1","resid_GONADcomp_im_wave1","resid_PUBcomp_im_wave1","resid_DHEA_cor_im_wave1","resid_TEST_cor_im_wave1","resid_EST_cor_im_wave1","subj_timing_im_wave2","parent_subj_timing_im_wave2","resid_ldstage_im_wave2","resid_pdsstage_im_wave2","resid_ADRENcomp_im_wave2","resid_GONADcomp_im_wave2","resid_PUBcomp_im_wave2","resid_DHEA_cor_im_wave2","resid_TEST_cor_im_wave2","resid_EST_cor_im_wave2"),       #independent variables
+              x = c("aam_final","subj_timing_im_wave1","parent_subj_timing_im_wave1","resid_neg_ldstage_im_wave1","resid_neg_pdsstage_im_wave1","resid_neg_ADRENcomp_im_wave1","resid_neg_GONADcomp_im_wave1","resid_neg_PUBcomp_im_wave1", "resid_neg_parent_pdsstage_im_wave1","resid_neg_DHEA_cor_im_wave1","resid_neg_TEST_cor_im_wave1","resid_neg_EST_cor_im_wave1",
+                    "subj_timing_im_wave2","parent_subj_timing_im_wave2","resid_neg_ldstage_im_wave2","resid_neg_pdsstage_im_wave2","resid_neg_ADRENcomp_im_wave2","resid_neg_GONADcomp_im_wave2","resid_neg_PUBcomp_im_wave2","resid_neg_parent_pdsstage_im_wave2","resid_neg_DHEA_cor_im_wave2","resid_neg_TEST_cor_im_wave2","resid_neg_EST_cor_im_wave2"),       #independent variables
             model = c("logistic"),           # logistic regression  model
             controls = c("CTQ_threat_im_wave1", "anx_d_im_wave1"))  # control variables 
 
 # Any "fear" diagnosis according to HITOP
 results_feard <- run_specs(df = data, 
                      y = c("fear_d_im_wave2"),     #dependent variables
-              x = c("aam_final","subj_timing_im_wave1","parent_subj_timing_im_wave1","resid_ldstage_im_wave1","resid_pdsstage_im_wave1","resid_ADRENcomp_im_wave1","resid_GONADcomp_im_wave1","resid_PUBcomp_im_wave1","resid_DHEA_cor_im_wave1","resid_TEST_cor_im_wave1","resid_EST_cor_im_wave1","subj_timing_im_wave2","parent_subj_timing_im_wave2","resid_ldstage_im_wave2","resid_pdsstage_im_wave2","resid_ADRENcomp_im_wave2","resid_GONADcomp_im_wave2","resid_PUBcomp_im_wave2","resid_DHEA_cor_im_wave2","resid_TEST_cor_im_wave2","resid_EST_cor_im_wave2"),       #independent variables
+              x = c("aam_final","subj_timing_im_wave1","parent_subj_timing_im_wave1","resid_neg_ldstage_im_wave1","resid_neg_pdsstage_im_wave1","resid_neg_ADRENcomp_im_wave1","resid_neg_GONADcomp_im_wave1","resid_neg_PUBcomp_im_wave1", "resid_neg_parent_pdsstage_im_wave1","resid_neg_DHEA_cor_im_wave1","resid_neg_TEST_cor_im_wave1","resid_neg_EST_cor_im_wave1",
+                    "subj_timing_im_wave2","parent_subj_timing_im_wave2","resid_neg_ldstage_im_wave2","resid_neg_pdsstage_im_wave2","resid_neg_ADRENcomp_im_wave2","resid_neg_GONADcomp_im_wave2","resid_neg_PUBcomp_im_wave2","resid_neg_parent_pdsstage_im_wave2","resid_neg_DHEA_cor_im_wave2","resid_neg_TEST_cor_im_wave2","resid_neg_EST_cor_im_wave2"),       #independent variables
             model = c("logistic"),           # logistic regression  model
             controls = c("CTQ_threat_im_wave1", "fear_d_im_wave1"))  # control variables 
 
@@ -115,43 +119,50 @@ results_feard <- run_specs(df = data,
 
 results_intd2 <- run_specs(df = data, 
                      y = c("int_d_wave2"),     #dependent variables
-              x = c("aam_final","subj_timing_wave1","parent_subj_timing_wave1","resid_ldstage_wave1","resid_pdsstage_wave1","resid_ADRENcomp_wave1","resid_GONADcomp_wave1","resid_PUBcomp_wave1","resid_DHEA_cor_wave1","resid_TEST_cor_wave1","resid_EST_cor_wave1","subj_timing_wave2","parent_subj_timing_wave2","resid_ldstage_wave2","resid_pdsstage_wave2","resid_ADRENcomp_wave2","resid_GONADcomp_wave2","resid_PUBcomp_wave2","resid_DHEA_cor_wave2","resid_TEST_cor_wave2","resid_EST_cor_wave2"),       #independent variables
+              x = c("aam_final","subj_timing_wave1","parent_subj_timing_wave1","resid_neg_ldstage_wave1","resid_neg_pdsstage_wave1","resid_neg_ADRENcomp_wave1","resid_neg_GONADcomp_wave1","resid_neg_PUBcomp_wave1", "resid_neg_parent_pdsstage_wave1","resid_neg_DHEA_cor_wave1","resid_neg_TEST_cor_wave1","resid_neg_EST_cor_wave1",
+                    "subj_timing_wave2","parent_subj_timing_wave2","resid_neg_ldstage_wave2","resid_neg_pdsstage_wave2","resid_neg_ADRENcomp_wave2","resid_neg_GONADcomp_wave2","resid_neg_PUBcomp_wave2","resid_neg_parent_pdsstage_wave2","resid_neg_DHEA_cor_wave2","resid_neg_TEST_cor_wave2","resid_neg_EST_cor_wave2"),       #independent variables
             model = c("logistic"),           # logistic regression model
             controls = c("CTQ_threat_wave1", "int_d_wave1"))  # control variables 
 
 results_cesdc2 <- run_specs(df = data, 
                      y = c("CESDC_total_wave2"),     #dependent variables
-              x = c("aam_final","subj_timing_wave1","parent_subj_timing_wave1","resid_ldstage_wave1","resid_pdsstage_wave1","resid_ADRENcomp_wave1","resid_GONADcomp_wave1","resid_PUBcomp_wave1","resid_DHEA_cor_wave1","resid_TEST_cor_wave1","resid_EST_cor_wave1","subj_timing_wave2","parent_subj_timing_wave2","resid_ldstage_wave2","resid_pdsstage_wave2","resid_ADRENcomp_wave2","resid_GONADcomp_wave2","resid_PUBcomp_wave2","resid_DHEA_cor_wave2","resid_TEST_cor_wave2","resid_EST_cor_wave2"),       #independent variables
+              x = c("aam_final","subj_timing_wave1","parent_subj_timing_wave1","resid_neg_ldstage_wave1","resid_neg_pdsstage_wave1","resid_neg_ADRENcomp_wave1","resid_neg_GONADcomp_wave1","resid_neg_PUBcomp_wave1", "resid_neg_parent_pdsstage_wave1","resid_neg_DHEA_cor_wave1","resid_neg_TEST_cor_wave1","resid_neg_EST_cor_wave1",
+                    "subj_timing_wave2","parent_subj_timing_wave2","resid_neg_ldstage_wave2","resid_neg_pdsstage_wave2","resid_neg_ADRENcomp_wave2","resid_neg_GONADcomp_wave2","resid_neg_PUBcomp_wave2","resid_neg_parent_pdsstage_wave2","resid_neg_DHEA_cor_wave2","resid_neg_TEST_cor_wave2","resid_neg_EST_cor_wave2"),      #independent variables
             model = c("lm"),           # linear model
             controls = c("CTQ_threat_wave1", "CESDC_total_wave1"))  # control variables 
 
 results_deprd2 <- run_specs(df = data, 
                      y = c("depres_d_wave2"),     #dependent variables
-              x = c("aam_final","subj_timing_wave1","parent_subj_timing_wave1","resid_ldstage_wave1","resid_pdsstage_wave1","resid_ADRENcomp_wave1","resid_GONADcomp_wave1","resid_PUBcomp_wave1","resid_DHEA_cor_wave1","resid_TEST_cor_wave1","resid_EST_cor_wave1","subj_timing_wave2","parent_subj_timing_wave2","resid_ldstage_wave2","resid_pdsstage_wave2","resid_ADRENcomp_wave2","resid_GONADcomp_wave2","resid_PUBcomp_wave2","resid_DHEA_cor_wave2","resid_TEST_cor_wave2","resid_EST_cor_wave2"),       #independent variables
+              x = c("aam_final","subj_timing_wave1","parent_subj_timing_wave1","resid_neg_ldstage_wave1","resid_neg_pdsstage_wave1","resid_neg_ADRENcomp_wave1","resid_neg_GONADcomp_wave1","resid_neg_PUBcomp_wave1", "resid_neg_parent_pdsstage_wave1","resid_neg_DHEA_cor_wave1","resid_neg_TEST_cor_wave1","resid_neg_EST_cor_wave1",
+                    "subj_timing_wave2","parent_subj_timing_wave2","resid_neg_ldstage_wave2","resid_neg_pdsstage_wave2","resid_neg_ADRENcomp_wave2","resid_neg_GONADcomp_wave2","resid_neg_PUBcomp_wave2","resid_neg_parent_pdsstage_wave2","resid_neg_DHEA_cor_wave2","resid_neg_TEST_cor_wave2","resid_neg_EST_cor_wave2"),       #independent variables
             model = c("logistic"),           # logistic regression  model
             controls = c("CTQ_threat_wave1", "depres_d_wave1"))  # control variables 
 
 results_distressd2 <- run_specs(df = data, 
                      y = c("distress_d_wave2"),     #dependent variables
-              x = c("aam_final","subj_timing_wave1","parent_subj_timing_wave1","resid_ldstage_wave1","resid_pdsstage_wave1","resid_ADRENcomp_wave1","resid_GONADcomp_wave1","resid_PUBcomp_wave1","resid_DHEA_cor_wave1","resid_TEST_cor_wave1","resid_EST_cor_wave1","subj_timing_wave2","parent_subj_timing_wave2","resid_ldstage_wave2","resid_pdsstage_wave2","resid_ADRENcomp_wave2","resid_GONADcomp_wave2","resid_PUBcomp_wave2","resid_DHEA_cor_wave2","resid_TEST_cor_wave2","resid_EST_cor_wave2"),       #independent variables
+              x = c("aam_final","subj_timing_wave1","parent_subj_timing_wave1","resid_neg_ldstage_wave1","resid_neg_pdsstage_wave1","resid_neg_ADRENcomp_wave1","resid_neg_GONADcomp_wave1","resid_neg_PUBcomp_wave1", "resid_neg_parent_pdsstage_wave1","resid_neg_DHEA_cor_wave1","resid_neg_TEST_cor_wave1","resid_neg_EST_cor_wave1",
+                    "subj_timing_wave2","parent_subj_timing_wave2","resid_neg_ldstage_wave2","resid_neg_pdsstage_wave2","resid_neg_ADRENcomp_wave2","resid_neg_GONADcomp_wave2","resid_neg_PUBcomp_wave2","resid_neg_parent_pdsstage_wave2","resid_neg_DHEA_cor_wave2","resid_neg_TEST_cor_wave2","resid_neg_EST_cor_wave2"),       #independent variables
             model = c("logistic"),           # logistic regression  model
             controls = c("CTQ_threat_wave1", "distress_d_wave1"))  # control variables 
 
 results_scared2 <- run_specs(df = data, 
                   y = c("SCARED_mean_wave2"),     #dependent variables
-              x = c("aam_final","subj_timing_wave1","parent_subj_timing_wave1","resid_ldstage_wave1","resid_pdsstage_wave1","resid_ADRENcomp_wave1","resid_GONADcomp_wave1","resid_PUBcomp_wave1","resid_DHEA_cor_wave1","resid_TEST_cor_wave1","resid_EST_cor_wave1","subj_timing_wave2","parent_subj_timing_wave2","resid_ldstage_wave2","resid_pdsstage_wave2","resid_ADRENcomp_wave2","resid_GONADcomp_wave2","resid_PUBcomp_wave2","resid_DHEA_cor_wave2","resid_TEST_cor_wave2","resid_EST_cor_wave2"),       #independent variables
+              x = c("aam_final","subj_timing_wave1","parent_subj_timing_wave1","resid_neg_ldstage_wave1","resid_neg_pdsstage_wave1","resid_neg_ADRENcomp_wave1","resid_neg_GONADcomp_wave1","resid_neg_PUBcomp_wave1", "resid_neg_parent_pdsstage_wave1","resid_neg_DHEA_cor_wave1","resid_neg_TEST_cor_wave1","resid_neg_EST_cor_wave1",
+                    "subj_timing_wave2","parent_subj_timing_wave2","resid_neg_ldstage_wave2","resid_neg_pdsstage_wave2","resid_neg_ADRENcomp_wave2","resid_neg_GONADcomp_wave2","resid_neg_PUBcomp_wave2","resid_neg_parent_pdsstage_wave2","resid_neg_DHEA_cor_wave2","resid_neg_TEST_cor_wave2","resid_neg_EST_cor_wave2"),       #independent variables
             model = c("lm"),           # linear model
             controls = c("CTQ_threat_wave1", "SCARED_mean_wave1"))  # control variables 
 
 results_anxd2 <- run_specs(df = data, 
                      y = c("anx_d_wave2"),     #dependent variables
-              x = c("aam_final","subj_timing_wave1","parent_subj_timing_wave1","resid_ldstage_wave1","resid_pdsstage_wave1","resid_ADRENcomp_wave1","resid_GONADcomp_wave1","resid_PUBcomp_wave1","resid_DHEA_cor_wave1","resid_TEST_cor_wave1","resid_EST_cor_wave1","subj_timing_wave2","parent_subj_timing_wave2","resid_ldstage_wave2","resid_pdsstage_wave2","resid_ADRENcomp_wave2","resid_GONADcomp_wave2","resid_PUBcomp_wave2","resid_DHEA_cor_wave2","resid_TEST_cor_wave2","resid_EST_cor_wave2"),       #independent variables
+              x = c("aam_final","subj_timing_wave1","parent_subj_timing_wave1","resid_neg_ldstage_wave1","resid_neg_pdsstage_wave1","resid_neg_ADRENcomp_wave1","resid_neg_GONADcomp_wave1","resid_neg_PUBcomp_wave1", "resid_neg_parent_pdsstage_wave1","resid_neg_DHEA_cor_wave1","resid_neg_TEST_cor_wave1","resid_neg_EST_cor_wave1",
+                    "subj_timing_wave2","parent_subj_timing_wave2","resid_neg_ldstage_wave2","resid_neg_pdsstage_wave2","resid_neg_ADRENcomp_wave2","resid_neg_GONADcomp_wave2","resid_neg_PUBcomp_wave2","resid_neg_parent_pdsstage_wave2","resid_neg_DHEA_cor_wave2","resid_neg_TEST_cor_wave2","resid_neg_EST_cor_wave2"),       #independent variables
             model = c("logistic"),           # logistic regression  model
             controls = c("CTQ_threat_wave1", "anx_d_wave1"))  # control variables 
 
 results_feard2 <- run_specs(df = data, 
                      y = c("fear_d_wave2"),     #dependent variables
-              x = c("aam_final","subj_timing_wave1","parent_subj_timing_wave1","resid_ldstage_wave1","resid_pdsstage_wave1","resid_ADRENcomp_wave1","resid_GONADcomp_wave1","resid_PUBcomp_wave1","resid_DHEA_cor_wave1","resid_TEST_cor_wave1","resid_EST_cor_wave1","subj_timing_wave2","parent_subj_timing_wave2","resid_ldstage_wave2","resid_pdsstage_wave2","resid_ADRENcomp_wave2","resid_GONADcomp_wave2","resid_PUBcomp_wave2","resid_DHEA_cor_wave2","resid_TEST_cor_wave2","resid_EST_cor_wave2"),       #independent variables
+              x = c("aam_final","subj_timing_wave1","parent_subj_timing_wave1","resid_neg_ldstage_wave1","resid_neg_pdsstage_wave1","resid_neg_ADRENcomp_wave1","resid_neg_GONADcomp_wave1","resid_neg_PUBcomp_wave1", "resid_neg_parent_pdsstage_wave1","resid_neg_DHEA_cor_wave1","resid_neg_TEST_cor_wave1","resid_neg_EST_cor_wave1",
+                    "subj_timing_wave2","parent_subj_timing_wave2","resid_neg_ldstage_wave2","resid_neg_pdsstage_wave2","resid_neg_ADRENcomp_wave2","resid_neg_GONADcomp_wave2","resid_neg_PUBcomp_wave2","resid_neg_parent_pdsstage_wave2","resid_neg_DHEA_cor_wave2","resid_neg_TEST_cor_wave2","resid_neg_EST_cor_wave2"),       #independent variables
             model = c("logistic"),           # logistic regression  model
             controls = c("CTQ_threat_wave1", "fear_d_wave1"))  # control variables 
 
