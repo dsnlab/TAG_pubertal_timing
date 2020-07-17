@@ -309,7 +309,7 @@ rownames(cor_timing1_r) <- colnames(cor_timing1_r)
 p_timing1_r <- cor_pmat(Timing_allways1)
 colnames(p_timing1_r) <- colnames(cor_timing1_r) 
 rownames(p_timing1_r) <- rownames(cor_timing1_r) 
-ggcorrplot(cor_timing1_r, p.mat=p_timing1_r, lab=T,lab_size=3,type="lower",title="Pubertal timing correlations Time 1",colors = c("#FFA500", "white", "#3C1361"))
+ggcorrplot(cor_timing1_r, p.mat=p_timing1_r, lab=T,lab_size=3,type="lower",title="Pubertal timing correlations Time 1",colors = c("#e41a1c", "white", "#3C1361"))
 
 #Wave 2
 Timing_allways2 <- Timing_neg1_resid %>% select(resid_neg_pdsstage_wave2,resid_neg_parent_pdsstage_wave2,resid_neg_ldstage_wave2,resid_neg_PUBcomp_wave2,resid_neg_ADRENcomp_wave2,resid_neg_GONADcomp_wave2,subj_timing_wave2,parent_subj_timing_wave2,resid_neg_DHEA_cor_wave2,resid_neg_TEST_cor_wave2,resid_neg_EST_cor_wave2,aam_final)
@@ -321,7 +321,7 @@ rownames(cor_timing2_r) <- rownames(cor_timing1_r)
 p_timing2 <- cor_pmat(Timing_allways2)
 colnames(p_timing2) <- colnames(cor_timing1_r)
 rownames(p_timing2) <- rownames(cor_timing1_r)
-ggcorrplot(cor_timing2_r, p.mat=p_timing2, lab=T, lab_size=3,type="lower", title="Pubertal timing correlations Time 2",colors = c("#FFA500", "white", "#3C1361"))
+ggcorrplot(cor_timing2_r, p.mat=p_timing2, lab=T, lab_size=3,type="lower", title="Pubertal timing correlations Time 2",colors = c("#e41a1c", "white", "#3C1361"))
 
 #Both waves and all pubertal dev variables
 Timing_allwaysn <- select_if(Timing_allways, is.numeric) 

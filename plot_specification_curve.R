@@ -70,8 +70,7 @@ p1 <- plot_curve(results_frame_curve, ci=F, ribbon=T) +
   ylim(-2.5, 2.5) 
 
 p2 <- plot_choices(results_frame_curve, choices = c("predictor", "outcome", "timepoint","controls")) +
-  labs(x = "specifications (ranked)") + theme(strip.text.y.right = element_blank()) # element_text(angle = 0)
-
+  labs(x = "specifications (ranked)") + theme(strip.text.y.right = element_blank())  # element_text(angle = 0) 
 
 plot_specs(plot_a = p1, plot_b = p2, rel_height = c(1, 2))
 
