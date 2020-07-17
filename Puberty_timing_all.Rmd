@@ -278,42 +278,6 @@ Timing_allways <- merge(Timing_allways,age_at_menarche,by="tagid",all=T)
 
 ```
 
-```{r reorder and correlate all measures}
-
-#Wave 1
-Timing_allways1 <- Timing_allways %>% select(resid_pdsstage_wave1,resid_parent_pdsstage_wave1,resid_ldstage_wave1,resid_PUBcomp_wave1,resid_ADRENcomp_wave1,resid_GONADcomp_wave1,subj_timing_wave1,parent_subj_timing_wave1,resid_DHEA_cor_wave1,resid_TEST_cor_wave1,resid_EST_cor_wave1,aam_final)
-
-Timing_allways1 <- select_if(Timing_allways1, is.numeric) 
-cor_timing1_r <- cor(Timing_allways1, use="pairwise.complete.obs", method="pearson")
-colnames(cor_timing1_r) <- c("Residualized self-report PDS stage", "Residualized parent-report PDS stage", "Residualized LD stage", "Residualized puberty composite", "Residualized adrenal composite", "Residualized gonadal composite", "Self-report subjective timing", "Parent-report Subjective timing", "Residualized DHEA", "Residualized testosterone", "Residualized estradiol", "Age at menarche")
-rownames(cor_timing1_r) <- colnames(cor_timing1_r)
-p_timing1_r <- cor_pmat(Timing_allways1)
-colnames(p_timing1_r) <- colnames(cor_timing1_r) 
-rownames(p_timing1_r) <- rownames(cor_timing1_r) 
-ggcorrplot(cor_timing1_r, p.mat=p_timing1_r, lab=T,lab_size=3,type="lower",title="Pubertal timing correlations Time 1")
-
-#Wave 2
-Timing_allways2 <- Timing_allways %>% select(resid_pdsstage_wave2,resid_parent_pdsstage_wave2,resid_ldstage_wave2,resid_PUBcomp_wave2,resid_ADRENcomp_wave2,resid_GONADcomp_wave2,subj_timing_wave2,parent_subj_timing_wave2,resid_DHEA_cor_wave2,resid_TEST_cor_wave2,resid_EST_cor_wave2,aam_final)
-
-Timing_allways2 <- select_if(Timing_allways2, is.numeric) 
-cor_timing2_r <- cor(Timing_allways2, use="pairwise.complete.obs", method="pearson")
-colnames(cor_timing2_r) <- colnames(cor_timing1_r)
-rownames(cor_timing2_r) <- rownames(cor_timing1_r)
-p_timing2 <- cor_pmat(Timing_allways2)
-colnames(p_timing2) <- colnames(cor_timing1_r)
-rownames(p_timing2) <- rownames(cor_timing1_r)
-ggcorrplot(cor_timing2_r, p.mat=p_timing2, lab=T, lab_size=3,type="lower", title="Pubertal timing correlations Time 2")
-
-#Both waves and all pubertal dev variables
-Timing_allwaysn <- select_if(Timing_allways, is.numeric) 
-cor_timing_r <- cor(Timing_allwaysn, use="pairwise.complete.obs", method="pearson")
-cor_timing_rho <- cor(Timing_allwaysn, use="pairwise.complete.obs", method="spearman")
-p_timing <- cor_pmat(Timing_allwaysn)
-ggcorrplot(cor_timing_r, p.mat=p_timing, lab=T,lab_size=2,type="lower", title="Pubertal timing correlations both waves")
-
-
-```
-
 
 
 ```{r save}
@@ -331,4 +295,40 @@ write.csv(Timing_neg1_resid,paste0(cas_dir,'projects/W1_W2_pubertal_timing/Final
 
 
 # NOTE: Run the dynamic timing window script after this - it calculates timing based on stage of windows of 6 month age peers (and also school grade peers) per person. It calls on the "Timing_and_internalizing.csv" which is all data, imputed and nonimputed, and where the residuals are original (i.e., not multiplied by -1) (the first outputted dataset)
+```
+
+```{r reorder and correlate all measures}
+
+#Wave 1
+Timing_allways1 <- Timing_neg1_resid %>% select(resid_neg_pdsstage_wave1,resid_neg_parent_pdsstage_wave1,resid_neg_ldstage_wave1,resid_neg_PUBcomp_wave1,resid_neg_ADRENcomp_wave1,resid_neg_GONADcomp_wave1,subj_timing_wave1,parent_subj_timing_wave1,resid_neg_DHEA_cor_wave1,resid_neg_TEST_cor_wave1,resid_neg_EST_cor_wave1,aam_final)
+
+Timing_allways1 <- select_if(Timing_allways1, is.numeric) 
+cor_timing1_r <- cor(Timing_allways1, use="pairwise.complete.obs", method="pearson")
+colnames(cor_timing1_r) <- c("Residualized self-report PDS stage", "Residualized parent-report PDS stage", "Residualized LD stage", "Residualized puberty composite", "Residualized adrenal composite", "Residualized gonadal composite", "Self-report subjective timing", "Parent-report Subjective timing", "Residualized DHEA", "Residualized testosterone", "Residualized estradiol", "Age at menarche")
+rownames(cor_timing1_r) <- colnames(cor_timing1_r)
+p_timing1_r <- cor_pmat(Timing_allways1)
+colnames(p_timing1_r) <- colnames(cor_timing1_r) 
+rownames(p_timing1_r) <- rownames(cor_timing1_r) 
+ggcorrplot(cor_timing1_r, p.mat=p_timing1_r, lab=T,lab_size=3,type="lower",title="Pubertal timing correlations Time 1",colors = c("#FFA500", "white", "#3C1361"))
+
+#Wave 2
+Timing_allways2 <- Timing_neg1_resid %>% select(resid_neg_pdsstage_wave2,resid_neg_parent_pdsstage_wave2,resid_neg_ldstage_wave2,resid_neg_PUBcomp_wave2,resid_neg_ADRENcomp_wave2,resid_neg_GONADcomp_wave2,subj_timing_wave2,parent_subj_timing_wave2,resid_neg_DHEA_cor_wave2,resid_neg_TEST_cor_wave2,resid_neg_EST_cor_wave2,aam_final)
+
+Timing_allways2 <- select_if(Timing_allways2, is.numeric) 
+cor_timing2_r <- cor(Timing_allways2, use="pairwise.complete.obs", method="pearson")
+colnames(cor_timing2_r) <- colnames(cor_timing1_r)
+rownames(cor_timing2_r) <- rownames(cor_timing1_r)
+p_timing2 <- cor_pmat(Timing_allways2)
+colnames(p_timing2) <- colnames(cor_timing1_r)
+rownames(p_timing2) <- rownames(cor_timing1_r)
+ggcorrplot(cor_timing2_r, p.mat=p_timing2, lab=T, lab_size=3,type="lower", title="Pubertal timing correlations Time 2",colors = c("#FFA500", "white", "#3C1361"))
+
+#Both waves and all pubertal dev variables
+Timing_allwaysn <- select_if(Timing_allways, is.numeric) 
+cor_timing_r <- cor(Timing_allwaysn, use="pairwise.complete.obs", method="pearson")
+cor_timing_rho <- cor(Timing_allwaysn, use="pairwise.complete.obs", method="spearman")
+p_timing <- cor_pmat(Timing_allwaysn)
+ggcorrplot(cor_timing_r, p.mat=p_timing, lab=T,lab_size=2,type="lower", title="Pubertal timing correlations both waves",colors = c("#FFA500", "white", "#3C1361"))
+
+
 ```
