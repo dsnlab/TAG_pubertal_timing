@@ -63,14 +63,20 @@ results_frame_curve$controls <- revalue(results_frame_curve$control,
                                           "both"="both controls",
                                           "none"="without controls"))
 
+#Base the colors on p-value instead of conf.interval 
+results_frame_curve <- results_frame_curve %>% mutate(color2 = ifelse(results_frame_curve$p_value<0.05, "#e41a1c", "darkgrey"))
 
 # Plot specification curve
 p1 <- plot_curve(results_frame_curve, ci=F, ribbon=T) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "grey") +
   ylim(-2.5, 2.5) 
 
+p1[["data"]][["color"]] <- p1[["data"]][["color2"]] 
+
 p2 <- plot_choices(results_frame_curve, choices = c("predictor", "outcome", "timepoint","controls")) +
   labs(x = "specifications (ranked)") + theme(strip.text.y.right = element_blank())  # element_text(angle = 0) 
+
+p2[["data"]][["color"]] <- p2[["data"]][["color2"]] 
 
 plot_specs(plot_a = p1, plot_b = p2, rel_height = c(1, 2))
 
