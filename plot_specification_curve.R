@@ -4,6 +4,7 @@ require(dplyr)
 require(plyr)
 cas_dir="Y:/dsnlab/TAG/"
 bootstraps <- 500
+set.seed(88)
 
 results_frame <- read.csv(file=paste0(cas_dir,"projects/W1_W2_pubertal_timing/3_1_SCA.csv"))
 boot_sca <- read_rds(paste0(cas_dir,"projects/W1_W2_pubertal_timing/3_1_SCA_SCAboot.rds"))
@@ -69,7 +70,7 @@ results_frame_curve <- results_frame_curve %>% mutate(color2 = ifelse(results_fr
 # Plot specification curve
 p1 <- plot_curve(results_frame_curve, ci=F, ribbon=T) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "grey") +
-  ylim(-2.5, 2.5) 
+  ylim(-2.5, 2.5) + labs(y = "standardized \n regression coefficient",size=.5)
 
 p1[["data"]][["color"]] <- p1[["data"]][["color2"]] 
 

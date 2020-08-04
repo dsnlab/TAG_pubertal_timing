@@ -391,6 +391,18 @@ t.test(results_frame_wide_impu$imp,
        results_frame_wide_impu$nonimp, 
        paired=TRUE, 
        conf.level=0.95)
+#non-parametric ttest
+wilcox.test(results_frame_wide_impu$imp, 
+       results_frame_wide_impu$nonimp, 
+       paired=TRUE, 
+       conf.level=0.95)
+#standard errors
+results_frame_wide_impu2 <- results_frame_forwide %>% 
+  select (predictor, outcome, control, wave, imputation, standard_error) %>% 
+  spread(imputation, standard_error)
+median(results_frame_wide_impu2$imp)
+median(results_frame_wide_impu2$nonimp)
+
 
 ################# testing the effect of including control variables #################################
 
@@ -399,9 +411,24 @@ results_frame %>%
   dplyr::group_by(as.factor(control)) %>%
   dplyr::summarize(median_effect = median(effect))
 
-#anova
-anova_controls <- aov(effect ~ control, data=results_frame)
-summary(anova_controls)
+results_frame_wide_con <- results_frame_forwide %>% 
+  select (predictor, outcome, control, wave, imputation, effect) %>% 
+  spread(control, effect)
+results_frame_wide_con$speci <- 1:nrow(results_frame_wide_con)
+results_frame_long_con <-results_frame_wide_con %>% 
+  pivot_longer(cols=c("both","ctq","mh","none"),names_to = "control",values_to = "effect")
+
+#nonparametric repeated measures anova
+friedman.test(effect ~ control | speci, data=results_frame_long_con)
+
+#pairwise comparisons
+results_frame_long_con %>% filter(control=="none"|control=="mh") %>% wilcox.test(effect ~ control,data=.,paired=TRUE,conf.level=0.95)
+results_frame_long_con %>% filter(control=="none"|control=="ctq") %>% wilcox.test(effect ~ control,data=.,paired=TRUE,conf.level=0.95)
+results_frame_long_con %>% filter(control=="none"|control=="both") %>% wilcox.test(effect ~ control,data=.,paired=TRUE,conf.level=0.95)
+results_frame_long_con %>% filter(control=="ctq"|control=="both") %>% wilcox.test(effect ~ control,data=.,paired=TRUE,conf.level=0.95)
+results_frame_long_con %>% filter(control=="mh"|control=="both") %>% wilcox.test(effect ~ control,data=.,paired=TRUE,conf.level=0.95)
+results_frame_long_con %>% filter(control=="ctq"|control=="mh") %>% wilcox.test(effect ~ control,data=.,paired=TRUE,conf.level=0.95)
+
 
 ################# wave 1 or wave 2 pubertal timing #################################
 
@@ -418,6 +445,11 @@ t.test(results_frame_wide_wave$wave1,
        results_frame_wide_wave$wave2, 
        paired=TRUE, 
        conf.level=0.95)
+#non-parametric ttest
+wilcox.test(results_frame_wide_wave$wave1, 
+        results_frame_wide_wave$wave2, 
+        paired=TRUE, 
+        conf.level=0.95)
 
 ########################################################################################
 # 6. create inferential statistics separately for each wave 
