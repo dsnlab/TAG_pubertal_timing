@@ -332,3 +332,42 @@ ggcorrplot(cor_timing, p.mat=p_timing, lab=T,lab_size=4,type="lower", title="Pub
 
 
 ```
+
+```{r try exp AAM}
+# Just try a little non linear action between AAM and internalizing psychopathology for funsies
+AAM_nl_tests <- Timing_neg1_resid
+c = 1
+# first visualize just W2 symptoms
+aam_CESD_scatter <- ggplot(AAM_nl_tests, aes (x = aam_final, y = CESDC_total_im_wave2)) +
+  geom_point(size = 3.5) +
+  geom_smooth(method="lm", formula = (y ~ exp(x)), se = TRUE) +
+  theme_bw()
+
+aam_SCARED_scatter <- ggplot(AAM_nl_tests, aes (x = aam_final, y = SCARED_mean_im_wave2)) +
+  geom_point(size = 3.5) +
+  geom_smooth(method="lm", formula = (y ~ exp(x)), se = TRUE) +  
+  theme_bw()
+
+# Then visualize increase in symptoms from W1 to W2 (simple subtraction)
+  
+AAM_nl_tests$CESD_delta <- AAM_nl_tests$CESDC_total_im_wave2 - AAM_nl_tests$CESDC_total_im_wave1
+AAM_nl_tests$SCARED_delta <- AAM_nl_tests$SCARED_mean_im_wave2 - AAM_nl_tests$SCARED_mean_im_wave1
+
+aam_CESD_del_scatter <- ggplot(AAM_nl_tests, aes (x = aam_final, y = CESD_delta)) +
+  geom_point(size = 3.5) +
+  geom_smooth(method="lm", formula = (y ~ exp(x)), se = TRUE) +
+  theme_bw()
+
+aam_SCARED_del_scatter <- ggplot(AAM_nl_tests, aes (x = aam_final, y = SCARED_delta)) +
+  geom_point(size = 3.5) +
+  geom_smooth(method="lm", formula = (y ~ exp(x)), se = TRUE) +
+  theme_bw()
+
+# Look at linear and exp models with covariates
+linear_aam_cesd <- summary(lm(CESDC_total_im_wave2 ~ aam_final + CESDC_total_im_wave1 + CTQ_threat_im_wave2, AAM_nl_tests))
+exp_aam_cesd <- summary(lm(log(CESDC_total_im_wave2 + c) ~ aam_final + CESDC_total_im_wave1 + CTQ_threat_im_wave2, AAM_nl_tests))
+
+linear_aam_scared <- summary(lm(SCARED_mean_im_wave2 ~ aam_final + SCARED_mean_im_wave1 + CTQ_threat_im_wave2, AAM_nl_tests))
+exp_aam_scared <- summary(lm(log(SCARED_mean_im_wave2 + c) ~ aam_final + SCARED_mean_im_wave1 + CTQ_threat_im_wave2, AAM_nl_tests))
+```
+
