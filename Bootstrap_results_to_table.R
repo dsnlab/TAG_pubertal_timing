@@ -366,14 +366,14 @@ results_table_complete <- populate_table_bounds(boot = boot_sca, results_table_c
 ##########################################################################################################
 # 4. Save Table ##########################################################################################
 ##########################################################################################################
+
 write.csv(results_table_complete, file = paste0(cas_dir,"projects/W1_W2_pubertal_timing/table_complete.csv"))
 
 
 ##########################################################################################################
 # 5. Effect of model decisions
 # 
-# Effects are stronger when data is imputed (likely because of more power) 
-# and slightly stronger for wave 1 pubertal timing
+# 
 ##########################################################################################################
 
 
@@ -403,11 +403,32 @@ results_frame_wide_impu2 <- results_frame_forwide %>%
 median(results_frame_wide_impu2$imp)
 median(results_frame_wide_impu2$nonimp)
 
+#pulling the median difference between models with and without imputation from bootstrapped null models
+results_frame_imps <- data.frame("diff_imp_full" = NA)
+for(b in 1:(length(bootstraps_full)-1)){
+  boot_sh <- bootstraps_full[[b]] 
+  boot_sh1 <- boot_sh %>% filter(grepl(pattern="_im", predictor)) %>%
+    mutate(predictor= sub("_im", "", predictor),outcome= sub("_im", "", outcome),effect_imp=effect) %>%
+    dplyr::select(outcome,predictor,control,effect_imp)
+  boot_sh2 <- boot_sh %>% filter(!grepl(pattern="_im", predictor)) %>%
+    mutate(effect_ful=effect) %>%
+    dplyr::select(outcome,predictor,control,effect_ful)
+  boot_2sh <- merge(boot_sh1,boot_sh2,by=c("outcome","predictor","control")) %>%
+    mutate(effect_diff=effect_imp - effect_ful)
+  median <- median(boot_2sh$effect_diff)
+  results_frame_imps <- rbind(results_frame_imps, as.numeric(median))
+}
+results_frame_imps <- results_frame_imps[2:nrow(results_frame_imps),]
+
+round(quantile(results_frame_imps, probs = c(0.025, 0.975),na.rm=T), 3)
+median(results_frame_wide_impu$imp) - median(results_frame_wide_impu$nonimp)
+#observed difference -0.195, CI from bootstrapped null models -0.026 to 0.029
+
 
 ################# testing the effect of including control variables #################################
 
 ### find medians
-results_frame %>% 
+effects_by_control <- results_frame %>% 
   dplyr::group_by(as.factor(control)) %>%
   dplyr::summarize(median_effect = median(effect))
 
@@ -429,8 +450,33 @@ results_frame_long_con %>% filter(control=="ctq"|control=="both") %>% wilcox.tes
 results_frame_long_con %>% filter(control=="mh"|control=="both") %>% wilcox.test(effect ~ control,data=.,paired=TRUE,conf.level=0.95)
 results_frame_long_con %>% filter(control=="ctq"|control=="mh") %>% wilcox.test(effect ~ control,data=.,paired=TRUE,conf.level=0.95)
 
+#pulling the median difference between models with and without the ctq/mh control from bootstrapped null models
+results_frame_co <- data.frame("mh" = NA,"ctq" = NA)
+for(b in 1:(length(bootstraps_full)-1)){
+  boot_sh <- bootstraps_full[[b]] 
+  boot_sh0 <- boot_sh %>% filter(control=="none") %>%
+    mutate(effect_0=effect) %>%
+    dplyr::select(outcome,predictor,effect_0)
+  for(c in 1:ncol(results_frame_co)){
+      boot_sh1 <- boot_sh %>% filter(control==colnames(results_frame_co[c])) %>%
+        mutate(effect_1=effect) %>%
+       dplyr::select(outcome,predictor,effect_1)
+      boot_2sh <- merge(boot_sh0,boot_sh1,by=c("outcome","predictor")) %>%
+        mutate(effect_diff=effect_1 - effect_0)
+      median[c] <- median(boot_2sh$effect_diff)
+  }    
+  results_frame_co <- rbind(results_frame_co, as.numeric(median))
+}
+results_frame_co <- results_frame_co[2:nrow(results_frame_co),]
+#mh versus none #observed difference=0.011 and CI from bootstrapped null models = -0.037 to 0.041
+round(quantile(results_frame_co["mh"], probs = c(0.025, 0.975),na.rm=T), 3)
+effects_by_control$median_effect[3]-effects_by_control$median_effect[4]
+#ctq versus none #observed difference=0.022 and CI from bootstrapped null models = -0.038 to 0.04
+round(quantile(results_frame_co["ctq"], probs = c(0.025, 0.975),na.rm=T), 3)
+effects_by_control$median_effect[2]-effects_by_control$median_effect[4]
 
-################# wave 1 or wave 2 pubertal timing #################################
+
+############################# wave 1 or wave 2 pubertal timing #################################
 
 results_frame_wide_wave <- results_frame_forwide %>% 
   select (predictor, outcome, control, wave, imputation, effect) %>% 
@@ -450,6 +496,28 @@ wilcox.test(results_frame_wide_wave$wave1,
         results_frame_wide_wave$wave2, 
         paired=TRUE, 
         conf.level=0.95)
+
+#pulling the median difference between prospective and cross-sectional models from bootstrapped null models
+results_frame_diffs <- data.frame("diff_pros_cross" = NA)
+for(b in 1:(length(bootstraps_full)-1)){
+  boot_sh <- bootstraps_full[[b]] 
+  boot_sh1 <- boot_sh %>% filter(grepl(pattern="wave1", predictor)) %>%
+                          mutate(predictor= sub("_wave[1:2]", "", predictor),effect_w1=effect) %>%
+                          dplyr::select(outcome,predictor,control,effect_w1)
+  boot_sh2 <- boot_sh %>% filter(grepl(pattern="wave2", predictor)) %>%
+                          mutate(predictor= sub("_wave[1:2]", "", predictor),effect_w2=effect) %>%
+                          dplyr::select(outcome,predictor,control,effect_w2)
+  boot_2sh <- merge(boot_sh1,boot_sh2,by=c("outcome","predictor","control")) %>%
+              mutate(effect_diff=effect_w2 - effect_w1)
+  median <- median(boot_2sh$effect_diff)
+  results_frame_diffs <- rbind(results_frame_diffs,  as.numeric(median))
+}
+results_frame_diffs <- results_frame_diffs[2:nrow(results_frame_diffs),]
+
+round(quantile(results_frame_diffs, probs = c(0.025, 0.975),na.rm=T), 3)
+median(results_frame_wide_wave$wave1) - median(results_frame_wide_wave$wave2)
+#observed difference = -0.027, bootstrapped null models CI = -0.026 to 0.024
+
 
 ########################################################################################
 # 6. create inferential statistics separately for each wave 
