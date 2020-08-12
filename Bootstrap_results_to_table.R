@@ -421,9 +421,9 @@ for(b in 1:(length(bootstraps_full)-1)){
 results_frame_imps <- results_frame_imps[2:nrow(results_frame_imps),]
 
 round(quantile(results_frame_imps, probs = c(0.025, 0.975),na.rm=T), 3)
-obs_diff_impu <- median(results_frame_wide_impu$imp) - median(results_frame_wide_impu$nonimp)
+obs_diff_impu <- median(results_frame_wide_impu$imp - results_frame_wide_impu$nonimp)
 mean(results_frame_imps <= obs_diff_impu)
-#observed difference -0.195, p=.07, CI from bootstrapped null models -0.026 to 0.029
+#observed difference -0.0163, p=.11, CI from bootstrapped null models -0.026 to 0.029
 
 
 ################# testing the effect of including control variables #################################
@@ -469,19 +469,19 @@ for(b in 1:(length(bootstraps_full)-1)){
   results_frame_co <- rbind(results_frame_co, as.numeric(median))
 }
 results_frame_co <- results_frame_co[2:nrow(results_frame_co),]
-#mh versus none #observed difference=0.011, p=.30, and CI from bootstrapped null models = -0.037 to 0.041
+#mh versus none #observed difference=-0.0001, p=.54, and CI from bootstrapped null models = -0.037 to 0.041
 round(quantile(results_frame_co["mh"], probs = c(0.025, 0.975),na.rm=T), 3)
-obs_diff_mh <- effects_by_control$median_effect[3]-effects_by_control$median_effect[4]
-mean(results_frame_co >= obs_diff_mh)
-#ctq versus none #observed difference=0.022, p=.14, and CI from bootstrapped null models = -0.038 to 0.04
+obs_diff_mh <- median(results_frame_wide_con$mh - results_frame_wide_con$none)
+mean(results_frame_co$mh >= obs_diff_mh)
+#ctq versus none #observed difference=0.008, p=.36, and CI from bootstrapped null models = -0.038 to 0.04
 round(quantile(results_frame_co["ctq"], probs = c(0.025, 0.975),na.rm=T), 3)
-obs_diff_ctq <- effects_by_control$median_effect[2]-effects_by_control$median_effect[4]
-mean(results_frame_co >= obs_diff_ctq)
+obs_diff_ctq <- median(results_frame_wide_con$ctq - results_frame_wide_con$none)
+mean(results_frame_co$ctq >= obs_diff_ctq)
 
 ############################# wave 1 or wave 2 pubertal timing #################################
 
 results_frame_wide_wave <- results_frame_forwide %>% 
-  select (predictor, outcome, control, wave, imputation, effect) %>% 
+  dplyr::select (predictor, outcome, control, wave, imputation, effect) %>% 
   filter(!predictor=="aam_final") %>%
   spread(wave, effect)
 
@@ -516,10 +516,10 @@ for(b in 1:(length(bootstraps_full)-1)){
 }
 results_frame_diffs <- results_frame_diffs[2:nrow(results_frame_diffs),]
 
-obs_diff <- median(results_frame_wide_wave$wave1) - median(results_frame_wide_wave$wave2)
+obs_diff <- median(results_frame_wide_wave$wave1 - results_frame_wide_wave$wave2)
 round(quantile(results_frame_diffs, probs = c(0.025, 0.975),na.rm=T), 3)
 mean(results_frame_diffs <= obs_diff)
-#observed difference = -0.027, bootstrapped p=.02, null models CI = -0.026 to 0.024
+#observed difference = 0.003, bootstrapped p=.61, null models CI = -0.026 to 0.024
 
 
 ########################################################################################
