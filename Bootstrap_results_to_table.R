@@ -421,8 +421,9 @@ for(b in 1:(length(bootstraps_full)-1)){
 results_frame_imps <- results_frame_imps[2:nrow(results_frame_imps),]
 
 round(quantile(results_frame_imps, probs = c(0.025, 0.975),na.rm=T), 3)
-median(results_frame_wide_impu$imp) - median(results_frame_wide_impu$nonimp)
-#observed difference -0.195, CI from bootstrapped null models -0.026 to 0.029
+obs_diff_impu <- median(results_frame_wide_impu$imp) - median(results_frame_wide_impu$nonimp)
+mean(results_frame_imps <= obs_diff_impu)
+#observed difference -0.195, p=.07, CI from bootstrapped null models -0.026 to 0.029
 
 
 ################# testing the effect of including control variables #################################
@@ -468,13 +469,14 @@ for(b in 1:(length(bootstraps_full)-1)){
   results_frame_co <- rbind(results_frame_co, as.numeric(median))
 }
 results_frame_co <- results_frame_co[2:nrow(results_frame_co),]
-#mh versus none #observed difference=0.011 and CI from bootstrapped null models = -0.037 to 0.041
+#mh versus none #observed difference=0.011, p=.30, and CI from bootstrapped null models = -0.037 to 0.041
 round(quantile(results_frame_co["mh"], probs = c(0.025, 0.975),na.rm=T), 3)
-effects_by_control$median_effect[3]-effects_by_control$median_effect[4]
-#ctq versus none #observed difference=0.022 and CI from bootstrapped null models = -0.038 to 0.04
+obs_diff_mh <- effects_by_control$median_effect[3]-effects_by_control$median_effect[4]
+mean(results_frame_co >= obs_diff_mh)
+#ctq versus none #observed difference=0.022, p=.14, and CI from bootstrapped null models = -0.038 to 0.04
 round(quantile(results_frame_co["ctq"], probs = c(0.025, 0.975),na.rm=T), 3)
-effects_by_control$median_effect[2]-effects_by_control$median_effect[4]
-
+obs_diff_ctq <- effects_by_control$median_effect[2]-effects_by_control$median_effect[4]
+mean(results_frame_co >= obs_diff_ctq)
 
 ############################# wave 1 or wave 2 pubertal timing #################################
 
@@ -514,9 +516,10 @@ for(b in 1:(length(bootstraps_full)-1)){
 }
 results_frame_diffs <- results_frame_diffs[2:nrow(results_frame_diffs),]
 
+obs_diff <- median(results_frame_wide_wave$wave1) - median(results_frame_wide_wave$wave2)
 round(quantile(results_frame_diffs, probs = c(0.025, 0.975),na.rm=T), 3)
-median(results_frame_wide_wave$wave1) - median(results_frame_wide_wave$wave2)
-#observed difference = -0.027, bootstrapped null models CI = -0.026 to 0.024
+mean(results_frame_diffs <= obs_diff)
+#observed difference = -0.027, bootstrapped p=.02, null models CI = -0.026 to 0.024
 
 
 ########################################################################################
