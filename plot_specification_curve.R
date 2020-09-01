@@ -35,28 +35,28 @@ results_frame_curve <- results_frame_sc %>%
 results_frame_curve$predictor <- sub("_im_wave[1:2]$", "", results_frame_curve$predictor)
 results_frame_curve$predictor <- sub("_wave[1:2]$", "", results_frame_curve$predictor)
 results_frame_curve$predictor <- revalue(results_frame_curve$predictor, 
-                                         c("subj_timing"="self-reported subjective timing",
-                                         "parent_subj_timing"="parent-reported subjective timing",
-                                         "resid_neg_PUBcomp"="residualized puberty composite",
-                                        "resid_neg_ADRENcomp"="residualized adrenal composite",
-                                        "resid_neg_GONADcomp"="residualized gonadal composite",
-                                        "resid_neg_ldstage"="residualized line drawings stage",
-                                        "resid_neg_pdsstage"="residualized self-reported PDS stage",
-                                        "resid_neg_parent_pdsstage"="residualized parent-reported PDS stage",
-                                        "resid_neg_DHEA_cor"="residualized DHEA level",
-                                        "resid_neg_TEST_cor"="residualized testosterone level",
-                                        "resid_neg_EST_cor"="residualized estradiol level",
-                                        "aam_final"="age at menarche"))
+                                         c("subj_timing"="l self-reported subjective timing",
+                                         "parent_subj_timing"="k parent-reported subjective timing",
+                                         "resid_neg_PUBcomp"="j residualized puberty composite",
+                                        "resid_neg_ADRENcomp"="i residualized adrenal composite",
+                                        "resid_neg_GONADcomp"="h residualized gonadal composite",
+                                        "resid_neg_ldstage"="g residualized line drawings stage",
+                                        "resid_neg_pdsstage"="f residualized self-reported PDS stage",
+                                        "resid_neg_parent_pdsstage"="e residualized parent-reported PDS stage",
+                                        "resid_neg_DHEA_cor"="d residualized DHEA level",
+                                        "resid_neg_TEST_cor"="c residualized testosterone level",
+                                        "resid_neg_EST_cor"="b residualized estradiol level",
+                                        "aam_final"="a age at menarche"))
 results_frame_curve$outcome <- sub("_im_wave2$", "", results_frame_curve$outcome)
 results_frame_curve$outcome <- sub("_wave2$", "", results_frame_curve$outcome)
-results_frame_curve$outcome <- revalue(results_frame_curve$outcome, 
-                                         c("CESDC_total"="depressive symptoms",
-                                           "SCARED_mean"="anxiety symptoms",
-                                           "depres_d"="depressive disorder",
-                                           "anx_d"="anxiety disorder",
-                                           "int_d"="internalizing disorder",
-                                           "distress_d"="distress disorder",
-                                           "fear_d"="fear disorder"))
+results_frame_curve$outcome <- as.factor(revalue(results_frame_curve$outcome, 
+                                         c("CESDC_total"="g depressive symptoms",
+                                           "SCARED_mean"="f anxiety symptoms",
+                                           "depres_d"="d depressive disorder",
+                                           "anx_d"="c anxiety disorder",
+                                           "int_d"="e internalizing disorder",
+                                           "distress_d"="b distress disorder",
+                                           "fear_d"="a fear disorder")))
 results_frame_curve$estimate <- results_frame_curve$effect
 results_frame_curve$controls <- revalue(results_frame_curve$control, 
                                         c("mh"="time 1 psychopathology",
@@ -70,12 +70,12 @@ results_frame_curve <- results_frame_curve %>% mutate(color2 = ifelse(results_fr
 # Plot specification curve
 p1 <- plot_curve(results_frame_curve, ci=F, ribbon=T) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "grey") +
-  ylim(-2.5, 2.5) + labs(y = "standardized \n regression coefficient",size=.5)
+  ylim(-2.5, 2.5) + labs(y = "regression coefficient",size=.5)
 
 p1[["data"]][["color"]] <- p1[["data"]][["color2"]] 
 
 p2 <- plot_choices(results_frame_curve, choices = c("predictor", "outcome", "timepoint","controls")) +
-  labs(x = "specifications (ranked)") + theme(strip.text.y.right = element_blank())  # element_text(angle = 0) 
+  labs(x = "specifications (ranked)")   # element_text(angle = 0) 
 
 p2[["data"]][["color"]] <- p2[["data"]][["color2"]] 
 
