@@ -178,10 +178,10 @@ imp <- amelia(all_for_imp,m=25,p2s=0,idvars="wave",ts="age",cs="tagid",
 
 # check the performance of Amelia
 #The imputation does a bad job for CTQ_threat, the rest looks ok
-for (vari in c("CESDC_total","SCARED_mean","CTQ_threat","DHEA_cor","TEST_cor","EST_cor")) {
+for (vari in c("CESDC_total","SCARED_anxiety_mean","CTQ_threat","DHEA_cor","TEST_cor","EST_cor")) {
  densityplot <- compare.density(imp,vari)
  densityplot }
-for (vari in c("CESDC_total","SCARED_mean","CTQ_threat","DHEA_cor","TEST_cor","EST_cor",
+for (vari in c("CESDC_total","SCARED_anxiety_mean","CTQ_threat","DHEA_cor","TEST_cor","EST_cor",
                "subj_timing","parent_subj_timing","parent_pdsstage","adrenf2","gonadf2","PBIP_1A","PBIP_2A")) {
  overimputeplot <- overimpute(imp,var=vari)
  overimputeplot }
@@ -208,9 +208,9 @@ all_im <- all_im %>%
 #check distribution imputed variables
 #put in short format
   # non-imputed data:
-all_for_imp_short <- all_pub_int %>% pivot_wider(id_cols= tagid, names_from = wave, names_prefix = "wave", values_from = c(age,pdsstage,ldstage,parent_pdsstage,ADRENcomp,GONADcomp,PUBcomp,subj_timing,parent_subj_timing,DHEA_cor,TEST_cor,EST_cor,SCARED_mean,CESDC_total,depres_d,anx_d,int_d,distress_d,fear_d,CTQ_threat)) 
+all_for_imp_short <- all_pub_int %>% pivot_wider(id_cols= tagid, names_from = wave, names_prefix = "wave", values_from = c(age,pdsstage,ldstage,parent_pdsstage,ADRENcomp,GONADcomp,PUBcomp,subj_timing,parent_subj_timing,DHEA_cor,TEST_cor,EST_cor,SCARED_anxiety_mean,CESDC_total,depres_d,anx_d,int_d,distress_d,fear_d,CTQ_threat)) 
   # imputed data:
-all_im_short <- all_im %>% pivot_wider(id_cols= tagid, names_from = wave, names_prefix = "im_wave", values_from = c(age,pdsstage,ldstage,parent_pdsstage,ADRENcomp,GONADcomp,PUBcomp,subj_timing,parent_subj_timing,DHEA_cor,TEST_cor,EST_cor,SCARED_mean,CESDC_total,depres_d,anx_d,int_d,distress_d,fear_d,CTQ_threat)) 
+all_im_short <- all_im %>% pivot_wider(id_cols= tagid, names_from = wave, names_prefix = "im_wave", values_from = c(age,pdsstage,ldstage,parent_pdsstage,ADRENcomp,GONADcomp,PUBcomp,subj_timing,parent_subj_timing,DHEA_cor,TEST_cor,EST_cor,SCARED_anxiety_mean,CESDC_total,depres_d,anx_d,int_d,distress_d,fear_d,CTQ_threat)) 
 
 #plot
 all_for_imp_short %>% 
