@@ -29,13 +29,13 @@ CESDC_wave2 <- CESDC_wave2[!(CESDC_wave2$tagid=="TAG124"& CESDC_wave2$CESDC_tota
 
 #SCARED
 SCARED_wave1 <- read.table(paste0(cas_dir,'behavior/Questionnaires/Wave1/SCARED_Wave1.csv'),header=T,sep=",") %>%
-  select(tagid,SCARED_mean) %>%
-  dplyr::rename(SCARED_mean_w1=SCARED_mean)
+  select(tagid,SCARED_anxiety_mean) %>%
+  dplyr::rename(SCARED_anxiety_mean_w1=SCARED_anxiety_mean)
 SCARED_wave2 <- read.table(paste0(cas_dir,'behavior/Questionnaires/Wave2/SCARED_Wave2.csv'),header=T,sep=",") %>%
-  select(tagid,SCARED_mean) %>%
-  dplyr::rename(SCARED_mean_w2=SCARED_mean)
-SCARED_wave2 <- SCARED_wave2[!(SCARED_wave2$tagid=="TAG124"& SCARED_wave2$SCARED_mean_w2==0.222),]#remove pp who filled out wave 2 survey at wave 3
-SCARED_wave2 <- SCARED_wave2[!duplicated(SCARED_wave2[c("tagid","SCARED_mean_w2")]),] #remove pp who filled out wave 2 survey at wave 3
+  select(tagid,SCARED_anxiety_mean) %>%
+  dplyr::rename(SCARED_anxiety_mean_w2=SCARED_anxiety_mean)
+SCARED_wave2 <- SCARED_wave2[!(SCARED_wave2$tagid=="TAG124"& SCARED_wave2$SCARED_anxiety_mean_w2==0.222),]#remove pp who filled out wave 2 survey at wave 3
+SCARED_wave2 <- SCARED_wave2[!duplicated(SCARED_wave2[c("tagid","SCARED_anxiety_mean_w2")]),] #remove pp who filled out wave 2 survey at wave 3
 
 #combine
 int_q <- merge(CESDC_wave1,CESDC_wave2,by="tagid",all=T) %>%
