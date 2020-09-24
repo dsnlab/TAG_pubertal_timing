@@ -352,7 +352,7 @@ aam_CESD_scatter <- ggplot(AAM_nl_tests, aes (x = aam_final, y = CESDC_total_im_
   geom_smooth(method="lm", formula = (y ~ exp(x)), se = TRUE) +
   theme_bw()
 
-aam_SCARED_scatter <- ggplot(AAM_nl_tests, aes (x = aam_final, y = SCARED_mean_im_wave2)) +
+aam_SCARED_scatter <- ggplot(AAM_nl_tests, aes (x = aam_final, y = SCARED_anxiety_mean_im_wave2)) +
   geom_point(size = 3.5) +
   geom_smooth(method="lm", formula = (y ~ exp(x)), se = TRUE) +  
   theme_bw()
@@ -360,7 +360,7 @@ aam_SCARED_scatter <- ggplot(AAM_nl_tests, aes (x = aam_final, y = SCARED_mean_i
 # Then visualize increase in symptoms from W1 to W2 (simple subtraction)
   
 AAM_nl_tests$CESD_delta <- AAM_nl_tests$CESDC_total_im_wave2 - AAM_nl_tests$CESDC_total_im_wave1
-AAM_nl_tests$SCARED_delta <- AAM_nl_tests$SCARED_mean_im_wave2 - AAM_nl_tests$SCARED_mean_im_wave1
+AAM_nl_tests$SCARED_delta <- AAM_nl_tests$SCARED_anxiety_mean_im_wave2 - AAM_nl_tests$SCARED_anxiety_mean_im_wave1
 
 aam_CESD_del_scatter <- ggplot(AAM_nl_tests, aes (x = aam_final, y = CESD_delta)) +
   geom_point(size = 3.5) +
@@ -376,7 +376,7 @@ aam_SCARED_del_scatter <- ggplot(AAM_nl_tests, aes (x = aam_final, y = SCARED_de
 linear_aam_cesd <- summary(lm(CESDC_total_im_wave2 ~ aam_final + CESDC_total_im_wave1 + CTQ_threat_im_wave2, AAM_nl_tests))
 exp_aam_cesd <- summary(lm(log(CESDC_total_im_wave2 + c) ~ aam_final + CESDC_total_im_wave1 + CTQ_threat_im_wave2, AAM_nl_tests))
 
-linear_aam_scared <- summary(lm(SCARED_mean_im_wave2 ~ aam_final + SCARED_mean_im_wave1 + CTQ_threat_im_wave2, AAM_nl_tests))
-exp_aam_scared <- summary(lm(log(SCARED_mean_im_wave2 + c) ~ aam_final + SCARED_mean_im_wave1 + CTQ_threat_im_wave2, AAM_nl_tests))
+linear_aam_scared <- summary(lm(SCARED_anxiety_mean_im_wave2 ~ aam_final + SCARED_anxiety_mean_im_wave1 + CTQ_threat_im_wave2, AAM_nl_tests))
+exp_aam_scared <- summary(lm(log(SCARED_anxiety_mean_im_wave2 + c) ~ aam_final + SCARED_anxiety_mean_im_wave1 + CTQ_threat_im_wave2, AAM_nl_tests))
 ```
 
