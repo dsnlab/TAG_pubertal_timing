@@ -381,7 +381,7 @@ if (run_sca == 1){
     sca_full[[b]] <- results_frame
   }
 
-  # Save SCAs
+  # Save SCAs - - NOTE: you need to rename or delete these files in the folder if run previously
   write.csv(sca_full[[bootstraps+1]], file=paste0(cas_dir,"projects/W1_W2_pubertal_timing/3_1_SCA.csv"))
   write_rds(sca_full, paste0(cas_dir,"projects/W1_W2_pubertal_timing/3_1_SCA_SCAboot.rds"))
  
@@ -464,7 +464,7 @@ if (run_null == 1){
     )))
   }
   
-  # Save null models
+  # Save null models - NOTE: you need to rename or delete these files in the folder if run previously
   write_rds(y_null, paste0(cas_dir,"projects/W1_W2_pubertal_timing/3_1_ynull.rds"))
 
 } else {
@@ -556,7 +556,7 @@ if (run_boot == 1){
     }
     bootstraps_full[[b]] <- results_frame_it
   }
-  
+  # save - NOTE: you need to rename or delete these files in the folder if run previously
   write_rds(bootstraps_full, paste0(cas_dir,"projects/W1_W2_pubertal_timing/3_1_boot.rds"))
 
 } else {
