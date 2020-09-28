@@ -218,7 +218,7 @@ names(empty_rows) <- names(results_table_o)
 results_table_o <- rbind(results_table_o, empty_rows)
 
 results_table_o$outcome <- c("int_d","depres_d","anx_d",
-                           "distress_d", "fear_d", "CESDC_total", "SCARED_mean")
+                           "distress_d", "fear_d", "CESDC_total", "SCARED_anxiety_mean")
 results_table_o$sig_measure <- rep(c("median ES", "share of results", "share of sig results"),each= 7)
 
 #make a results frame with variable names collapsed over imp and wave
@@ -277,7 +277,7 @@ populate_table_bootstrap_o <- function(bootstrap, table){
       outc <- "fear"
     } else if (table[i, "outcome"] == "int_d") {
       outc <- "int"
-    } else if (table[i, "outcome"] == "SCARED_mean") {
+    } else if (table[i, "outcome"] == "SCARED_anxiety_mean") {
       outc <- "scar"
     }   
      
@@ -297,7 +297,7 @@ populate_table_bootstrap_o <- function(bootstrap, table){
 populate_table_bounds_o <- function(boot, table){
 
   results_frame_medians <- data.frame("anx_d" = NA, "CESDC_total" = NA,"depres_d" = NA,
-                                      "distress_d" = NA, "fear_d" = NA, "int_d" = NA, "SCARED_mean" = NA) #needs to be alphabetical order 
+                                      "distress_d" = NA, "fear_d" = NA, "int_d" = NA, "SCARED_anxiety_mean" = NA) #needs to be alphabetical order 
 
   for(b in 1:(length(boot)-1)){
     boot_sh <- boot[[b]] %>% mutate(outcome= sub("_wave[1:2]|_im_wave[1:2]$", "", outcome))  
