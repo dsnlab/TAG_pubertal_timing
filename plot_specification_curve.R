@@ -51,7 +51,7 @@ results_frame_curve$outcome <- sub("_im_wave2$", "", results_frame_curve$outcome
 results_frame_curve$outcome <- sub("_wave2$", "", results_frame_curve$outcome)
 results_frame_curve$outcome <- as.factor(revalue(results_frame_curve$outcome, 
                                          c("CESDC_total"="g depressive symptoms",
-                                           "SCARED_mean"="f anxiety symptoms",
+                                           "SCARED_anxiety_mean"="f anxiety symptoms",
                                            "depres_d"="d depressive disorder",
                                            "anx_d"="c anxiety disorder",
                                            "int_d"="e internalizing disorder",

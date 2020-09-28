@@ -309,19 +309,20 @@ write.csv(Timing_neg1_resid,paste0(cas_dir,'projects/W1_W2_pubertal_timing/Final
 ```{r reorder and correlate all measures}
 
 #Wave 1
-Timing_allways1 <- Timing_neg1_resid %>% select(resid_neg_pdsstage_wave1,resid_neg_parent_pdsstage_wave1,resid_neg_ldstage_wave1,resid_neg_PUBcomp_wave1,resid_neg_ADRENcomp_wave1,resid_neg_GONADcomp_wave1,subj_timing_wave1,parent_subj_timing_wave1,resid_neg_DHEA_cor_wave1,resid_neg_TEST_cor_wave1,resid_neg_EST_cor_wave1,aam_final)
+Timing_allways1 <- Timing_neg1_resid %>% select(resid_neg_EST_cor_wave1,resid_neg_TEST_cor_wave1,resid_neg_DHEA_cor_wave1,aam_final,parent_subj_timing_wave1,subj_timing_wave1,resid_neg_ADRENcomp_wave1,resid_neg_GONADcomp_wave1,resid_neg_PUBcomp_wave1,resid_neg_ldstage_wave1,resid_neg_parent_pdsstage_wave1,resid_neg_pdsstage_wave1)
 
 Timing_allways1 <- select_if(Timing_allways1, is.numeric) 
 cor_timing1_r <- cor(Timing_allways1, use="pairwise.complete.obs", method="spearman")
-colnames(cor_timing1_r) <- c("Residualized self-report PDS stage", "Residualized parent-report PDS stage", "Residualized LD stage", "Residualized puberty composite", "Residualized adrenal composite", "Residualized gonadal composite", "Self-report subjective timing", "Parent-report Subjective timing", "Residualized DHEA", "Residualized testosterone", "Residualized estradiol", "Age at menarche")
+colnames(cor_timing1_r) <- c("Residualized estradiol", "Residualized testosterone", "Residualized DHEA", "Age at menarche", "Parent-report subjective timing", "Self-report subjective timing", "Residualized adrenal composite", "Residualized gonadal composite", "Residualized puberty composite", "Residualized LD stage", "Residualized parent-report PDS stage", "Residualized self-report PDS stage")
+
 rownames(cor_timing1_r) <- colnames(cor_timing1_r)
 p_timing1_r <- cor_pmat(Timing_allways1)
 colnames(p_timing1_r) <- colnames(cor_timing1_r) 
 rownames(p_timing1_r) <- rownames(cor_timing1_r) 
-w1corrplot <- ggcorrplot(cor_timing1_r, lab=T,lab_size=4,type="lower",title="Pubertal timing correlations Time 1",colors = c("#e41a1c", "white", "#6897bb"))
+w1corrplot <- ggcorrplot(cor_timing1_r, lab=T,lab_size=4,type="upper",title="Pubertal timing correlations Time 1",colors = c("#e41a1c", "white", "#6897bb"))
 
 #Wave 2
-Timing_allways2 <- Timing_neg1_resid %>% select(resid_neg_pdsstage_wave2,resid_neg_parent_pdsstage_wave2,resid_neg_ldstage_wave2,resid_neg_PUBcomp_wave2,resid_neg_ADRENcomp_wave2,resid_neg_GONADcomp_wave2,subj_timing_wave2,parent_subj_timing_wave2,resid_neg_DHEA_cor_wave2,resid_neg_TEST_cor_wave2,resid_neg_EST_cor_wave2,aam_final)
+Timing_allways2 <- Timing_neg1_resid %>% select(resid_neg_EST_cor_wave2,resid_neg_TEST_cor_wave2,resid_neg_DHEA_cor_wave2,aam_final,parent_subj_timing_wave2,subj_timing_wave2,resid_neg_ADRENcomp_wave2,resid_neg_GONADcomp_wave2,resid_neg_PUBcomp_wave2,resid_neg_ldstage_wave2,resid_neg_parent_pdsstage_wave2,resid_neg_pdsstage_wave2)
 
 Timing_allways2 <- select_if(Timing_allways2, is.numeric) 
 cor_timing2_r <- cor(Timing_allways2, use="pairwise.complete.obs", method="spearman")
@@ -330,7 +331,7 @@ rownames(cor_timing2_r) <- rownames(cor_timing1_r)
 p_timing2 <- cor_pmat(Timing_allways2)
 colnames(p_timing2) <- colnames(cor_timing1_r)
 rownames(p_timing2) <- rownames(cor_timing1_r)
-w2corrplot <- ggcorrplot(cor_timing2_r, lab=T, lab_size=4,type="lower", title="Pubertal timing correlations Time 2",colors = c("#e41a1c", "white", "#6897bb"))
+w2corrplot <- ggcorrplot(cor_timing2_r, lab=T, lab_size=4,type="upper", title="Pubertal timing correlations Time 2",colors = c("#e41a1c", "white", "#6897bb"))
 
 #Both waves and all pubertal dev variables
 Timing_allwaysn <- Timing_neg1_resid %>% select(resid_neg_pdsstage_wave1,resid_neg_parent_pdsstage_wave1,resid_neg_ldstage_wave1,resid_neg_PUBcomp_wave1,resid_neg_ADRENcomp_wave1,resid_neg_GONADcomp_wave1,subj_timing_wave1,parent_subj_timing_wave1,resid_neg_DHEA_cor_wave1,resid_neg_TEST_cor_wave1,resid_neg_EST_cor_wave1,resid_neg_pdsstage_wave2,resid_neg_parent_pdsstage_wave2,resid_neg_ldstage_wave2,resid_neg_PUBcomp_wave2,resid_neg_ADRENcomp_wave2,resid_neg_GONADcomp_wave2,subj_timing_wave2,parent_subj_timing_wave2,resid_neg_DHEA_cor_wave2,resid_neg_TEST_cor_wave2,resid_neg_EST_cor_wave2,aam_final)
