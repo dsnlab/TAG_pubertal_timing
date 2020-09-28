@@ -324,9 +324,9 @@ get_results_frame <- function(outcome, predictor, control_set, ctq){
 
 ### define outcome measures for each dataset
 outcome_im <- c("int_d_im_wave2","depres_d_im_wave2","anx_d_im_wave2","distress_d_im_wave2","fear_d_im_wave2",
-                "CESDC_total_im_wave2","SCARED_mean_im_wave2")
+                "CESDC_total_im_wave2","SCARED_anxiety_mean_im_wave2")
 outcome_nonim <- c("int_d_wave2","depres_d_wave2","anx_d_wave2","distress_d_wave2","fear_d_wave2",
-                   "CESDC_total_wave2","SCARED_mean_wave2")
+                   "CESDC_total_wave2","SCARED_anxiety_mean_wave2")
 
 ### define predictors 
 predictor_im <- c("aam_final","subj_timing_im_wave1","parent_subj_timing_im_wave1","resid_neg_ldstage_im_wave1",
