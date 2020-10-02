@@ -192,8 +192,8 @@ completedData <- setDT(completedData, keep.rownames = "imputation")[]
 completedData <- completedData %>% 
   mutate(imputation=gsub("\\..*","",imputation)) %>%
   select(tagid,imputation,wave,depres_d,anx_d,distress_d,fear_d,subj_timing,parent_subj_timing,adrenf2,gonadf2,PBIP_1A,PBIP_2A,everything()) 
-agg <- aggregate(completedData[,14:21] , by = list(tagid=completedData$tagid,wave=completedData$wave),FUN= mean)
-agg2 <- aggregate(completedData[,4:13] , by = list(tagid=completedData$tagid,wave=completedData$wave),FUN= median)
+agg <- aggregate(completedData[,14:21] , by = list(tagid=completedData$tagid,wave=completedData$wave),FUN= mean) #for continuous variables
+agg2 <- aggregate(completedData[,4:13] , by = list(tagid=completedData$tagid,wave=completedData$wave),FUN= median)#for binary and ordinal variables
 all_im <- agg %>% left_join(.,agg2) %>% select(tagid, wave, everything())
 
 #recalculate ldstage, pdsstage, composites and int_d
@@ -205,7 +205,9 @@ all_im <- all_im %>%
          PUBcomp=rowMeans(select(.,gonadf2,PBIP_1A,adrenf2,PBIP_2A)),
          int_d=ifelse(depres_d==1|anx_d==1,1,0))
 
-#check distribution imputed variables
+write.csv(completedData,paste0(cas_dir,'projects/W1_W2_pubertal_timing/MItests.csv'),row.names=T)
+
+
 #put in short format
   # non-imputed data:
 all_for_imp_short <- all_pub_int %>% pivot_wider(id_cols= tagid, names_from = wave, names_prefix = "wave", values_from = c(age,pdsstage,ldstage,parent_pdsstage,ADRENcomp,GONADcomp,PUBcomp,subj_timing,parent_subj_timing,DHEA_cor,TEST_cor,EST_cor,SCARED_anxiety_mean,CESDC_total,depres_d,anx_d,int_d,distress_d,fear_d,CTQ_threat)) 
