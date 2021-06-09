@@ -71,15 +71,7 @@ Hormones <- read.table(paste0(cas_dir,'behavior/Puberty/Saliva//TAG_W1W2_Saliva_
 Puberty_allways <- merge(Puberty_allways,Hormones,by=c("tagid","wave"),all=T)
 
 #Filter out excluded participants
-overview <- read_excel(paste0(cas_dir,'behavior/Overview/Overview_Withdrawn_Completed/TAG_Overview_Doc.xlsx'),sheet=1)
-overview <- overview[,c("TAG_ID","W1S2_Completed","Withdrawn_W1","Exclusionary_Withdrawl")]
-overview <- overview %>% 
-  rename(tagid = TAG_ID) %>%
-  replace_na(list(Withdrawn_W1 = 0)) %>%
-  replace_na(list(Exclusionary_Withdrawl = 0)) %>% 
-  arrange(Exclusionary_Withdrawl) %>% 
-  filter(Exclusionary_Withdrawl==0) %>%
-  filter(Withdrawn_W1==0)
+overview <- read.csv(paste0(cas_dir,'behavior/Overview/TAGfinal174.csv'))
 Puberty_allways <- Puberty_allways %>% filter(tagid %in% overview$tagid)
 
 ```
@@ -142,7 +134,11 @@ CTQ <- CTQ %>%
   mutate(tagid=sprintf("TAG%03d", SID))
 all_pub_int <- all_pub_int %>%
   merge(.,CTQ[,c("tagid","CTQ_threat")],by=c("tagid"),all.x=T)
-#  merge(.,have_parPDS,by=c("tagid","wave")) 
+
+BMI <- read.csv(paste0(cas_dir,"behavior/Anthro/Wave1/TAG_W1_anthro_z_perc.csv")) %>% 
+  mutate(tagid=sprintf("TAG%03d", id))
+all_pub_int <- all_pub_int %>%
+  merge(.,BMI[,c("tagid","BMIZ")],by=c("tagid"),all.x=T)
                               
 Missinginfo_pubmh <- OrderMissing(all_pub_int, del.lesscases = 0)
 Missinginfo_pubmh_W1 <- OrderMissing(all_pub_int[which(all_pub_int$wave=='1'), ], del.lesscases = 0)
@@ -178,10 +174,10 @@ imp <- amelia(all_for_imp,m=25,p2s=0,idvars="wave",ts="age",cs="tagid",
 
 # check the performance of Amelia
 #The imputation does a bad job for CTQ_threat, the rest looks ok
-for (vari in c("CESDC_total","SCARED_anxiety_mean","CTQ_threat","DHEA_cor","TEST_cor","EST_cor")) {
+for (vari in c("CESDC_total","SCARED_anxiety_mean","CTQ_threat","DHEA_cor","TEST_cor","EST_cor","BMIZ")) {
  densityplot <- compare.density(imp,vari)
  densityplot }
-for (vari in c("CESDC_total","SCARED_anxiety_mean","CTQ_threat","DHEA_cor","TEST_cor","EST_cor",
+for (vari in c("CESDC_total","SCARED_anxiety_mean","CTQ_threat","DHEA_cor","TEST_cor","EST_cor","BMIZ",
                "subj_timing","parent_subj_timing","parent_pdsstage","adrenf2","gonadf2","PBIP_1A","PBIP_2A")) {
  overimputeplot <- overimpute(imp,var=vari)
  overimputeplot }
@@ -192,7 +188,7 @@ completedData <- setDT(completedData, keep.rownames = "imputation")[]
 completedData <- completedData %>% 
   mutate(imputation=gsub("\\..*","",imputation)) %>%
   select(tagid,imputation,wave,depres_d,anx_d,distress_d,fear_d,subj_timing,parent_subj_timing,adrenf2,gonadf2,PBIP_1A,PBIP_2A,everything()) 
-agg <- aggregate(completedData[,14:21] , by = list(tagid=completedData$tagid,wave=completedData$wave),FUN= mean) #for continuous variables
+agg <- aggregate(completedData[,14:22] , by = list(tagid=completedData$tagid,wave=completedData$wave),FUN= mean) #for continuous variables
 agg2 <- aggregate(completedData[,4:13] , by = list(tagid=completedData$tagid,wave=completedData$wave),FUN= median)#for binary and ordinal variables
 all_im <- agg %>% left_join(.,agg2) %>% select(tagid, wave, everything())
 
@@ -210,9 +206,9 @@ write.csv(completedData,paste0(cas_dir,'projects/W1_W2_pubertal_timing/MItests.c
 
 #put in short format
   # non-imputed data:
-all_for_imp_short <- all_pub_int %>% pivot_wider(id_cols= tagid, names_from = wave, names_prefix = "wave", values_from = c(age,pdsstage,ldstage,parent_pdsstage,ADRENcomp,GONADcomp,PUBcomp,subj_timing,parent_subj_timing,DHEA_cor,TEST_cor,EST_cor,SCARED_anxiety_mean,CESDC_total,depres_d,anx_d,int_d,distress_d,fear_d,CTQ_threat)) 
+all_for_imp_short <- all_pub_int %>% pivot_wider(id_cols= tagid, names_from = wave, names_prefix = "wave", values_from = c(age,pdsstage,ldstage,parent_pdsstage,ADRENcomp,GONADcomp,subj_timing,parent_subj_timing,DHEA_cor,TEST_cor,EST_cor,SCARED_anxiety_mean,CESDC_total,depres_d,anx_d,int_d,distress_d,fear_d,CTQ_threat,BMIZ)) 
   # imputed data:
-all_im_short <- all_im %>% pivot_wider(id_cols= tagid, names_from = wave, names_prefix = "im_wave", values_from = c(age,pdsstage,ldstage,parent_pdsstage,ADRENcomp,GONADcomp,PUBcomp,subj_timing,parent_subj_timing,DHEA_cor,TEST_cor,EST_cor,SCARED_anxiety_mean,CESDC_total,depres_d,anx_d,int_d,distress_d,fear_d,CTQ_threat)) 
+all_im_short <- all_im %>% pivot_wider(id_cols= tagid, names_from = wave, names_prefix = "im_wave", values_from = c(age,pdsstage,ldstage,parent_pdsstage,ADRENcomp,GONADcomp,subj_timing,parent_subj_timing,DHEA_cor,TEST_cor,EST_cor,SCARED_anxiety_mean,CESDC_total,depres_d,anx_d,int_d,distress_d,fear_d,CTQ_threat,BMIZ)) 
 
 #plot
 all_for_imp_short %>% 
@@ -221,6 +217,14 @@ all_for_imp_short %>%
 all_im_short %>% 
   select(-tagid,-depres_d_im_wave1,-anx_d_im_wave1,-int_d_im_wave1,-distress_d_im_wave1,-fear_d_im_wave1,-depres_d_im_wave2,-anx_d_im_wave2,-int_d_im_wave2,-distress_d_im_wave2,-fear_d_im_wave2) %>% gather() %>%
   ggplot(aes(value)) + facet_wrap(~ key, scales = "free") + geom_histogram()
+plotting <- melt(subset(all_pub_int,
+                 select=c(wave,age,parent_pdsstage,pdsstage,ldstage,DHEA_cor,TEST_cor,EST_cor)), 
+                 id.var=c("wave","age"))
+labels_plot <- c("parent PDS","self PDS","LD Tanner","DHEA","testosterone","estradiol")
+names(labels_plot) <- c("parent_pdsstage","pdsstage","ldstage","DHEA_cor","TEST_cor","EST_cor")
+ggplot(plotting, aes(x = age, y = value)) + geom_point(aes(color = variable)) + 
+  facet_grid(variable ~ wave, scales = "free", labeller = labeller(variable=labels_plot)) +
+  theme_minimal() + theme(legend.position = "none")
 
 ```
 
@@ -231,14 +235,14 @@ Pubertal timing
 Timing_allways <- merge(all_im_short,all_for_imp_short,by="tagid")
 
 #create residuals for each wave separately BEFORE IMPUTATION
-pubcolumns1 <- list("ldstage_wave1","pdsstage_wave1","ADRENcomp_wave1","GONADcomp_wave1","PUBcomp_wave1","parent_pdsstage_wave1","DHEA_cor_wave1","TEST_cor_wave1","EST_cor_wave1")
+pubcolumns1 <- list("ldstage_wave1","pdsstage_wave1","ADRENcomp_wave1","GONADcomp_wave1","parent_pdsstage_wave1","DHEA_cor_wave1","TEST_cor_wave1","EST_cor_wave1")
 for(Pub in pubcolumns1){
   modelap1 <- lm(formula = paste(Pub, "~ age_wave1"),data=all_for_imp_short,na.action=na.exclude)
   summary(modelap1)
   Timing_allways[[paste('resid',Pub, sep="_")]] <- resid(modelap1)
 }
 
-pubcolumns2 <- c("ldstage_wave2","pdsstage_wave2","ADRENcomp_wave2","GONADcomp_wave2","PUBcomp_wave2","parent_pdsstage_wave2","DHEA_cor_wave2","TEST_cor_wave2","EST_cor_wave2")
+pubcolumns2 <- c("ldstage_wave2","pdsstage_wave2","ADRENcomp_wave2","GONADcomp_wave2","parent_pdsstage_wave2","DHEA_cor_wave2","TEST_cor_wave2","EST_cor_wave2")
 for(Pub in pubcolumns2){
   modelap2 <- lm(formula = paste(Pub, "~ age_wave2"),data=all_for_imp_short,na.action=na.exclude)
   summary(modelap2)
@@ -246,14 +250,14 @@ for(Pub in pubcolumns2){
 }
 
 #create residuals for each wave separately AFTER IMPUTATION
-pubcolumns1a <- list("ldstage_im_wave1","pdsstage_im_wave1","ADRENcomp_im_wave1","GONADcomp_im_wave1","PUBcomp_im_wave1","parent_pdsstage_im_wave1","DHEA_cor_im_wave1","TEST_cor_im_wave1","EST_cor_im_wave1")
+pubcolumns1a <- list("ldstage_im_wave1","pdsstage_im_wave1","ADRENcomp_im_wave1","GONADcomp_im_wave1","parent_pdsstage_im_wave1","DHEA_cor_im_wave1","TEST_cor_im_wave1","EST_cor_im_wave1")
 for(Pub in pubcolumns1a){
   modelap1a <- lm(formula = paste(Pub, "~ age_im_wave1"),data=Timing_allways,na.action=na.exclude)
   summary(modelap1a)
   Timing_allways[[paste('resid',Pub, sep="_")]] <- resid(modelap1a)
 }
 
-pubcolumns2a <- c("ldstage_im_wave2","pdsstage_im_wave2","ADRENcomp_im_wave2","GONADcomp_im_wave2","PUBcomp_im_wave2","parent_pdsstage_im_wave2","DHEA_cor_im_wave2","TEST_cor_im_wave2","EST_cor_im_wave2")
+pubcolumns2a <- c("ldstage_im_wave2","pdsstage_im_wave2","ADRENcomp_im_wave2","GONADcomp_im_wave2","parent_pdsstage_im_wave2","DHEA_cor_im_wave2","TEST_cor_im_wave2","EST_cor_im_wave2")
 for(Pub in pubcolumns2a){
   modelap2a <- lm(formula = paste(Pub, "~ age_im_wave2"),data=Timing_allways,na.action=na.exclude)
   summary(modelap2a)
@@ -298,8 +302,8 @@ write.csv(Timing_allways,paste0(cas_dir,'projects/W1_W2_pubertal_timing/Timing_a
 
 # But, in further analyses (like the SCA), we want all timing variables to go in the same direction (and we can't reverse code age at menarche), so here we will multiply the residuals only by -1. This way, all timing variables will be coded so that higher values are later timing (less advanced compared to peers), and lower values are earlier timing (more advanced compared to peers)
 Timing_neg1_resid <- Timing_allways
-resid_vars <- c("resid_ldstage_wave1", "resid_pdsstage_wave1", "resid_ADRENcomp_wave1", "resid_GONADcomp_wave1", "resid_PUBcomp_wave1", "resid_parent_pdsstage_wave1", "resid_DHEA_cor_wave1", "resid_TEST_cor_wave1", "resid_EST_cor_wave1", "resid_ldstage_wave2", "resid_pdsstage_wave2", "resid_ADRENcomp_wave2", "resid_GONADcomp_wave2", "resid_PUBcomp_wave2", "resid_parent_pdsstage_wave2", "resid_DHEA_cor_wave2", "resid_TEST_cor_wave2", "resid_EST_cor_wave2","resid_ldstage_im_wave1", "resid_pdsstage_im_wave1", "resid_ADRENcomp_im_wave1", "resid_GONADcomp_im_wave1", "resid_PUBcomp_im_wave1", "resid_parent_pdsstage_im_wave1", "resid_DHEA_cor_im_wave1", "resid_TEST_cor_im_wave1", "resid_EST_cor_im_wave1", "resid_ldstage_im_wave2", "resid_pdsstage_im_wave2", "resid_ADRENcomp_im_wave2", "resid_GONADcomp_im_wave2", "resid_PUBcomp_im_wave2", "resid_parent_pdsstage_im_wave2", "resid_DHEA_cor_im_wave2", "resid_TEST_cor_im_wave2", "resid_EST_cor_im_wave2")
-resid_neg_vars <- c("resid_neg_ldstage_wave1", "resid_neg_pdsstage_wave1", "resid_neg_ADRENcomp_wave1", "resid_neg_GONADcomp_wave1", "resid_neg_PUBcomp_wave1", "resid_neg_parent_pdsstage_wave1", "resid_neg_DHEA_cor_wave1", "resid_neg_TEST_cor_wave1", "resid_neg_EST_cor_wave1", "resid_neg_ldstage_wave2", "resid_neg_pdsstage_wave2", "resid_neg_ADRENcomp_wave2", "resid_neg_GONADcomp_wave2", "resid_neg_PUBcomp_wave2", "resid_neg_parent_pdsstage_wave2", "resid_neg_DHEA_cor_wave2", "resid_neg_TEST_cor_wave2", "resid_neg_EST_cor_wave2","resid_neg_ldstage_im_wave1", "resid_neg_pdsstage_im_wave1", "resid_neg_ADRENcomp_im_wave1", "resid_neg_GONADcomp_im_wave1", "resid_neg_PUBcomp_im_wave1", "resid_neg_parent_pdsstage_im_wave1", "resid_neg_DHEA_cor_im_wave1", "resid_neg_TEST_cor_im_wave1", "resid_neg_EST_cor_im_wave1", "resid_neg_ldstage_im_wave2", "resid_neg_pdsstage_im_wave2", "resid_neg_ADRENcomp_im_wave2", "resid_neg_GONADcomp_im_wave2", "resid_neg_PUBcomp_im_wave2", "resid_neg_parent_pdsstage_im_wave2", "resid_neg_DHEA_cor_im_wave2", "resid_neg_TEST_cor_im_wave2", "resid_neg_EST_cor_im_wave2")
+resid_vars <- c("resid_ldstage_wave1", "resid_pdsstage_wave1", "resid_ADRENcomp_wave1", "resid_GONADcomp_wave1", "resid_parent_pdsstage_wave1", "resid_DHEA_cor_wave1", "resid_TEST_cor_wave1", "resid_EST_cor_wave1", "resid_ldstage_wave2", "resid_pdsstage_wave2", "resid_ADRENcomp_wave2", "resid_GONADcomp_wave2", "resid_parent_pdsstage_wave2", "resid_DHEA_cor_wave2", "resid_TEST_cor_wave2", "resid_EST_cor_wave2","resid_ldstage_im_wave1", "resid_pdsstage_im_wave1", "resid_ADRENcomp_im_wave1", "resid_GONADcomp_im_wave1", "resid_parent_pdsstage_im_wave1", "resid_DHEA_cor_im_wave1", "resid_TEST_cor_im_wave1", "resid_EST_cor_im_wave1", "resid_ldstage_im_wave2", "resid_pdsstage_im_wave2", "resid_ADRENcomp_im_wave2", "resid_GONADcomp_im_wave2", "resid_parent_pdsstage_im_wave2", "resid_DHEA_cor_im_wave2", "resid_TEST_cor_im_wave2", "resid_EST_cor_im_wave2")
+resid_neg_vars <- c("resid_neg_ldstage_wave1", "resid_neg_pdsstage_wave1", "resid_neg_ADRENcomp_wave1", "resid_neg_GONADcomp_wave1", "resid_neg_parent_pdsstage_wave1", "resid_neg_DHEA_cor_wave1", "resid_neg_TEST_cor_wave1", "resid_neg_EST_cor_wave1", "resid_neg_ldstage_wave2", "resid_neg_pdsstage_wave2", "resid_neg_ADRENcomp_wave2", "resid_neg_GONADcomp_wave2", "resid_neg_parent_pdsstage_wave2", "resid_neg_DHEA_cor_wave2", "resid_neg_TEST_cor_wave2", "resid_neg_EST_cor_wave2","resid_neg_ldstage_im_wave1", "resid_neg_pdsstage_im_wave1", "resid_neg_ADRENcomp_im_wave1", "resid_neg_GONADcomp_im_wave1", "resid_neg_parent_pdsstage_im_wave1", "resid_neg_DHEA_cor_im_wave1", "resid_neg_TEST_cor_im_wave1", "resid_neg_EST_cor_im_wave1", "resid_neg_ldstage_im_wave2", "resid_neg_pdsstage_im_wave2", "resid_neg_ADRENcomp_im_wave2", "resid_neg_GONADcomp_im_wave2", "resid_neg_parent_pdsstage_im_wave2", "resid_neg_DHEA_cor_im_wave2", "resid_neg_TEST_cor_im_wave2", "resid_neg_EST_cor_im_wave2")
 Timing_neg1_resid[resid_neg_vars] <- Timing_neg1_resid[resid_vars]*-1
 
 write.csv(Timing_neg1_resid,paste0(cas_dir,'projects/W1_W2_pubertal_timing/Final_timing_int.csv'),row.names=F)
@@ -311,11 +315,11 @@ write.csv(Timing_neg1_resid,paste0(cas_dir,'projects/W1_W2_pubertal_timing/Final
 ```{r reorder and correlate all measures}
 
 #Wave 1
-Timing_allways1 <- Timing_neg1_resid %>% select(resid_neg_EST_cor_wave1,resid_neg_TEST_cor_wave1,resid_neg_DHEA_cor_wave1,aam_final,parent_subj_timing_wave1,subj_timing_wave1,resid_neg_ADRENcomp_wave1,resid_neg_GONADcomp_wave1,resid_neg_PUBcomp_wave1,resid_neg_ldstage_wave1,resid_neg_parent_pdsstage_wave1,resid_neg_pdsstage_wave1)
+Timing_allways1 <- Timing_neg1_resid %>% select(resid_neg_EST_cor_wave1,resid_neg_TEST_cor_wave1,resid_neg_DHEA_cor_wave1,aam_final,parent_subj_timing_wave1,subj_timing_wave1,resid_neg_ADRENcomp_wave1,resid_neg_GONADcomp_wave1,resid_neg_ldstage_wave1,resid_neg_parent_pdsstage_wave1,resid_neg_pdsstage_wave1)
 
 Timing_allways1 <- select_if(Timing_allways1, is.numeric) 
 cor_timing1_r <- cor(Timing_allways1, use="pairwise.complete.obs", method="spearman")
-colnames(cor_timing1_r) <- c("Residualized estradiol", "Residualized testosterone", "Residualized DHEA", "Age at menarche", "Parent-report subjective timing", "Self-report subjective timing", "Residualized adrenal composite", "Residualized gonadal composite", "Residualized puberty composite", "Residualized LD stage", "Residualized parent-report PDS stage", "Residualized self-report PDS stage")
+colnames(cor_timing1_r) <- c("Residualized estradiol", "Residualized testosterone", "Residualized DHEA", "Age at menarche", "Parent-report subjective timing", "Self-report subjective timing", "Residualized adrenal composite", "Residualized gonadal composite", "Residualized LD stage", "Residualized parent-report PDS stage", "Residualized self-report PDS stage")
 
 rownames(cor_timing1_r) <- colnames(cor_timing1_r)
 p_timing1_r <- cor_pmat(Timing_allways1)
@@ -324,7 +328,7 @@ rownames(p_timing1_r) <- rownames(cor_timing1_r)
 w1corrplot <- ggcorrplot(cor_timing1_r, lab=T,lab_size=4,type="upper",title="Pubertal timing correlations Time 1",colors = c("#e41a1c", "white", "#6897bb"))
 
 #Wave 2
-Timing_allways2 <- Timing_neg1_resid %>% select(resid_neg_EST_cor_wave2,resid_neg_TEST_cor_wave2,resid_neg_DHEA_cor_wave2,aam_final,parent_subj_timing_wave2,subj_timing_wave2,resid_neg_ADRENcomp_wave2,resid_neg_GONADcomp_wave2,resid_neg_PUBcomp_wave2,resid_neg_ldstage_wave2,resid_neg_parent_pdsstage_wave2,resid_neg_pdsstage_wave2)
+Timing_allways2 <- Timing_neg1_resid %>% select(resid_neg_EST_cor_wave2,resid_neg_TEST_cor_wave2,resid_neg_DHEA_cor_wave2,aam_final,parent_subj_timing_wave2,subj_timing_wave2,resid_neg_ADRENcomp_wave2,resid_neg_GONADcomp_wave2,resid_neg_ldstage_wave2,resid_neg_parent_pdsstage_wave2,resid_neg_pdsstage_wave2)
 
 Timing_allways2 <- select_if(Timing_allways2, is.numeric) 
 cor_timing2_r <- cor(Timing_allways2, use="pairwise.complete.obs", method="spearman")
@@ -336,7 +340,7 @@ rownames(p_timing2) <- rownames(cor_timing1_r)
 w2corrplot <- ggcorrplot(cor_timing2_r, lab=T, lab_size=4,type="upper", title="Pubertal timing correlations Time 2",colors = c("#e41a1c", "white", "#6897bb"))
 
 #Both waves and all pubertal dev variables
-Timing_allwaysn <- Timing_neg1_resid %>% select(resid_neg_pdsstage_wave1,resid_neg_parent_pdsstage_wave1,resid_neg_ldstage_wave1,resid_neg_PUBcomp_wave1,resid_neg_ADRENcomp_wave1,resid_neg_GONADcomp_wave1,subj_timing_wave1,parent_subj_timing_wave1,resid_neg_DHEA_cor_wave1,resid_neg_TEST_cor_wave1,resid_neg_EST_cor_wave1,resid_neg_pdsstage_wave2,resid_neg_parent_pdsstage_wave2,resid_neg_ldstage_wave2,resid_neg_PUBcomp_wave2,resid_neg_ADRENcomp_wave2,resid_neg_GONADcomp_wave2,subj_timing_wave2,parent_subj_timing_wave2,resid_neg_DHEA_cor_wave2,resid_neg_TEST_cor_wave2,resid_neg_EST_cor_wave2,aam_final)
+Timing_allwaysn <- Timing_neg1_resid %>% select(resid_neg_pdsstage_wave1,resid_neg_parent_pdsstage_wave1,resid_neg_ldstage_wave1,resid_neg_ADRENcomp_wave1,resid_neg_GONADcomp_wave1,subj_timing_wave1,parent_subj_timing_wave1,resid_neg_DHEA_cor_wave1,resid_neg_TEST_cor_wave1,resid_neg_EST_cor_wave1,resid_neg_pdsstage_wave2,resid_neg_parent_pdsstage_wave2,resid_neg_ldstage_wave2,resid_neg_ADRENcomp_wave2,resid_neg_GONADcomp_wave2,subj_timing_wave2,parent_subj_timing_wave2,resid_neg_DHEA_cor_wave2,resid_neg_TEST_cor_wave2,resid_neg_EST_cor_wave2,aam_final)
 
 cor_timing <- cor(Timing_allwaysn, use="pairwise.complete.obs", method="spearman")
 p_timing <- cor_pmat(Timing_allwaysn)
