@@ -16,7 +16,7 @@ library("tidyverse")
 cas_dir="Y:/dsnlab/TAG/"
 
 ## set to how many bootstraps I want to do
-bootstraps <- 500
+bootstraps <- 1000
 
 #####################################################################################
 # b) Load SCAs, SCAs with bootstrap and Bootstrapped Models ####
@@ -70,33 +70,31 @@ fill_per <- function(boot_results, frame){
     boot_results_m <- as.data.frame(boot_results[m])
     n <- 2
     
-    for (i in 1:13){
+    for (i in 1:12){
       
       if(i == 1){
         results_subset <- boot_results_m
       } else if (i == 2) {
-        results_subset <- boot_results_m %>% filter(grepl(pattern="PUBcomp", predictor))
-      } else if (i == 3) {
         results_subset <- boot_results_m %>% filter(grepl(pattern="ADRENcomp", predictor))
-      } else if (i == 4){
+      } else if (i == 3){
         results_subset <- boot_results_m %>% filter(grepl(pattern="GONADcomp", predictor))
-      } else if (i == 5){
+      } else if (i == 4){
         results_subset <- boot_results_m %>% filter(grepl(pattern="neg_pdsstage", predictor))
-      } else if (i == 6){
+      } else if (i == 5){
         results_subset <- boot_results_m %>% filter(grepl(pattern="parent_pdsstage", predictor))
-      } else if (i == 7){
+      } else if (i == 6){
         results_subset <- boot_results_m %>% filter(grepl(pattern="ldstage", predictor))
-      } else if (i == 8){
+      } else if (i == 7){
         results_subset <- boot_results_m %>% filter(grepl(pattern="aam", predictor))
-      } else if (i == 9){
+      } else if (i == 8){
         results_subset <- boot_results_m %>% filter(grepl(pattern="^subj_timing", predictor))
-      } else if (i == 10){
+      } else if (i == 9){
         results_subset <- boot_results_m %>% filter(grepl(pattern="parent_subj_timing", predictor))
-      } else if (i == 11){
+      } else if (i == 10){
         results_subset <- boot_results_m %>% filter(grepl(pattern="DHEA", predictor))
-      } else if (i == 12){
+      } else if (i == 11){
         results_subset <- boot_results_m %>% filter(grepl(pattern="TEST", predictor))
-      } else if (i == 13){
+      } else if (i == 12){
         results_subset <- boot_results_m %>% filter(grepl(pattern="_EST", predictor))
       }
       
@@ -129,13 +127,10 @@ fill_per <- function(boot_results, frame){
 # a) Make dataframe to hold the results ####
 #####################################################################################
 permutation_frame <-
-  data.frame(matrix(NA, nrow = bootstraps, ncol = 66))
+  data.frame(matrix(NA, nrow = bootstraps, ncol = 61))
 names(permutation_frame) <-
   c("permutation_number",
     "effect.tot", "sign.neg.tot", "sign.pos.tot", "sign.sig.neg.tot", "sign.sig.pos.tot",
-    
-    #PUBcomp
-    "effect.pcomp","sign.neg.pcomp","sign.pos.pcomp","sign.sig.neg.pcomp","sign.sig.pos.pcomp",
     
     #ADRENcomp
     "effect.acomp","sign.neg.acomp","sign.pos.acomp","sign.sig.neg.acomp","sign.sig.pos.acomp",
@@ -200,9 +195,9 @@ per_frame <- fill_per(bootstraps_full, per_frame)
 #####################################################################################
 analyse_boot <- function(boot_results){
 
-  results_table <- data.frame(matrix(NA, nrow = 13, ncol = 3))
+  results_table <- data.frame(matrix(NA, nrow = 12, ncol = 3))
   names(results_table) <- c("median_effect","share_neg","share_sig_neg")
-  results_table$timing_var <- c("tot","pcomp","acomp","gcomp","pds","ppds","ld","aam","subj","psubj","dhea","test","est")
+  results_table$timing_var <- c("tot","acomp","gcomp","pds","ppds","ld","aam","subj","psubj","dhea","test","est")
 
   for(i in 1:nrow(results_table)){
     suffix <- results_table$timing_var[i]
@@ -237,15 +232,15 @@ bootstrap_summary <- analyse_boot(per_frame)
 ##########################################################################################################
 results_table2 <- data.frame(predictor = NA, sig_measure = NA,
                             observed = NA, lower = NA, upper = NA, p = NA)
-empty_rows <- data.frame(matrix(nrow = 38, ncol = ncol(results_table2)))
+empty_rows <- data.frame(matrix(nrow = 35, ncol = ncol(results_table2)))
 names(empty_rows) <- names(results_table2)
 results_table2 <- rbind(results_table2, empty_rows)
 
 results_table2$predictor <- c("total","aam_final","parent_subj_timing","resid_neg_ADRENcomp",
                            "resid_neg_DHEA_cor", "resid_neg_EST_cor", "resid_neg_GONADcomp", 
                               "resid_neg_ldstage", "resid_neg_parent_pdsstage" , "resid_neg_pdsstage",
-                              "resid_neg_PUBcomp", "resid_neg_TEST_cor", "subj_timing")
-results_table2$sig_measure <- rep(c("median ES", "share of results", "share of sig results"),each= 13)
+                               "resid_neg_TEST_cor", "subj_timing")
+results_table2$sig_measure <- rep(c("median ES", "share of results", "share of sig results"),each= 12)
 
 #make a results frame with variable names collapsed over imp and wave
 results_frame_forwide <- results_frame %>% 
@@ -323,8 +318,6 @@ populate_table_bootstrap <- function(bootstrap, table){
       pubtim <- "acomp"
     } else if (table[i, "predictor"] == "resid_neg_GONADcomp") {
       pubtim <- "gcomp"
-    } else if (table[i, "predictor"] == "resid_neg_PUBcomp") {
-      pubtim <- "pcomp"
     } else if (table[i, "predictor"] == "resid_neg_DHEA_cor") {
       pubtim <- "dhea"
     } else if (table[i, "predictor"] == "resid_neg_TEST_cor") {
@@ -351,7 +344,7 @@ populate_table_bounds <- function(boot, table){
   results_frame_medians <- data.frame("aam_final" = NA, "parent_subj_timing" = NA,"resid_neg_ADRENcomp" = NA,
                                       "resid_neg_DHEA_cor" = NA, "resid_neg_EST_cor" = NA, "resid_neg_GONADcomp" = NA, 
                                         "resid_neg_ldstage" = NA, "resid_neg_parent_pdsstage" = NA, "resid_neg_pdsstage" = NA,
-                                        "resid_neg_PUBcomp" = NA, "resid_neg_TEST_cor" = NA, "subj_timing" = NA,"total"=NA) #needs to be alphabetical order with total at the end
+                                         "resid_neg_TEST_cor" = NA, "subj_timing" = NA,"total"=NA) #needs to be alphabetical order with total at the end
     
   for(b in 1:(length(boot)-1)){
     boot_sh <- boot[[b]] %>% mutate(predictor= sub("_wave[1:2]|_im_wave[1:2]$", "", predictor))  

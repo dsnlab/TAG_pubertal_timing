@@ -15,7 +15,6 @@
 
 #########
 # Issues:
-# -Two participants still have no wave 2 data after imputation because they had no observed values at wave 2
 # -the script pulls eta-squared effect sizes but only works for lm, not logistic models. These are not really necessary though
 
 
@@ -46,7 +45,7 @@ run_boot <- 1
 #####################################################################################
 # c) Determine how many bootstraps to run
 #####################################################################################
-bootstraps <- 500
+bootstraps <- 1000
 
 #####################################################################################
 # d) Load data #### changed to direct to our imputed and non-imputed datasets
@@ -82,6 +81,7 @@ get_data <- function(results_frame, dataset, data, boot) {
   data$dv <- data[,as.character(results_frame$outcome[i])]
   data$wave1_control <- data[,as.character(results_frame$wave1_control[i])]
   data$ctq_control <- data[,as.character(results_frame$ctq_control[i])]
+  data$bmi_control <- data[,as.character(results_frame$bmi_control[i])]
   
   # Do bootstrapping
   if(boot == TRUE){
@@ -163,15 +163,63 @@ get_model_scale <- function(get_data_list){
         data = data, 
         family = binomial)
     }
-  #Model with both controls  
-  } else {
+  # Model with only BMI z-score as control
+  } else if (results_frame$control[i] == "bmi") {
     if (results_frame$model[i] == "lm") {
       reg <- lm(
-        scale(dv) ~ scale(iv) + scale(wave1_control) + scale(ctq_control), 
+        scale(dv) ~ scale(iv) + scale(bmi_control), 
         data = data)
     } else {
       reg <- glm(
-        dv ~ scale(iv) + wave1_control + scale(ctq_control),
+        dv ~ scale(iv) + scale(bmi_control), 
+        data = data, 
+        family = binomial)
+    }
+    # Model with early-life stress and wave 1 psychopathology as control
+  } else if (results_frame$control[i] == "mhctq") {
+    if (results_frame$model[i] == "lm") {
+      reg <- lm(
+        scale(dv) ~ scale(iv) + scale(ctq_control) + scale(wave1_control), 
+        data = data)
+    } else {
+      reg <- glm(
+        dv ~ scale(iv) + scale(ctq_control) + wave1_control, 
+        data = data, 
+        family = binomial)
+    }
+    # Model with BMI and wave 1 mental health variable as control
+  } else if (results_frame$control[i] == "mhbmi") {
+    if (results_frame$model[i] == "lm") {
+      reg <- lm(
+        scale(dv) ~ scale(iv) + scale(wave1_control) + scale(bmi_control), 
+        data = data)
+    } else {
+      reg <- glm(
+        dv ~ scale(iv) + wave1_control + scale(bmi_control), 
+        data = data, 
+        family = binomial)
+    }
+    # Model with ELS and BMI as control
+  } else if (results_frame$control[i] == "bmictq") {
+    if (results_frame$model[i] == "lm") {
+      reg <- lm(
+        scale(dv) ~ scale(iv) + scale(bmi_control) + scale(ctq_control), 
+        data = data)
+    } else {
+      reg <- glm(
+        dv ~ scale(iv) + scale(bmi_control) + scale(ctq_control), 
+        data = data, 
+        family = binomial)
+    }
+    #Model with all controls  
+  } else {
+    if (results_frame$model[i] == "lm") {
+      reg <- lm(
+        scale(dv) ~ scale(iv) + scale(wave1_control) + scale(ctq_control) + scale(bmi_control), 
+        data = data)
+    } else {
+      reg <- glm(
+        dv ~ scale(iv) + wave1_control + scale(ctq_control) + scale(bmi_control),
         data = data, 
         family = binomial)
     }
@@ -225,15 +273,63 @@ get_model_noscale <- function(get_data_list){
         data = data, 
         family = binomial)
     }
-    #Model with both controls  
-  } else {
+    # Model with only BMI as control
+  } else if (results_frame$control[i] == "bmi") {
     if (results_frame$model[i] == "lm") {
       reg <- lm(
-        dv ~ iv + wave1_control + ctq_control, 
+        dv ~ iv + bmi_control, 
         data = data)
     } else {
       reg <- glm(
-        dv ~ iv + wave1_control + ctq_control,
+        dv ~ iv + bmi_control, 
+        data = data, 
+        family = binomial)
+    }
+    # Model with early-life stress and wave 1 psychopathology as control
+  } else if (results_frame$control[i] == "mhctq") {
+    if (results_frame$model[i] == "lm") {
+      reg <- lm(
+        dv ~ iv + ctq_control + wave1_control, 
+        data = data)
+    } else {
+      reg <- glm(
+        dv ~ iv + ctq_control + wave1_control, 
+        data = data, 
+        family = binomial)
+    }
+    # Model with BMI and wave 1 mental health variable as control
+  } else if (results_frame$control[i] == "mhbmi") {
+    if (results_frame$model[i] == "lm") {
+      reg <- lm(
+        dv ~ iv + wave1_control + bmi_control, 
+        data = data)
+    } else {
+      reg <- glm(
+        dv ~ iv + wave1_control + bmi_control, 
+        data = data, 
+        family = binomial)
+    }
+    # Model with ELS and BMI as control
+  } else if (results_frame$control[i] == "bmictq") {
+    if (results_frame$model[i] == "lm") {
+      reg <- lm(
+        dv ~ iv + bmi_control + ctq_control, 
+        data = data)
+    } else {
+      reg <- glm(
+        dv ~ iv + bmi_control + ctq_control, 
+        data = data, 
+        family = binomial)
+    }
+    #Model with all controls  
+  } else {
+    if (results_frame$model[i] == "lm") {
+      reg <- lm(
+        dv ~ iv + wave1_control + ctq_control + bmi_control, 
+        data = data)
+    } else {
+      reg <- glm(
+        dv ~ iv + wave1_control + ctq_control + bmi_control,
         data = data, 
         family = binomial)
     }
@@ -309,9 +405,9 @@ get_coef <- function(get_model_list) {
 #### and to add variable indicating whether to run linear or logistic regression
 ###############################
 
-get_results_frame <- function(outcome, predictor, control_set, ctq){
-  results_frame <- expand.grid(outcome, predictor, control_set, ctq)
-  names(results_frame) <- c("outcome", "predictor", "control","ctq_control")
+get_results_frame <- function(outcome, predictor, control_set, ctq, bmi){
+  results_frame <- expand.grid(outcome, predictor, control_set, ctq, bmi)
+  names(results_frame) <- c("outcome", "predictor", "control","ctq_control","bmi_control")
   results_frame$wave1_control <- str_replace(outcome,"2","1")
   results_frame$model <- ifelse(str_detect(outcome,"_d"),'logistic',"lm")
   results_frame[, c("t_value", "effect", "p_value", "standard_error", "number", "etasqrd")] <- NA
@@ -330,31 +426,33 @@ outcome_nonim <- c("int_d_wave2","depres_d_wave2","anx_d_wave2","distress_d_wave
 
 ### define predictors 
 predictor_im <- c("aam_final","subj_timing_im_wave1","parent_subj_timing_im_wave1","resid_neg_ldstage_im_wave1",
-                  "resid_neg_pdsstage_im_wave1","resid_neg_parent_pdsstage_im_wave1","resid_neg_ADRENcomp_im_wave1","resid_neg_GONADcomp_im_wave1",
-                  "resid_neg_PUBcomp_im_wave1","resid_neg_DHEA_cor_im_wave1","resid_neg_TEST_cor_im_wave1",
+                  "resid_neg_pdsstage_im_wave1","resid_neg_parent_pdsstage_im_wave1","resid_neg_ADRENcomp_im_wave1",
+                  "resid_neg_GONADcomp_im_wave1","resid_neg_DHEA_cor_im_wave1","resid_neg_TEST_cor_im_wave1",
                   "resid_neg_EST_cor_im_wave1","subj_timing_im_wave2","parent_subj_timing_im_wave2",
                   "resid_neg_ldstage_im_wave2","resid_neg_pdsstage_im_wave2","resid_neg_parent_pdsstage_im_wave2",
-                  "resid_neg_ADRENcomp_im_wave2","resid_neg_GONADcomp_im_wave2","resid_neg_PUBcomp_im_wave2",
+                  "resid_neg_ADRENcomp_im_wave2","resid_neg_GONADcomp_im_wave2",
                   "resid_neg_DHEA_cor_im_wave2","resid_neg_TEST_cor_im_wave2","resid_neg_EST_cor_im_wave2")
 predictor_nonim <- c("aam_final","subj_timing_wave1","parent_subj_timing_wave1","resid_neg_ldstage_wave1",
                   "resid_neg_pdsstage_wave1","resid_neg_parent_pdsstage_wave1","resid_neg_ADRENcomp_wave1",
-                  "resid_neg_GONADcomp_wave1","resid_neg_PUBcomp_wave1","resid_neg_DHEA_cor_wave1",
+                  "resid_neg_GONADcomp_wave1","resid_neg_DHEA_cor_wave1",
                   "resid_neg_TEST_cor_wave1","resid_neg_EST_cor_wave1","subj_timing_wave2",
                   "parent_subj_timing_wave2","resid_neg_ldstage_wave2","resid_neg_pdsstage_wave2",
                   "resid_neg_parent_pdsstage_wave2","resid_neg_ADRENcomp_wave2",
-                  "resid_neg_GONADcomp_wave2","resid_neg_PUBcomp_wave2","resid_neg_DHEA_cor_wave2",
+                  "resid_neg_GONADcomp_wave2","resid_neg_DHEA_cor_wave2",
                   "resid_neg_TEST_cor_wave2","resid_neg_EST_cor_wave2")
 
-### define categories to indicate which control variable combo to use (no controls, only CTQ, only wave1 mh, or both)
-control_set <- c("none","ctq","mh","both")
-control_im <- "CTQ_threat_im_wave1"
-control_nonim <- "CTQ_threat_wave1"
+### define categories to indicate which control variable combo to use 
+control_set <- c("none","ctq","mh","bmi","mhctq","mhbmi","bmictq","all")
+ctq_im <- "CTQ_threat_im_wave1"
+ctq_nonim <- "CTQ_threat_wave1"
+bmi_im <- "BMIZ_im_wave1"
+bmi_nonim <- "BMIZ_wave1"
 
 ###############################
 # ii) Run functions ### changed so that both results_frames are combined into one
 ###############################
-results_frame_im <- get_results_frame(outcome_im, predictor_im, control_set, control_im)
-results_frame_nonim <- get_results_frame(outcome_nonim, predictor_nonim, control_set, control_nonim)
+results_frame_im <- get_results_frame(outcome_im, predictor_im, control_set, ctq_im, bmi_im)
+results_frame_nonim <- get_results_frame(outcome_nonim, predictor_nonim, control_set, ctq_nonim, bmi_nonim)
 results_frame <- rbind(results_frame_im, results_frame_nonim)
 
 ###############################
@@ -441,9 +539,25 @@ get_ynull <- function(get_model_list) {
       control_coef <- replace(coef(reg)[[3]], is.na(coef(reg)[[3]]), 0) 
       y.null.i = arm::invlogit(coef(reg)[[1]] + control_coef*data$ctq_control)
     }
+    else if (results_frame$control[i]=="bmi") {
+      control_coef <- replace(coef(reg)[[3]], is.na(coef(reg)[[3]]), 0) 
+      y.null.i = arm::invlogit(coef(reg)[[1]] + control_coef*data$bmi_control)
+    }
+    else if (results_frame$control[i]=="mhctq") {
+      control_coef <- replace(coef(reg)[[3]], is.na(coef(reg)[[3]]), 0) 
+      y.null.i = arm::invlogit(coef(reg)[[1]] + control_coef*data$wave1_control + control_coef*data$ctq_control)
+    }
+    else if (results_frame$control[i]=="mhbmi") {
+      control_coef <- replace(coef(reg)[[3]], is.na(coef(reg)[[3]]), 0) 
+      y.null.i = arm::invlogit(coef(reg)[[1]] + control_coef*data$wave1_control + control_coef*data$bmi_control)
+    }
+    else if (results_frame$control[i]=="bmictq") {
+      control_coef <- replace(coef(reg)[[3]], is.na(coef(reg)[[3]]), 0) 
+      y.null.i = arm::invlogit(coef(reg)[[1]] + control_coef*data$bmi_control + control_coef*data$ctq_control)
+    }
     else {
       control_coef <- replace(coef(reg)[[3]], is.na(coef(reg)[[3]]), 0) 
-      y.null.i = arm::invlogit(coef(reg)[[1]] + control_coef*data$wave1_control + coef(reg)[[4]]*data$ctq_control)
+      y.null.i = arm::invlogit(coef(reg)[[1]] + control_coef*data$wave1_control + coef(reg)[[4]]*data$ctq_control + control_coef*data$bmi_control)
     }
   }
   
@@ -509,7 +623,8 @@ get_boot_data <- function(results_frame, dataset, data, y.null) {
   data$iv <- data[,as.character(results_frame$predictor[i])]
   data$wave1_control <- data[,as.character(results_frame$wave1_control[i])]
   data$ctq_control <- data[,as.character(results_frame$ctq_control[i])]
- 
+  data$bmi_control <- data[,as.character(results_frame$bmi_control[i])]
+  
   # Setup variable names dv
   if (b <= bootstraps){
     data$dv <- y.null[[i]]
