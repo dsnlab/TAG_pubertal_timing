@@ -16,7 +16,7 @@ library("tidyverse")
 cas_dir="Y:/dsnlab/TAG/"
 
 ## set to how many bootstraps I want to do
-bootstraps <- 500
+bootstraps <- 1000
 
 #####################################################################################
 # b) Load SCAs, SCAs with bootstrap and Bootstrapped Models ####
