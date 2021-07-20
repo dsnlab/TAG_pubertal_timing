@@ -1,5 +1,5 @@
 # TAG_pubertal_timing
-All pubertal timing scripts across TAG waves
+Scripts for the manuscript "Multi-method assessment of pubertal timing and associations with internalizing psychopathology in early adolescent girls"
 
 Description of scripts so far:
 
